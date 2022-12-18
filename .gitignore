@@ -1,0 +1,6 @@
+.idea
+install.lock
+.product
+gofly.sock
+
+config.yaml
