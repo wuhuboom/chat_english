@@ -2,6 +2,6 @@
 	"Server":"127.0.0.1",
 	"Port":"3306",
 	"Database":"go_fly_pro",
-	"Username":"go_fly_pro",
-	"Password":"go_fly_pro"
+	"Username":"root",
+	"Password":"123456789"
 }

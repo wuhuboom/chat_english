@@ -12,10 +12,9 @@ import (
 )
 
 func NewVisitorServer(c *gin.Context) {
+
+	//升級協議   get=>ws
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
-
-
-
 	if err != nil {
 		log.Println("upgrade error:", err)
 		return
@@ -28,6 +27,8 @@ func NewVisitorServer(c *gin.Context) {
 		conn.Close()
 		return
 	}
+
+	//獲取訪客
 	vistorInfo := models.FindVisitorByVistorId(visitorId)
 	if vistorInfo.VisitorId == "" {
 		log.Println("访客visitorId不存在:", visitorId)
@@ -43,6 +44,7 @@ func NewVisitorServer(c *gin.Context) {
 		Ent_id:     vistorInfo.EntId,
 		UpdateTime: time.Now(),
 	}
+
 	AddVisitorToList(user)
 	VisitorOnline(toId, vistorInfo)
 	//判断是否有room_id,代表聊天室

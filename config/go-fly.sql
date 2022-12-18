@@ -18,7 +18,7 @@ CREATE TABLE `user` (
  UNIQUE KEY `idx_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8|
 INSERT INTO `user` (`id`, `name`, `password`, `nickname`, `created_at`, `updated_at`, `expired_at`, `avator`, `pid`) VALUES
-(1, 'caonima888', '585d234cb6a583ad1bd1fd65c75b7219', '菜地超管', '2020-07-02 14:36:46', '2020-07-05 08:46:57', '2030-07-04 09:32:20', '/static/images/user/2.jpg', 0)|
+(1, 'caonima888', '7607e2066670eb663e316329d805d5ae', '菜地超管', '2020-07-02 14:36:46', '2020-07-05 08:46:57', '2030-07-04 09:32:20', '/static/images/user/2.jpg', 0)|
 
 DROP TABLE IF EXISTS `visitor`|
 CREATE TABLE `visitor` (

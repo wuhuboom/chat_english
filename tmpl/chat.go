@@ -64,16 +64,11 @@ func PageChat(c *gin.Context) {
 	CopyrightUrl := models.FindConfig("CopyrightUrl")
 	ShowKefuName := models.FindConfig("ShowKefuName")
 
-
-fmt.Println("????????????????????????????????????????????")
-	fmt.Println(CopyrightTxt)
-
 	entInfo := models.FindUserById(entId)
 	title := "GOFLY客服-免费在线客服系统源码-网站开源在线客服系统-私有化部署网页在线客服软件代码下载"
 	if entInfo.Nickname != "" {
 		title = entInfo.Nickname
 	}
-
 
 	c.HTML(http.StatusOK, "chat_page.html", gin.H{
 		"KEFU_ID":        kefuId,

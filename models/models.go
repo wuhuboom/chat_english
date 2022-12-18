@@ -38,7 +38,6 @@ func NewConnect(mysqlConfigFile string) error {
 	}
 	err = json.Unmarshal(info, mysql)
 
-
 	if err != nil {
 		panic("解析MYSQL配置文件JSON结构失败!" + err.Error())
 	}
@@ -50,7 +49,7 @@ func NewConnect(mysqlConfigFile string) error {
 		return err
 	}
 	DB.SingularTable(true)
-	DB.LogMode(true)
+	//DB.LogMode(true)
 	DB.DB().SetMaxIdleConns(10)
 	DB.DB().SetMaxOpenConns(100)
 	DB.DB().SetConnMaxLifetime(59 * time.Second)

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"go-fly-muti/common"
@@ -179,6 +180,8 @@ func FindUsersOwn(page uint, pagesize uint, query interface{}, args ...interface
 	}
 	var users []User
 	DB.Select("user.*,role.name role_name,role.id role_id").Joins("left join user_role on user.id=user_role.user_id").Joins("left join role on user_role.role_id=role.id").Where(query, args...).Offset(offset).Order("user.updated_at desc").Limit(pagesize).Find(&users)
+
+	fmt.Println(users)
 	return users
 }
 func FindUsersPages(page uint, pagesize uint) []User {

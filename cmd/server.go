@@ -71,7 +71,9 @@ func run(cmd *cobra.Command, args []string) {
 	}
 
 	gin.SetMode(gin.ReleaseMode)
-	engine := gin.Default()
+	//engine := gin.Default()
+	engine := gin.New()
+	engine.Use(gin.Recovery())
 	//是否编译模板
 	if common.IsCompireTemplate {
 		templ := template.Must(template.New("").ParseFS(static.TemplatesEmbed, "templates/**/*.html"))

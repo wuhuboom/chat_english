@@ -14,5 +14,6 @@ func SetLanguage(c *gin.Context) {
 		}
 	}
 	types.ApiCode.LANG = lang
+
 	c.Set("lang", lang)
 }

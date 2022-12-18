@@ -134,12 +134,15 @@ func PostVisitorLogin(c *gin.Context) {
 			form.ToId = entKefuInfo.Name
 		} else {
 			for _, kefu := range kefus {
+
 				if _, ok := ws.KefuList[kefu.Name]; ok {
 					form.ToId = kefu.Name
 					allOffline = false
 					dstKefu = kefu
+					fmt.Println("成功選擇到商戶:" + kefu.Name)
 					break
 				}
+				fmt.Println("失敗選擇到:商戶:" + kefu.Name + "不在線")
 			}
 		}
 
