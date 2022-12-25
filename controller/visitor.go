@@ -134,7 +134,6 @@ func PostVisitorLogin(c *gin.Context) {
 			form.ToId = entKefuInfo.Name
 		} else {
 			for _, kefu := range kefus {
-
 				if _, ok := ws.KefuList[kefu.Name]; ok {
 					form.ToId = kefu.Name
 					allOffline = false

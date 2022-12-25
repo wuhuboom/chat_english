@@ -23,11 +23,7 @@ func NewKefuServer(c *gin.Context) {
 		return
 	}
 
-
-
-
 	fmt.Print("----------------------------------------------")
-
 
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
@@ -170,7 +166,7 @@ func SendPingToKefuClient() {
 	}
 }
 
-//获取企业下在线的客服
+// GetEntOnlineKefuId 获取企业下在线的客服
 func GetEntOnlineKefuId(entId string) string {
 	for kefuId, kefuConn := range KefuList {
 		if len(kefuConn) > 0 {
