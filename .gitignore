@@ -4,3 +4,4 @@ install.lock
 gofly.sock
 
 config.yaml
+config/mysql.json
