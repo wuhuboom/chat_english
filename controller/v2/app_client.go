@@ -10,9 +10,7 @@ type ClientForm struct {
 	ClientId string `form:"client_id" json:"client_id" uri:"client_id" xml:"client_id" binding:"required"`
 }
 
-/**
-注册app client_id
-*/
+// PostAppKefuClient /**
 func PostAppKefuClient(c *gin.Context) {
 	kefuName, _ := c.Get("kefu_name")
 	var form ClientForm
