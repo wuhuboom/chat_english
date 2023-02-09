@@ -94,7 +94,7 @@ func PostTransKefu(c *gin.Context) {
 	ws.UpdateVisitorUser(visitorId, kefuId)
 	go ws.VisitorOnline(kefuId, visitor)
 	go ws.VisitorOffline(curKefuId.(string), visitor.VisitorId, visitor.Name)
-	ws.VisitorNotice(visitor.VisitorId, "客服转接到"+user.Nickname)
+	ws.VisitorNotice(visitor.VisitorId, "Customer service was transferred to "+user.Nickname)
 	ws.VisitorTransfer(visitor.VisitorId, kefuId)
 	c.JSON(200, gin.H{
 		"code": 200,

@@ -134,7 +134,7 @@ func FindLastMessageByVisitorId(visitorId string) Message {
 	return m
 }
 
-//查询条数
+// CountMessage 查询条数
 func CountMessage(query interface{}, args ...interface{}) uint {
 	var count uint
 	DB.Model(&Message{}).Where(query, args...).Count(&count)
