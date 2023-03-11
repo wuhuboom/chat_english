@@ -22,9 +22,6 @@ func NewKefuServer(c *gin.Context) {
 		})
 		return
 	}
-
-	fmt.Print("----------------------------------------------")
-
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Print("upgrade:", err)

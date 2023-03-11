@@ -32,6 +32,7 @@ type VisitorLoginForm struct {
 	VisitorName string `form:"visitor_name" json:"visitor_name" uri:"visitor_name" xml:"visitor_name"`
 }
 
+// PostVisitorLogin 玩家分配客服
 func PostVisitorLogin(c *gin.Context) {
 	var form VisitorLoginForm
 	err := c.Bind(&form)
@@ -66,6 +67,7 @@ func PostVisitorLogin(c *gin.Context) {
 			})
 			return
 		}
+
 		visitorIds := strings.Split(form.VisitorId, "|")
 		if len(visitorIds) > 1 {
 			if visitorIds[0] != "wx" {
@@ -122,26 +124,46 @@ func PostVisitorLogin(c *gin.Context) {
 		})
 		return
 	}
+
+	//判断商户是否在线
 	dstKefu := models.FindUser(form.ToId)
 	//判断是否在线
 	_, ok := ws.KefuList[form.ToId]
 	if dstKefu.OnlineStatus == 1 && ok {
 		allOffline = false
 	} else {
-		kefus := models.FindUsersWhere("(pid = ? or id=?) and online_status=1", form.EntId, form.EntId)
-		//kefus := models.FindUsersByPid(form.EntId)
-		if len(kefus) == 0 {
-			form.ToId = entKefuInfo.Name
-		} else {
-			for _, kefu := range kefus {
+
+		fmt.Println("!!!")
+		//type userData struct {
+		//	Name string `json:"name"`
+		//}
+		var uu []models.User
+		models.DB.Raw("SELECT   user.name as  name  ,user.avator as avator  FROM  message LEFT JOIN  user  ON user.name=message.kefu_id WHERE  message.visitor_id= ? AND user.online_status=1  ORDER BY  message.created_at  DESC   LIMIT  1", form.VisitorId).Scan(&uu)
+		fmt.Println(uu)
+		if len(uu) != 0 {
+			for _, kefu := range uu {
 				if _, ok := ws.KefuList[kefu.Name]; ok {
 					form.ToId = kefu.Name
 					allOffline = false
 					dstKefu = kefu
-					fmt.Println("成功選擇到商戶:" + kefu.Name)
 					break
 				}
-				fmt.Println("失敗選擇到:商戶:" + kefu.Name + "不在線")
+			}
+		} else {
+
+			kefus := models.FindUsersWhere("(pid = ? or id=?) and online_status=1", form.EntId, form.EntId)
+			//kefus := models.FindUsersByPid(form.EntId)
+			if len(kefus) == 0 {
+				form.ToId = entKefuInfo.Name
+			} else {
+				for _, kefu := range kefus {
+					if _, ok := ws.KefuList[kefu.Name]; ok {
+						form.ToId = kefu.Name
+						allOffline = false
+						dstKefu = kefu
+						break
+					}
+				}
 			}
 		}
 

@@ -61,6 +61,7 @@ func UpdateUser(id string, name string, password string, avator string, nickname
 }
 func UpdateUserRecNum(name string, num interface{}) {
 	user := &User{}
+
 	DB.Model(user).Where("name = ?", name).Update("RecNum", gorm.Expr("rec_num + ?", num))
 }
 func UpdateUserRecNumZero(name string) {

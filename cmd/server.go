@@ -163,7 +163,7 @@ func initDir() {
 func initDaemon() {
 	//启动进程之前要先杀死之前的金额
 
-	pid, err := ioutil.ReadFile("Project.sock")
+	pid, err := ioutil.ReadFile("gofly.sock")
 	if err != nil {
 		return
 	}
