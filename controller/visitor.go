@@ -132,7 +132,8 @@ func PostVisitorLogin(c *gin.Context) {
 	if dstKefu.OnlineStatus == 1 && ok {
 		allOffline = false
 	} else {
-		fmt.Println(ws.ClientList)
+		fmt.Println("内存在线客服")
+		fmt.Println(ws.KefuList)
 		Mes := models.Message{}
 		err := models.DB.Where("visitor_id=?", form.VisitorId).Order("created_at desc").First(&Mes).Error
 		uu := models.User{}

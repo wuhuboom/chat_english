@@ -77,6 +77,8 @@ func GetOtherKefuList(c *gin.Context) {
 		"result": result,
 	})
 }
+
+// PostTransKefu 转移客服
 func PostTransKefu(c *gin.Context) {
 	kefuId := c.Query("kefu_id")
 	visitorId := c.Query("visitor_id")
