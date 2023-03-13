@@ -6,6 +6,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"go-fly-muti/common"
 	"go-fly-muti/types"
+	"go.uber.org/zap"
 	"strconv"
 	"time"
 )
@@ -229,6 +230,14 @@ func (user *User) GetUsers(fields string) []User {
 //更新user
 func (user *User) UpdateUser() {
 	user.UpdatedAt = time.Now()
+
+	if user.OnlineStatus == 1 {
+
+		zap.L().Debug(time.Now().Format("2006-01-02 15:04:05") + "   客服id:" + strconv.Itoa(int(user.ID)) + "状态:-->>>上线")
+	} else {
+		zap.L().Debug(time.Now().Format("2006-01-02 15:04:05") + "   客服id:" + strconv.Itoa(int(user.ID)) + "状态:-->>>下线")
+	}
+
 	user.buildQuery().Model(&User{}).Update(user)
 }
 

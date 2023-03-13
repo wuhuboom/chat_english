@@ -1,7 +1,0 @@
-失敗選擇到:商戶:ceshi不在線
-成功選擇到商戶:ceshi01
-2022/12/18 16:00:00 cleanRoom start...
-2022/12/19 00:00:00 cleanRoom start...
-2022/12/18 17:31:05 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
-======
-----------------------------------------------2022/12/18 18:12:21 ws/user.go  websocket: close 1001 (going away)

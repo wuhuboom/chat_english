@@ -17,6 +17,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/ipipdotnet/ipdb-go v1.3.0
 	github.com/jinzhu/gorm v1.9.14
+	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/satori/go.uuid v1.2.0
 	github.com/silenceper/wechat/v2 v2.1.0
 	github.com/sirupsen/logrus v1.8.1
@@ -26,6 +27,8 @@ require (
 	github.com/spf13/viper v1.3.2
 	github.com/tidwall/gjson v1.13.0
 	github.com/zh-five/xdaemon v0.1.1
+	go.uber.org/zap v1.24.0
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 )

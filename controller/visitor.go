@@ -132,25 +132,18 @@ func PostVisitorLogin(c *gin.Context) {
 	if dstKefu.OnlineStatus == 1 && ok {
 		allOffline = false
 	} else {
-
-		fmt.Println("!!!")
-		//type userData struct {
-		//	Name string `json:"name"`
-		//}
-		var uu []models.User
-		models.DB.Raw("SELECT   user.name as  name  ,user.avator as avator  FROM  message LEFT JOIN  user  ON user.name=message.kefu_id WHERE  message.visitor_id= ? AND user.online_status=1  ORDER BY  message.created_at  DESC   LIMIT  1", form.VisitorId).Scan(&uu)
-		fmt.Println(uu)
-		if len(uu) != 0 {
-			for _, kefu := range uu {
-				if _, ok := ws.KefuList[kefu.Name]; ok {
-					form.ToId = kefu.Name
-					allOffline = false
-					dstKefu = kefu
-					break
-				}
+		fmt.Println(ws.ClientList)
+		Mes := models.Message{}
+		err := models.DB.Where("visitor_id=?", form.VisitorId).Order("created_at desc").First(&Mes).Error
+		uu := models.User{}
+		err11 := models.DB.Where("name=? and  online_status = 1", Mes.KefuId).First(&uu).Error
+		if err == nil && err11 == nil {
+			if _, ok := ws.KefuList[uu.Name]; ok {
+				form.ToId = uu.Name
+				allOffline = false
+				dstKefu = uu
 			}
 		} else {
-
 			kefus := models.FindUsersWhere("(pid = ? or id=?) and online_status=1", form.EntId, form.EntId)
 			//kefus := models.FindUsersByPid(form.EntId)
 			if len(kefus) == 0 {

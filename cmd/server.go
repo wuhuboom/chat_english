@@ -10,6 +10,7 @@ import (
 	"github.com/zh-five/xdaemon"
 	"go-fly-muti/common"
 	"go-fly-muti/controller"
+	"go-fly-muti/logger"
 	"go-fly-muti/middleware"
 	"go-fly-muti/models"
 	"go-fly-muti/router"
@@ -47,6 +48,7 @@ func init() {
 }
 func run(cmd *cobra.Command, args []string) {
 
+	log.Println("565544")
 	//初始化目录
 	initDir()
 	//初始化守护进程
@@ -63,6 +65,15 @@ func run(cmd *cobra.Command, args []string) {
 		fmt.Println("配置文件初始化事变", err)
 		return
 	}
+
+	//注册日志
+
+	err := logger.Init()
+	if err != nil {
+		fmt.Println("日志err", err)
+		return
+	}
+
 	//设置时区
 	loc, err := time.LoadLocation(viper.GetString("app.  timeZone"))
 	if err == nil {

@@ -5,3 +5,4 @@ gofly.sock
 
 config.yaml
 config/mysql.json
+web_app.log
