@@ -7,13 +7,15 @@ import (
 
 func SetLanguage(c *gin.Context) {
 	lang := c.Query("lang")
+	//lang := "en"
+
 	if lang == "" {
 		lang := c.GetHeader("lang")
 		if lang == "" {
 			lang = "cn"
 		}
 	}
-	types.ApiCode.LANG = lang
 
+	types.ApiCode.LANG = lang
 	c.Set("lang", lang)
 }

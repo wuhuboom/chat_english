@@ -7,6 +7,7 @@ import (
 	"github.com/silenceper/wechat/v2/cache"
 	offConfig "github.com/silenceper/wechat/v2/officialaccount/config"
 	"github.com/silenceper/wechat/v2/officialaccount/oauth"
+	"github.com/spf13/viper"
 	"go-fly-muti/common"
 	"go-fly-muti/lib"
 	"go-fly-muti/models"
@@ -20,10 +21,12 @@ func PageChatRoom(c *gin.Context) {
 	c.HTML(http.StatusOK, "chat_room.html", gin.H{})
 }
 
-//咨询界面
+// PageChat 咨询界面
 func PageChat(c *gin.Context) {
 	kefuId := c.Query("kefu_id")
 	lang, _ := c.Get("lang")
+
+	//fmt.Println(lang)
 	refer := c.Query("refer")
 	entId := c.Query("ent_id")
 	if refer == "" {
@@ -53,7 +56,7 @@ func PageChat(c *gin.Context) {
 	landHost := models.FindConfig("LandHost")
 	if landHost != "" && landHost != c.Request.Host {
 		c.Redirect(302, fmt.Sprintf("//%s/chatIndex?kefu_id=%s&ent_id=%s&lang=%s&visitor_id=%s&visitor_name=%s&avator=%s", landHost,
-			kefuId, entId, lang, visitorId, visitorName, avator))
+			kefuId, entId, "en", visitorId, visitorName, avator))
 		return
 	}
 	SystemNotice := models.FindConfig("SystemNotice")
@@ -70,7 +73,11 @@ func PageChat(c *gin.Context) {
 		title = entInfo.Nickname
 	}
 
-	c.HTML(http.StatusOK, "chat_page.html", gin.H{
+	FontVersion := viper.GetString("app.FontVersion")
+	if FontVersion == "" {
+		FontVersion = "chat_page.html"
+	}
+	c.HTML(http.StatusOK, FontVersion, gin.H{
 		"KEFU_ID":        kefuId,
 		"Lang":           lang.(string),
 		"Refer":          refer,
