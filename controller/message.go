@@ -92,6 +92,14 @@ func SendMessageV2(c *gin.Context) {
 			IsKefu:    "no",
 		},
 	}
+
+	// 更新玩家最后一次更新时间
+	//affected := DB.Debug().Model(&models.Visitor{}).Where("visitor_id=?", toId).Updates(map[string]interface{}{"UpdateAt": time.Now().Format("2006-01-02 15:04:05")}).RowsAffected
+
+	//fmt.Println(toId)
+	affected := models.DB.Exec("UPDATE  visitor SET  updated_at=?   WHERE  visitor_id =?", time.Now().Format("2006-01-02 15:04:05"), form.FromId).RowsAffected
+	fmt.Println(affected)
+
 	str, _ := json.Marshal(msg)
 	ws.OneKefuMessage(kefuInfo.Name, str)
 	go SendAppGetuiPush(kefuInfo.Name, "[信息]"+vistorInfo.Name, content)
@@ -178,6 +186,7 @@ func SendKefuMessage(c *gin.Context) {
 	str2, _ := json.Marshal(msg)
 	ws.OneKefuMessage(kefuInfo.Name, str2)
 	go models.ReadMessageByVisitorId(vistorInfo.VisitorId, "visitor")
+
 	c.JSON(200, gin.H{
 		"code": 200,
 		"msg":  "ok",
@@ -384,6 +393,7 @@ func GetMessagesV2(c *gin.Context) {
 		}
 		chatMessages = append(chatMessages, chatMessage)
 	}
+
 	c.JSON(200, gin.H{
 		"code":   200,
 		"msg":    "ok",

@@ -1,2 +1,2 @@
-ps -ef|grep "go-fly-pro"
-kill -9 $(pidof 'go-fly-pro')
+ps -ef|grep "main"
+kill -9 $(pidof 'main')

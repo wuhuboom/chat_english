@@ -70,7 +70,7 @@ func PageChat(c *gin.Context) {
 		title = entInfo.Nickname
 	}
 
-	c.HTML(http.StatusOK, "chat_page1.html", gin.H{
+	c.HTML(http.StatusOK, "chat_page.html", gin.H{
 		"KEFU_ID":        kefuId,
 		"Lang":           lang.(string),
 		"Refer":          refer,

@@ -75,7 +75,7 @@ func run(cmd *cobra.Command, args []string) {
 	}
 
 	//设置时区
-	loc, err := time.LoadLocation(viper.GetString("app.  timeZone"))
+	loc, err := time.LoadLocation(viper.GetString("app.timeZone"))
 	if err == nil {
 		time.Local = loc // -> this is setting the global timezone
 		fmt.Println(time.Now().Format("2006-01-02 15:04:05 "))
