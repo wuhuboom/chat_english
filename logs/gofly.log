@@ -1,0 +1,101 @@
+server:
+  port: 10100
+  cache:
+    type: redis
+#静态资源路径
+static:
+  file: "file:/www/wwwroot/ball_project/ball_web/upload/"
+spring:
+  #设置单个文件的大小，默认1MB
+  servlet:
+    multipart:
+      #单个文件大小
+      max-file-size: 20MB
+      #一次请求总大小
+      max-request-size: 50MB
+  thymeleaf:
+    mode: LEGACYHTML5
+    prefix: classpath:/templates/
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    dynamic:
+      #默认库
+      primary: master
+      datasource:
+        #名称,和上面对应就是主库,默认库
+        master:
+          url: "jdbc:mysql://8:3306/ball_data?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8"
+          username: "ball_data"
+          password: "h2GmarX62F8p2Ka4"
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          druid:
+            #连接池配置
+            min-idle: 5
+            initial-size: 5
+            max-active: 2000
+            # 配置获取连接等待超时的时间
+            max-wait: 60000
+            # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+            time-between-eviction-runs-millis: 60000
+            # 配置一个连接在池中最小生存的时间，单位是毫秒
+            min-evictable-idle-time-millis: 30000
+            validation-query: SELECT 1 FROM DUAL
+            test-while-idle: true
+            test-on-borrow: false
+            test-on-return: false
+        #从库名称随意
+        slave_1:
+          url: "jdbc:mysql://10:3306/ball_data?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8"
+          username: "ball_data"
+          password: "h2GmarX62F8p2Ka4"
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          druid:
+            #连接池配置
+            min-idle: 5
+            initial-size: 5
+            max-active: 2000
+            # 配置获取连接等待超时的时间
+            max-wait: 60000
+            # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+            time-between-eviction-runs-millis: 60000
+            # 配置一个连接在池中最小生存的时间，单位是毫秒
+            min-evictable-idle-time-millis: 30000
+            validation-query: SELECT 1 FROM DUAL
+            test-while-idle: true
+            test-on-borrow: false
+            test-on-return: false
+    druid:
+      #监控
+      stat-view-servlet:
+        enabled: true
+      filter:
+        wall:
+          enabled: true
+          config:
+            multi-statement-allow: true
+  redis:
+    database: 0
+    host: 127.0.0.1
+    port: 6666
+    password: TX$bZm6ZE@cXJpLo
+    timeout: 3000ms
+logging:
+  level:
+    root: info
+some-comfig:
+  # 结算订单线程数
+  thread-open: 7
+  #服务器名
+  server-name: s1
+  server-url: 'http://119.42.149.34:10100/'
+  time-zone: "Asia/Kolkata"
+  #足球API接口的KEY
+  api-key: "7d1eefe431aea2527a46ac1e68f99f51"
+  #短信平台接口地址
+  sms-server: 'http://api.quanqiusms.com/api/sms/mtsend'
+  #短信平台appkey
+  sms-app-key: 'yGd84OnH'
+  #短信平台secretKey
+  sms-secret-key: 'R77SRleU'
+  #短信验证码,{0}为验证码参数，必须
+  sms-message: 'Your verification code is {0}, please ignore this message unless you operate by yourself'
