@@ -49,7 +49,7 @@ func PostVisitorLogin(c *gin.Context) {
 	if !tools.LimitFreqSingle("visitor_login:"+c.ClientIP(), 1, 2) {
 		c.JSON(200, gin.H{
 			"code": types.ApiCode.FREQ_LIMIT,
-			"msg":  c.ClientIP() + types.ApiCode.GetMessage(types.ApiCode.FREQ_LIMIT),
+			"msg":  types.ApiCode.GetMessage(types.ApiCode.FREQ_LIMIT),
 		})
 		return
 	}
@@ -202,7 +202,7 @@ func PostVisitorLogin(c *gin.Context) {
 	})
 }
 
-//组合扩展信息
+// 组合扩展信息
 func makeVisitorLoginForm(form *VisitorLoginForm) {
 	//扩展信息
 	extraJson := tools.Base64Decode(form.Extra)
@@ -245,7 +245,8 @@ func GetVisitor(c *gin.Context) {
 	})
 }
 
-/**
+/*
+*
 获取访客访问动态
 */
 func GetVisitorExt(c *gin.Context) {
@@ -493,7 +494,8 @@ func GetVisitorOnlines(c *gin.Context) {
 	})
 }
 
-/**
+/*
+*
 设置访客属性
 */
 func PostVisitorAttrs(c *gin.Context) {
@@ -536,7 +538,8 @@ func PostVisitorAttrs(c *gin.Context) {
 	})
 }
 
-/**
+/*
+*
 设置访客属性
 */
 func GetVisitorAttr(c *gin.Context) {

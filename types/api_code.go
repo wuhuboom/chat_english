@@ -78,7 +78,7 @@ func init() {
 		ApiCode.NO_ADMIN_AUTH:     "administrator allowed",
 		ApiCode.VISITOR_BAN:       "visitors are banned",
 		ApiCode.IP_BAN:            "ip are banned",
-		ApiCode.FREQ_LIMIT:        "frequency limit",
+		ApiCode.FREQ_LIMIT:        "Don't click too fast",
 		ApiCode.VISITOR_NO_EXIST:  "visitor not exist",
 	}
 }

@@ -122,14 +122,14 @@
           </el-dialog>
           <!--//切换语言-->
 
-          <el-row :gutter="2" v-for="v in msgList" v-bind:class="{'chatBoxMe': v.is_kefu==true}">
+          <el-row :gutter="2" v-for="v in msgList" v-bind:class="{'chatBoxMe': v.is_kefu==true}" style="margin-top: 20px;">
             <!-- <div class="chatTime" v-bind:class="{'chatTimeHide': v.show_time==false}">
                 <span>
                     <{formatTime(v.time)}>
                 </span>
             </div> -->
             <div v-if="v.is_kefu!=true"
-                 style="display:flex;justify-content: flex-start;align-items: flex-start;">
+                 style="display:flex;justify-content: flex-start;align-items: center;">
               <el-col :span="4">
                 <el-avatar shape="circle" :size="40" :src="v.avator"></el-avatar>
               </el-col>
