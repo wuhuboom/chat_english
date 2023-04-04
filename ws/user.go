@@ -90,7 +90,7 @@ func AddKefuToList(kefu *User) {
 	KefuList[kefu.Id] = newKefuConns
 }
 
-//给超管发消息
+// 给超管发消息
 func SuperAdminMessage(str []byte) {
 	return
 	//给超管发
@@ -103,7 +103,7 @@ func SuperAdminMessage(str []byte) {
 	}
 }
 
-//给指定客服发消息
+// 给指定客服发消息
 func OneKefuMessage(toId string, str []byte) {
 	//新版
 	mKefuConns, ok := KefuList[toId]
@@ -113,6 +113,11 @@ func OneKefuMessage(toId string, str []byte) {
 			defer kefu.Mux.Unlock()
 			error := kefu.Conn.WriteMessage(websocket.TextMessage, str)
 			if error != nil {
+				if websocket.IsCloseError(error, websocket.CloseGoingAway) {
+					// 连接已关闭，不再进行写入操作
+					log.Println("连接已关闭，不再进行写入操作", error, string(str))
+					return
+				}
 				log.Println("send_kefu_message", error, string(str))
 			}
 		}
@@ -136,7 +141,7 @@ func KefuMessage(visitorId, content string, kefuInfo models.User) {
 	OneKefuMessage(kefuInfo.Name, str)
 }
 
-//给客服客户端发送消息判断客户端是否在线
+// 给客服客户端发送消息判断客户端是否在线
 func SendPingToKefuClient() {
 	msg := TypeMessage{
 		Type: "many pong",
