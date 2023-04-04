@@ -57,7 +57,7 @@ func FindMessageByWhere(query interface{}, args ...interface{}) []MessageKefu {
 	return messages
 }
 
-//修改消息状态
+// 修改消息状态
 func ReadMessageByVisitorId(visitor_id, mesType string) {
 	message := &Message{
 		Status: "read",
@@ -65,7 +65,7 @@ func ReadMessageByVisitorId(visitor_id, mesType string) {
 	DB.Model(&message).Where("visitor_id=? and mes_type=?", visitor_id, mesType).Update(message)
 }
 
-//修改消息状态
+// 修改消息状态
 func ReadMessageByEntIdVisitorId(visitor_id, ent_id, mesType string) {
 	message := &Message{
 		Status: "read",
@@ -73,7 +73,7 @@ func ReadMessageByEntIdVisitorId(visitor_id, ent_id, mesType string) {
 	DB.Model(&message).Where("visitor_id=? and ent_id=? and mes_type=?", visitor_id, ent_id, mesType).Update(message)
 }
 
-//修改消息状态
+// 修改消息状态
 func UpdateMessageVisitorId(visitorId, newId string) {
 	message := &Message{
 		VisitorId: newId,
@@ -81,7 +81,7 @@ func UpdateMessageVisitorId(visitorId, newId string) {
 	DB.Model(&message).Where("visitor_id=? ", visitorId).Update(message)
 }
 
-//获取未读数
+// 获取未读数
 func FindUnreadMessageNumByVisitorIds(visitor_ids []string, messageFrom string) map[string]uint32 {
 	var count []VisitorUnread
 	DB.Table("message").Select("count(id) num,visitor_id").Where("visitor_id in(?) and status=? and mes_type=?", visitor_ids, "unread", messageFrom).Group("visitor_id").Find(&count)
@@ -92,7 +92,7 @@ func FindUnreadMessageNumByVisitorIds(visitor_ids []string, messageFrom string) 
 	return result
 }
 
-//查询最后一条消息
+// 查询最后一条消息
 func FindLastMessage(visitorIds []string) []Message {
 	var messages []Message
 	if len(visitorIds) <= 0 {
@@ -127,7 +127,7 @@ func FindLastMessageMap(visitorIds []string) map[string]string {
 	return temp
 }
 
-//查询最后一条消息
+// 查询最后一条消息
 func FindLastMessageByVisitorId(visitorId string) Message {
 	var m Message
 	DB.Select("content").Where("visitor_id=?", visitorId).Order("id desc").First(&m)

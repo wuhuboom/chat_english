@@ -337,6 +337,8 @@ func GetVisitors(c *gin.Context) {
 		},
 	})
 }
+
+// GetVisitorsList 获取访客列表
 func GetVisitorsList(c *gin.Context) {
 	page, _ := strconv.Atoi(c.Query("page"))
 	pagesize, _ := strconv.Atoi(c.Query("pagesize"))
@@ -376,18 +378,34 @@ func GetVisitorsList(c *gin.Context) {
 	} else {
 		orderBy = orderBy + " desc"
 	}
-	vistors := models.FindVisitorsByEntId(uint(page), uint(pagesize), fmt.Sprintf("%v", entId), orderBy, search, args...)
-	count := models.CountVisitorsByEntid(fmt.Sprintf("%v", entId), search, args...)
+
+	var vistors []models.Visitor
+	var count uint
+	if visitorName == "未读" {
+		offset := (page - 1) * pagesize
+
+		models.DB.Debug().Raw("SELECT v.* FROM visitor v, message m WHERE v.visitor_id = m.visitor_id AND m.STATUS = 'unread' AND m.ent_id = ? AND m.mes_type='visitor' GROUP BY v.visitor_id, m.created_at   ORDER BY m.created_at DESC LIMIT ?, ?;", entId, offset, pagesize).Scan(&vistors)
+		var lx []models.Visitor
+		models.DB.Debug().Raw("SELECT v.* FROM visitor v, message m WHERE v.visitor_id = m.visitor_id AND m.STATUS = 'unread' AND m.ent_id = ? AND m.mes_type='visitor' GROUP BY v.visitor_id, m.created_at   ORDER BY m.created_at DESC ", entId).Scan(&lx)
+		count = uint(len(lx))
+	} else {
+		//获取客服列表
+		vistors = models.FindVisitorsByEntId(uint(page), uint(pagesize), fmt.Sprintf("%v", entId), orderBy, search, args...)
+		//
+		count = models.CountVisitorsByEntid(fmt.Sprintf("%v", entId), search, args...)
+
+	}
 
 	//获取最后一条消息内容
 	visitorIds := make([]string, 0)
 	for _, visitor := range vistors {
 		visitorIds = append(visitorIds, visitor.VisitorId)
 	}
+
 	messagesMap := models.FindLastMessageMap(visitorIds)
 	//获取访客未读数
 	unreadMap := models.FindUnreadMessageNumByVisitorIds(visitorIds, "visitor")
-	//log.Println(unreadMap)
+	log.Println(unreadMap)
 	users := make([]VisitorOnline, 0)
 	for _, visitor := range vistors {
 		var unreadNum uint32
@@ -398,6 +416,7 @@ func GetVisitorsList(c *gin.Context) {
 		if visitor.RealName != "" {
 			username = visitor.RealName
 		}
+
 		user := VisitorOnline{
 			Id:          visitor.ID,
 			VisitorId:   visitor.VisitorId,
@@ -412,6 +431,7 @@ func GetVisitorsList(c *gin.Context) {
 		}
 		users = append(users, user)
 	}
+
 	c.JSON(200, gin.H{
 		"code": 200,
 		"msg":  "ok",
