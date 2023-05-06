@@ -113,11 +113,11 @@ func OneKefuMessage(toId string, str []byte) {
 			defer kefu.Mux.Unlock()
 			error := kefu.Conn.WriteMessage(websocket.TextMessage, str)
 			if error != nil {
-				if websocket.IsCloseError(error, websocket.CloseGoingAway) {
-					// 连接已关闭，不再进行写入操作
-					log.Println("连接已关闭，不再进行写入操作", error, string(str))
-					return
-				}
+				//if websocket.IsCloseError(error, websocket.CloseGoingAway) {
+				//	// 连接已关闭，不再进行写入操作
+				//	log.Println("连接已关闭，不再进行写入操作", error, string(str))
+				//	return
+				//}
 				log.Println("send_kefu_message", error, string(str))
 			}
 		}

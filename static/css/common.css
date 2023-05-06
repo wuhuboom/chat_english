@@ -972,6 +972,7 @@ a{color: #07a9fe;text-decoration: none;cursor: pointer;}
 }
 .chatEntBox{
     height: 100%;
+    background: #071a28;
 }
 .chatReplay{
     margin-top:15px;
