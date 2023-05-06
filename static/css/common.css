@@ -631,7 +631,7 @@ a{color: #07a9fe;text-decoration: none;cursor: pointer;}
 .settingTitle{
     height: 35px;
     line-height: 35px;
-   background: #fff;width: 100%;overflow: hidden;
+    background: #fff;width: 100%;overflow: hidden;
     overflow: hidden;
     box-shadow: 0 1px 3px 0 rgba(52, 63, 75, 0.1);
     margin-bottom: 2px;
