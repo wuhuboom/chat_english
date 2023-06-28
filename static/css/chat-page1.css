@@ -1,0 +1,275 @@
+audio {
+  height: 44px;
+}
+
+audio::-webkit-media-controls-panel {
+  background-color: #5c6cff;
+}
+.flagsDialog .el-dialog {
+  background: #041e31;
+}
+
+.flagsDialog .el-dialog__body {
+  padding-left: 0;
+  padding-right: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.flagsDialog .el-dialog__body span {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+}
+
+.flagBtn {
+  border: none !important;
+  background-color: #5c6cff !important;
+  color: #fff !important;
+}
+.iconBox {
+  width: 42.6px;
+  height: 46.6px;
+  padding-top: 16px;
+  margin-right: 16px;
+  transition: transform 0.3s;
+}
+
+.iconBox img {
+  width: 100%;
+  object-fit: contain;
+}
+
+.iconBox:focus {
+  transform: translateY(-2px);
+}
+
+/* chatbox nav */
+.back_btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.back_btn img {
+  width: 24px;
+  object-fit: contain;
+}
+.avatar {
+  width: 42px;
+  object-fit: contain;
+  margin-right: 8px;
+  margin-left: 10px;
+  border-radius: 50%;
+}
+.chatBoxNav {
+  background: #041e31;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 8px;
+}
+.chatBoxNav p {
+  flex: 1;
+  text-align: center;
+  padding-right: 36px;
+}
+
+@media screen and (min-width: 900px) {
+  .chatBoxNav {
+    display: none;
+  }
+  .iconBox:hover {
+    transform: translateY(-2px);
+  }
+}
+.visitorFaceBox {
+  bottom: 166px;
+}
+.visitorIconBox {
+  position: initial;
+  background: #041e31;
+  display: flex;
+}
+.chatCenter {
+  box-shadow: 2px 2px 6px rgb(51 53 56);
+}
+.chatContext {
+  background: #071a28;
+}
+.chatBox {
+  background: #071a28;
+}
+.chatVisitorPage {
+  height: calc(100% - 190px);
+}
+.chatBox .el-col {
+  margin: 0;
+}
+.chatUser {
+  margin-top: 0;
+}
+.chatContent {
+  background-color: #515151;
+  color: #ffffff;
+  border: 1px solid #515151;
+}
+.kefuMe .chatContent {
+  background-color: #5c6cff;
+  border: 1px solid #5c6cff;
+}
+.chatContent:before,
+.chatContent:after {
+  border-right-color: #515151;
+}
+.chatContent:after {
+  border-right-color: #515151;
+}
+.kefuMe .chatContent:after,
+.kefuMe .chatContent:before {
+  border-right-color: #5c6cff;
+}
+.chatBoxMe .chatContent:after,
+.chatBoxMe .chatContent:before {
+  border-left-color: #5c6cff;
+}
+.chatBoxSend {
+  background: #041e31;
+  height: auto;
+  border-top: 1px solid #041e31;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+.chatBoxMe {
+  padding: 8px 0;
+}
+.chatTime {
+  margin: 0;
+  margin-bottom: 8px;
+  margin-top: 20px;
+}
+.chatTime span {
+  background: transparent;
+  font-weight: 300;
+}
+.readIcon,
+.noReadIcon {
+  width: 14px;
+  height: 14px;
+}
+.chatEntTitle {
+  background-color: rgb(51, 53, 56);
+}
+
+.reconnectDialog .el-dialog {
+  background: #041e31;
+}
+
+.reconnectDialog .el-dialog__body {
+  padding-left: 0;
+  padding-right: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.reconnectDialog .el-dialog__body span {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+}
+.btn-pass {
+  background: #5c6cff;
+  color: #fff;
+  border-color: #5c6cff;
+}
+.btn-cancel {
+  background: #515151;
+  color: #fff;
+  border-color: #515151;
+}
+
+.reconnectBtn {
+  border: none !important;
+  background-color: #5c6cff !important;
+  color: #fff !important;
+}
+
+.recordDialogContainer .el-dialog {
+  background: #041e31;
+}
+
+.recordDialogContainer .el-dialog__body {
+  padding-left: 0;
+  padding-right: 0;
+}
+.visitorEditor {
+  margin-top: 8px;
+  position: relative;
+}
+.visitorEditor .visitorEditorArea {
+  margin-left: 0;
+}
+.visitorEditor .visitorEditorArea input {
+  background-color: #515151;
+  border: 1px solid #515151;
+  color: #fff;
+  /* padding-left: 26px; */
+}
+
+.visitorEditor .visitorEditorArea input::-webkit-input-placeholder {
+  color: #606266;
+}
+
+.sendBtn[disabled] {
+  filter: grayscale(1);
+}
+
+.sendBtn {
+  background-color: transparent !important;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  margin-left: 8px;
+}
+
+.sendBtn span {
+  width: 100%;
+  height: 100%;
+  display: inline-block;
+}
+
+.sendBtn img {
+  height: 100%;
+  object-fit: contain;
+}
+.visitorEditor .visitorEditorSmile {
+  height: 20px;
+  width: 20px;
+  margin: 0 8px;
+  position: absolute;
+  top: 10px;
+}
+.visitorEditor .visitorEditorChoose {
+  margin: 0;
+  margin-left: 8px;
+}
+.companyInfo {
+  color: #fff;
+}
+@media screen and (min-width: 900px) {
+  .chatCenter {
+    background-color: rgb(51, 53, 56);
+    color: #fff;
+    border: 1px solid rgb(51, 53, 56);
+  }
+  .chatVisitorPage {
+    height: calc(100% - 187px);
+  }
+  .chatEntBox {
+    border-right: 1px solid #1d1b1b;
+  }
+}

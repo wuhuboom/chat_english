@@ -14,7 +14,7 @@
   <script src="/static/js/functions.js?v=0.6.0"></script>
   <link rel="stylesheet" href="/static/css/front.css?v=0.6.0" />
   <link rel="stylesheet" href="/static/css/common.css?v=0.6.3" />
-  <link rel="stylesheet" href="/static/css/chart-page.css?v=0.0.1" />
+  <link rel="stylesheet" href="/static/css/chat-page1.css?v=0.0.1" />
   <link rel="stylesheet" href="/static/css/icono.min.css" />
   <link rel="icon" href="/static/images/favicon.ico">
   <style>
@@ -28,269 +28,272 @@
 </head>
 
 <body>
-<div id="app" class="chatCenter">
-  <template>
-    <!--客服代码-->
-    <div class="chatEntTitle" v-show="!isIframe">
-      <el-badge :type="onlineType" is-dot class="item">
-        <el-avatar class="chatEntTitleLogo" :size="35" :src="noticeAvatar"></el-avatar>
-      </el-badge>
-      <span>
-                    <{chatTitle}>
-                </span>
-    </div>
-    <div class="chatEntBox">
-      <div ref="chatVisitorPage" class="chatContext chatVisitorPage"
-           v-on:click="showIconBtns=false;showFaceIcon=false">
-        <div class="chatBox">
-          <div style="cursor: pointer" class="chatTime" v-on:click="loadMoreMessages"
-               v-show="showLoadMore">
-            <{flyLang.moremessage}>
+  <div id="app" class="chatCenter">
+    <template>
+      <!--客服代码-->
+      <div class="chatEntTitle" v-show="!isIframe">
+        <el-badge :type="onlineType" is-dot class="item">
+          <el-avatar class="chatEntTitleLogo" :size="35" :src="noticeAvatar"></el-avatar>
+        </el-badge>
+        <span>
+          <{chatTitle}>
+        </span>
+      </div>
+      <div class="chatEntBox">
+        <div class="chatBoxNav">
+          <div class="back_btn" v-on:click="window.history.back()">
+            <img src="/static/images/chat_3_back_btn.png" alt="chat_3_back_btn">
           </div>
-
-          <el-row class="chatReplay" :gutter="2" v-show="replys.length>0">
-            <el-col :span="4">
-              <el-avatar shape="circle" :size="40" :src="noticeAvatar"></el-avatar>
-            </el-col>
-            <el-col :span="20">
-              <div class="chatUser">
-                <{noticeName}>
-              </div>
-              <div class="chatContent visitorReply">
-                <div v-for="reply in replys">
-                  <div class="visitorReplyTitle">
-                    <{reply.group_name}>
-                  </div>
-                  <div v-on:click="sendReply(item.item_name)" class="visitorReplyContent"
-                       v-for="item in reply.items">
-                    <{item.item_name}>
-                  </div>
-                </div>
-              </div>
-            </el-col>
-            <div class="clear"></div>
-          </el-row>
-          <el-dialog :title="flyLang.leave" :visible.sync="allOffline" width="100%" top="0">
-            <el-input style="margin-bottom: 10px;" :placeholder="flyLang.email"
-                      v-model="visitorContact.email"></el-input>
-            <el-input style="margin-bottom: 10px;" :placeholder="flyLang.wechat"
-                      v-model="visitorContact.weixin"></el-input>
-            <el-input style="margin-bottom: 10px;" :placeholder="flyLang.realname"
-                      v-model="visitorContact.name"></el-input>
-            <el-input :placeholder="flyLang.content" type="textarea" v-model="visitorContact.msg">
-            </el-input>
-            <span slot="footer" class="dialog-footer">
-                                <el-button @click="sendEmailMsg">
-                                    <{flyLang.sent}>
-                                </el-button>
-                                <el-button @click="allOffline = false">
-                                    <{flyLang.cancel}>
-                                </el-button>
-                            </span>
-          </el-dialog>
-          <!--录音-->
-          <el-dialog class="recordDialogContainer" :visible.sync="audioDialog" width="100%" top="0">
-            <div class="dialogRecoder">
-              <el-progress type="circle" :format="recoderFormat" :stroke-width="10"
-                           :percentage="recoderSecond" color="#5C6CFF"></el-progress>
-              <br />
-              <audio v-show="recorderEnd" style="margin: 8px 0;" controls ref="audio" muted="muted"
-                     src="" id="audio"></audio>
-              <br />
-              <el-button class='btn-pass' id="start" @click="startRecoder($event)">
-                <{flyLang.start}>
-              </el-button>
-              <el-button class='btn-cancel'  @click="stopRecoder($event)">
-                <{flyLang.stop}>
-              </el-button>
-              <el-button class='btn-pass' @click="sendRecoder()">
-                <{flyLang.sent}>
-              </el-button>
-              <el-button class='btn-cancel' @click="cancelRecoder()">
-                <{flyLang.cancel}>
-              </el-button>
+          <p>
+            <{getKefuName}>
+          </p>
+        </div>
+        <div ref="chatVisitorPage" class="chatContext chatVisitorPage"
+          v-on:click="showIconBtns=false;showFaceIcon=false">
+          <div class="chatBox">
+            <div style="cursor: pointer" class="chatTime" v-on:click="loadMoreMessages" v-show="showLoadMore">
+              <{flyLang.moremessage}>
             </div>
 
-          </el-dialog>
-          <!--//录音-->
-          <!--切换语言-->
-          <el-dialog class="flagsDialog" :visible.sync="flagsDialog" width="90%" top="30px">
-            <!--                        <el-button @click="selectLang('cn')" class="flagBtn" type="primary" plain><img src="/static/images/flags/cn.svg"/> 中文</el-button>-->
-            <el-button @click="selectLang('en')" class="flagBtn" type="primary" plain><img
-                    src="/static/images/flags/gb.svg" /> english</el-button>
-            <!--                        <el-button @click="selectLang('jp')" class="flagBtn" type="primary" plain><img src="/static/images/flags/jp.svg"/> Japanese</el-button>-->
-          </el-dialog>
-          <!--//切换语言-->
+            <el-row class="chatReplay" :gutter="2" v-show="replys.length>0">
+              <el-col :span="4">
+                <el-avatar shape="circle" :size="40" :src="noticeAvatar"></el-avatar>
+              </el-col>
+              <el-col :span="20">
+                <div class="chatUser">
+                  <{noticeName}>
+                </div>
+                <div class="chatContent visitorReply">
+                  <div v-for="reply in replys">
+                    <div class="visitorReplyTitle">
+                      <{reply.group_name}>
+                    </div>
+                    <div v-on:click="sendReply(item.item_name)" class="visitorReplyContent" v-for="item in reply.items">
+                      <{item.item_name}>
+                    </div>
+                  </div>
+                </div>
+              </el-col>
+              <div class="clear"></div>
+            </el-row>
+            <el-dialog :title="flyLang.leave" :visible.sync="allOffline" width="100%" top="0">
+              <el-input style="margin-bottom: 10px;" :placeholder="flyLang.email"
+                v-model="visitorContact.email"></el-input>
+              <el-input style="margin-bottom: 10px;" :placeholder="flyLang.wechat"
+                v-model="visitorContact.weixin"></el-input>
+              <el-input style="margin-bottom: 10px;" :placeholder="flyLang.realname"
+                v-model="visitorContact.name"></el-input>
+              <el-input :placeholder="flyLang.content" type="textarea" v-model="visitorContact.msg">
+              </el-input>
+              <span slot="footer" class="dialog-footer">
+                <el-button @click="sendEmailMsg">
+                  <{flyLang.sent}>
+                </el-button>
+                <el-button @click="allOffline = false">
+                  <{flyLang.cancel}>
+                </el-button>
+              </span>
+            </el-dialog>
+            <!--录音-->
+            <el-dialog class="recordDialogContainer" :visible.sync="audioDialog" width="100%" top="0">
+              <div class="dialogRecoder">
+                <el-progress type="circle" :format="recoderFormat" :stroke-width="10" :percentage="recoderSecond"
+                  color="#5C6CFF"></el-progress>
+                <br />
+                <audio v-show="recorderEnd" style="margin: 8px 0;" controls ref="audio" muted="muted" src=""
+                  id="audio"></audio>
+                <br />
+                <el-button class='btn-pass' id="start" @click="startRecoder($event)">
+                  <{flyLang.start}>
+                </el-button>
+                <el-button class='btn-cancel' @click="stopRecoder($event)">
+                  <{flyLang.stop}>
+                </el-button>
+                <el-button class='btn-pass' @click="sendRecoder()">
+                  <{flyLang.sent}>
+                </el-button>
+                <el-button class='btn-cancel' @click="cancelRecoder()">
+                  <{flyLang.cancel}>
+                </el-button>
+              </div>
 
-          <el-row :gutter="2" v-for="v in msgList" v-bind:class="{'chatBoxMe': v.is_kefu==true}" style="margin-top: 20px;">
-            <!-- <div class="chatTime" v-bind:class="{'chatTimeHide': v.show_time==false}">
+            </el-dialog>
+            <!--//录音-->
+            <!--切换语言-->
+            <el-dialog class="flagsDialog" :visible.sync="flagsDialog" width="90%" top="30px">
+              <!--                        <el-button @click="selectLang('cn')" class="flagBtn" type="primary" plain><img src="/static/images/flags/cn.svg"/> 中文</el-button>-->
+              <el-button @click="selectLang('en')" class="flagBtn" type="primary" plain><img
+                  src="/static/images/flags/gb.svg" /> english</el-button>
+              <!--                        <el-button @click="selectLang('jp')" class="flagBtn" type="primary" plain><img src="/static/images/flags/jp.svg"/> Japanese</el-button>-->
+            </el-dialog>
+            <!--//切换语言-->
+
+            <el-row :gutter="2" v-for="v in msgList" v-bind:class="{'chatBoxMe': v.is_kefu==true}"
+              style="margin-top: 20px;">
+              <!-- <div class="chatTime" v-bind:class="{'chatTimeHide': v.show_time==false}">
                 <span>
                     <{formatTime(v.time)}>
                 </span>
             </div> -->
-            <div v-if="v.is_kefu!=true"
-                 style="display:flex;justify-content: flex-start;align-items: center;">
-              <el-col :span="4">
-                <el-avatar shape="circle" :size="40" :src="v.avator"></el-avatar>
-              </el-col>
-              <el-col :span="20" style="padding-bottom: 8px;">
-                <div class="chatTime" v-bind:class="{'chatTimeHide': v.show_time==false}"
-                     style="display:flex;justify-content: flex-start;align-items: center;">
-                  <div class="chatUser" v-if="showKefuName!='off'">
-                    <{v.name}>
+              <div v-if="v.is_kefu!=true" style="display:flex;justify-content: flex-start;align-items: center;">
+                <el-col :span="4">
+                  <el-avatar shape="circle" :size="40" :src="v.avator"></el-avatar>
+                </el-col>
+                <el-col :span="20" style="padding-bottom: 8px;">
+                  <div class="chatTime" v-bind:class="{'chatTimeHide': v.show_time==false}"
+                    style="display:flex;justify-content: flex-start;align-items: center;">
+                    <div class="chatUser" v-if="showKefuName!='off'">
+                      <{v.name}>
+                    </div>
+                    <span style="margin:0 4px;">
+                      <{formatTime(v.time)}>
+                    </span>
+                    <img class="readIcon" v-show="v.read_status=='已读'" src="/static/images/chatIcon/read.png" alt="">
+                    <img class="noReadIcon" v-show="v.read_status!='已读'" src="/static/images/chatIcon/no-read.png"
+                      alt="">
                   </div>
-                  <span style="margin:0 4px;">
-                                            <{formatTime(v.time)}>
-                                        </span>
-                  <img class="readIcon" v-show="v.read_status=='已读'"
-                       src="/static/images/chatIcon/read.png" alt="">
-                  <img class="noReadIcon" v-show="v.read_status!='已读'"
-                       src="/static/images/chatIcon/no-read.png" alt="">
-                </div>
-                <div class="chatContent replyContentBtn" v-html="v.content"></div>
-              </el-col>
-            </div>
-            <div class="kefuMe" v-if="v.is_kefu==true">
-              <el-col :span="24">
-                <div class="chatTime" v-bind:class="{'chatTimeHide': v.show_time==false}"
-                     style="display:flex;justify-content: flex-end;align-items: center;">
-                                        <span>
-                                            <{formatTime(v.time)}>
-                                        </span>
-                  <img class="readIcon" v-show="v.read_status=='已读'"
-                       src="/static/images/chatIcon/read.png" alt="">
-                  <img class="noReadIcon" v-show="v.read_status!='已读'"
-                       src="/static/images/chatIcon/no-read.png" alt="">
-                </div>
-                <div class="chatContent replyContentBtn" v-html="v.content"></div>
-                <!-- <div class="chatReadStatus">
+                  <div class="chatContent replyContentBtn" v-html="v.content"></div>
+                </el-col>
+              </div>
+              <div class="kefuMe" v-if="v.is_kefu==true">
+                <el-col :span="24">
+                  <div class="chatTime" v-bind:class="{'chatTimeHide': v.show_time==false}"
+                    style="display:flex;justify-content: flex-end;align-items: center;">
+                    <span>
+                      <{formatTime(v.time)}>
+                    </span>
+                    <img class="readIcon" v-show="v.read_status=='已读'" src="/static/images/chatIcon/read.png" alt="">
+                    <img class="noReadIcon" v-show="v.read_status!='已读'" src="/static/images/chatIcon/no-read.png"
+                      alt="">
+                  </div>
+                  <div class="chatContent replyContentBtn" v-html="v.content"></div>
+                  <!-- <div class="chatReadStatus">
                     <{v.read_status}>
                 </div> -->
-              </el-col>
-            </div>
-            <div class="clear"></div>
-          </el-row>
+                </el-col>
+              </div>
+              <div class="clear"></div>
+            </el-row>
 
-          <!--知识库返回-->
-          <!--//知识库返回-->
+            <!--知识库返回-->
+            <!--//知识库返回-->
+          </div>
         </div>
-      </div>
-      <div class="chatBoxSend">
-        <div class="faceBox visitorFaceBox" v-if="showFaceIcon">
-          <ul class="faceBoxList">
-            <li v-on:click="faceIconClick(i)" class="faceIcon" v-for="(v,i) in face" :title="v.name">
-              <img :src=v.path>
-            </li>
-          </ul>
-          <div class="clear"></div>
-        </div>
-        <!-- <div class="iconBtns visitorIconBox" v-show="showIconBtns"> -->
-        <div class="iconBtns visitorIconBox">
-          <div style="display: none" :title="flyLang.emotions"
-               class="icono-smile visitorIconBtns visitorFaceBtn"></div>
-          <p class="iconBox" :title="flyLang.photo" id="uploadImg" v-on:click="uploadImg('/uploadimg')">
-            <img src="/static/images/chatIcon/upload-img.png" />
-            <!-- <i :title="flyLang.photo" class="icono-image visitorIconBtns visitorImageBtn" id="uploadImg"
+        <div class="chatBoxSend">
+          <div class="faceBox visitorFaceBox" v-if="showFaceIcon">
+            <ul class="faceBoxList">
+              <li v-on:click="faceIconClick(i)" class="faceIcon" v-for="(v,i) in face" :title="v.name">
+                <img :src=v.path>
+              </li>
+            </ul>
+            <div class="clear"></div>
+          </div>
+          <!-- <div class="iconBtns visitorIconBox" v-show="showIconBtns"> -->
+          <div class="iconBtns visitorIconBox">
+            <div style="display: none" :title="flyLang.emotions" class="icono-smile visitorIconBtns visitorFaceBtn">
+            </div>
+            <p class="iconBox" :title="flyLang.photo" id="uploadImg" v-on:click="uploadImg('/uploadimg')">
+              <img src="/static/images/chatIcon/upload-img.png" />
+              <!-- <i :title="flyLang.photo" class="icono-image visitorIconBtns visitorImageBtn" id="uploadImg"
                                         v-on:click="uploadImg('/uploadimg')"></i> -->
-          </p>
-          <p class="iconBox" :title="flyLang.file" id="uploadFile" v-on:click="uploadFile('/uploadfile')">
-            <img src="/static/images/chatIcon/upload-file.png" />
-            <!-- <i :title="flyLang.file" class="icono-folder visitorIconBtns visitorFolderBtn"
+            </p>
+            <p class="iconBox" :title="flyLang.file" id="uploadFile" v-on:click="uploadFile('/uploadfile')">
+              <img src="/static/images/chatIcon/upload-file.png" />
+              <!-- <i :title="flyLang.file" class="icono-folder visitorIconBtns visitorFolderBtn"
                                         id="uploadFile" v-on:click="uploadFile('/uploadfile')"></i> -->
-          </p>
-          <!-- <p class="iconBox" :title="flyLang.recoder" v-on:click="audioDialog=true"> -->
-          <!-- <img src="/static/images/chatIcon/audio.png" /> -->
-          <!-- <i :title="flyLang.recoder" class="icono-microphone visitorIconBtns visitorHistoryBtn"
+            </p>
+            <!-- <p class="iconBox" :title="flyLang.recoder" v-on:click="audioDialog=true"> -->
+            <!-- <img src="/static/images/chatIcon/audio.png" /> -->
+            <!-- <i :title="flyLang.recoder" class="icono-microphone visitorIconBtns visitorHistoryBtn"
                                           v-on:click="audioDialog=true"></i>  -->
-          <!-- </p> -->
-          <!-- <p  class="iconBox" :title="flyLang.newWindow" v-on:click="openNewWindow()"> -->
-          <!-- <img src="/static/images/chatIcon/new-window.png" /> -->
-          <!-- <i :title="flyLang.newWindow" class="icono-display visitorIconBtns visitorHistoryBtn"
+            <!-- </p> -->
+            <!-- <p  class="iconBox" :title="flyLang.newWindow" v-on:click="openNewWindow()"> -->
+            <!-- <img src="/static/images/chatIcon/new-window.png" /> -->
+            <!-- <i :title="flyLang.newWindow" class="icono-display visitorIconBtns visitorHistoryBtn"
                                           v-on:click="openNewWindow()"></i> -->
-          <!-- </p> -->
-          <i style="display:none;" class="audioIcon visitorIconBtns visitorAudioIcon" @click="callPeer">
-          </i>
-          <!-- <p class="iconBox" @click="flagsDialog='true'"> -->
-          <!-- <i class="icono-support visitorIconBtns" @click="flagsDialog='true'"> </i> -->
-          <!-- <img src="/static/images/chatIcon/support.png" /> -->
-          <!-- </p> -->
-          <div class="clear"></div>
-        </div>
-        <div class="visitorEditor">
-          <el-input class="visitorEditorArea" @focus="scrollBottom;showIconBtns=false"
-                    @blur="scrollBottom;showIconBtns=false" v-model="messageContent"
-                    @keyup.native="inputNextText" v-on:keyup.enter.native="chatToUser"
-                    :placeholder="flyLang.textarea">
-          </el-input>
-          <!-- <img :title="flyLang.emotions" class="visitorEditorSmile visitorFaceBtn"
+            <!-- </p> -->
+            <i style="display:none;" class="audioIcon visitorIconBtns visitorAudioIcon" @click="callPeer">
+            </i>
+            <!-- <p class="iconBox" @click="flagsDialog='true'"> -->
+            <!-- <i class="icono-support visitorIconBtns" @click="flagsDialog='true'"> </i> -->
+            <!-- <img src="/static/images/chatIcon/support.png" /> -->
+            <!-- </p> -->
+            <div class="clear"></div>
+          </div>
+          <div class="visitorEditor">
+            <el-input class="visitorEditorArea" @focus="scrollBottom;showIconBtns=false"
+              @blur="scrollBottom;showIconBtns=false" v-model="messageContent" @keyup.native="inputNextText"
+              v-on:keyup.enter.native="chatToUser" :placeholder="flyLang.textarea">
+            </el-input>
+            <!-- <img :title="flyLang.emotions" class="visitorEditorSmile visitorFaceBtn"
               v-on:click="showFaceIcon==true?showFaceIcon=false:showFaceIcon=true"
               src="/static/images/chatIcon/shape.png" /> -->
-          <!-- <div :title="flyLang.emotions"
+            <!-- <div :title="flyLang.emotions"
               v-on:click="showFaceIcon==true?showFaceIcon=false:showFaceIcon=true"
               class="visitorEditorSmile visitorFaceBtn"></div> -->
-          <!-- <div v-on:click="showIconBtns==true?showIconBtns=false:showIconBtns=true"
+            <!-- <div v-on:click="showIconBtns==true?showIconBtns=false:showIconBtns=true"
               v-show="messageContent==''" :title="flyLang.emotions" class="visitorEditorChoose"></div> -->
-          <!-- <el-button type="success" size="small" v-show="!sendDisabled && messageContent!=''"
+            <!-- <el-button type="success" size="small" v-show="!sendDisabled && messageContent!=''"
               class="visitorEditorBtn" :disabled="sendDisabled||messageContent==''"
               v-on:click="chatToUser();showIconBtns=false">
               <{flyLang.sent}>
           </el-button> -->
-          <el-button type="success" size="small" class="sendBtn"
-                     :disabled="sendDisabled||messageContent==''" v-on:click="chatToUser();showIconBtns=false">
-            <img src="/static/images/chatIcon/send.png" />
-          </el-button>
+            <el-button type="success" size="small" class="sendBtn" :disabled="sendDisabled||messageContent==''"
+              v-on:click="chatToUser();showIconBtns=false">
+              <img src="/static/images/chatIcon/send.png" />
+            </el-button>
+          </div>
+          <div class="footContact clear">
+            <a href="{{.CopyrightUrl}}" target="_blank">{{.CopyrightTxt}}</a>
+          </div>
         </div>
-        <div class="footContact clear">
-          <a href="{{.CopyrightUrl}}" target="_blank">{{.CopyrightTxt}}</a>
+      </div>
+      <div class="chatArticle">
+        <div class="companyInfo">
+          <el-avatar shape="circle" :size="160" :src="noticeAvatar"></el-avatar>
+          <p>
+            <{noticeName}>
+          </p>
+        </div>
+        <div v-for="reply in replys">
+          <a v-on:click="sendReply(item.item_name)" class="chatArticleItem" v-for="item in reply.items">
+            <{item.item_name}>
+          </a>
         </div>
       </div>
-    </div>
-    <div class="chatArticle">
-      <div class="companyInfo">
-        <el-avatar shape="circle" :size="160" :src="noticeAvatar"></el-avatar>
-        <p>
-          <{noticeName}>
-        </p>
-      </div>
-      <div v-for="reply in replys">
-        <a v-on:click="sendReply(item.item_name)" class="chatArticleItem" v-for="item in reply.items">
-          <{item.item_name}>
-        </a>
-      </div>
-    </div>
-    <div class="clear"></div>
+      <div class="clear"></div>
 
-    <!--//客服代码-->
-    <audio id="chatMessageAudio">
-      <source id="chatMessageAudioSource" />
-    </audio>
-    <audio id="chatMessageSendAudio">
-      <source id="chatMessageSendAudioSource" />
-    </audio>
-    <video id="chatRtc" style="display: none"></video>
-    <!--重连按钮-->
-    <el-dialog class="reconnectDialog" :visible.sync="reconnectDialog" :close-on-click-modal="false" width="90%"
-               :show-close="false" top="50px" center>
-                <span><i style="font-size: 20px;" class="el-icon-warning-outline"></i>
-                    <{chatTitle}>
-                </span>
-      <span slot="footer" class="dialog-footer">
-                    <el-button class="reconnectBtn" @click="focusHandle" type="primary" plain>reconnect</el-button>
-                </span>
-    </el-dialog>
-    <!--//重连按钮-->
-    <!--图片预览-->
+      <!--//客服代码-->
+      <audio id="chatMessageAudio">
+        <source id="chatMessageAudioSource" />
+      </audio>
+      <audio id="chatMessageSendAudio">
+        <source id="chatMessageSendAudioSource" />
+      </audio>
+      <video id="chatRtc" style="display: none"></video>
+      <!--重连按钮-->
+      <el-dialog class="reconnectDialog" :visible.sync="reconnectDialog" :close-on-click-modal="false" width="90%"
+        :show-close="false" top="50px" center>
+        <span><i style="font-size: 20px;" class="el-icon-warning-outline"></i>
+          <{chatTitle}>
+        </span>
+        <span slot="footer" class="dialog-footer">
+          <el-button class="reconnectBtn" @click="focusHandle" type="primary" plain>reconnect</el-button>
+        </span>
+      </el-dialog>
+      <!--//重连按钮-->
+      <!--图片预览-->
 
-    <el-image style="display: none;" ref="preview" class="hideImgDiv" :src="imgPreviewSrc[0]"
-              :preview-src-list="imgPreviewSrc" z-index="9999"></el-image>
+      <el-image style="display: none;" ref="preview" class="hideImgDiv" :src="imgPreviewSrc[0]"
+        :preview-src-list="imgPreviewSrc" z-index="9999"></el-image>
 
 
 
 
 
 
-  </template>
-</div>
+    </template>
+  </div>
 </body>
 <script src="/static/js/reconnecting-websocket.min.js"></script>
 <script src="/static/js/recoder.js"></script>
@@ -382,7 +385,7 @@
       //初始化websocket
       initConn: function () {
         this.socket = new ReconnectingWebSocket(this.server + "?visitor_id=" + this.visitor
-                .visitor_id + "&to_id=" + this.visitor.to_id); //创建Socket实例
+          .visitor_id + "&to_id=" + this.visitor.to_id); //创建Socket实例
         this.socket.debug = true;
         this.socket.onmessage = this.OnMessage;
         this.socket.onopen = this.OnOpen;
@@ -740,7 +743,7 @@
           url: "/2/messages?visitor_id=" + this.visitor.visitor_id,
           success: function (data) {
             if (data.code == 200 && data.result != null && data.result.length !=
-                    0) {
+              0) {
               let msgList = data.result;
               _this.msgList = [];
               for (var i = 0; i < msgList.length; i++) {
@@ -859,9 +862,9 @@
       getNowDate: function () { // 获取日期
         var d = new Date(new Date());
         return d.getFullYear() + '-' + this.digit(d.getMonth() + 1) + '-' + this.digit(d
-                        .getDate()) +
-                ' ' + this.digit(d.getHours()) + ':' + this.digit(d.getMinutes()) + ':' + this.digit(d
-                        .getSeconds());
+          .getDate()) +
+          ' ' + this.digit(d.getHours()) + ':' + this.digit(d.getMinutes()) + ':' + this.digit(d
+            .getSeconds());
       },
       //补齐数位
       digit: function (num) {
@@ -885,38 +888,38 @@
           return;
         }
         $.get("/2/notices?visitor_id=" + this.visitor.visitor_id + "&ent_id=" + ENT_ID +
-                "&kefu_name=" + this.visitor.to_id,
-                function (res) {
-                  _this.setCache("noticed_" + ENT_ID, 1);
-                  //debugger;
-                  // _this.noticeName=res.result.username;
-                  // _this.noticeAvatar=res.result.avatar;
-                  if (res.result.welcome != null) {
-                    var msgs = res.result.welcome;
-                    var delaySecond = 0;
-                    for (let i in msgs) {
-                      var msg = msgs[i];
-                      if (msg.delay_second) {
-                        delaySecond += msg.delay_second;
-                      } else {
-                        delaySecond += 4;
-                      }
-                      var timer = setTimeout(function (msg) {
-                        msg.time = _this.getNowDate();
-                        msg.content = replaceSpecialTag(msg.content);
-                        _this.msgList.push(msg);
-                        _this.scrollBottom();
-                        _this.alertSound('/static/images/notification.mp3');
-                        var redata = {
-                          type: "message",
-                          data: msg
-                        }
-                        window.parent.postMessage(redata, "*");
-                      }, 1000 * delaySecond, msg);
-                      _this.allTimeouter.push(timer);
-                    }
+          "&kefu_name=" + this.visitor.to_id,
+          function (res) {
+            _this.setCache("noticed_" + ENT_ID, 1);
+            //debugger;
+            // _this.noticeName=res.result.username;
+            // _this.noticeAvatar=res.result.avatar;
+            if (res.result.welcome != null) {
+              var msgs = res.result.welcome;
+              var delaySecond = 0;
+              for (let i in msgs) {
+                var msg = msgs[i];
+                if (msg.delay_second) {
+                  delaySecond += msg.delay_second;
+                } else {
+                  delaySecond += 4;
+                }
+                var timer = setTimeout(function (msg) {
+                  msg.time = _this.getNowDate();
+                  msg.content = replaceSpecialTag(msg.content);
+                  _this.msgList.push(msg);
+                  _this.scrollBottom();
+                  _this.alertSound('/static/images/notification.mp3');
+                  var redata = {
+                    type: "message",
+                    data: msg
                   }
-                });
+                  window.parent.postMessage(redata, "*");
+                }, 1000 * delaySecond, msg);
+                _this.allTimeouter.push(timer);
+              }
+            }
+          });
       },
       initCss: function () {
         var _this = this;
@@ -1055,7 +1058,7 @@
       uploadImg: function (url) {
         let _this = this;
         $('#uploadImg').after(
-                '<input type="file" accept="image/gif,image/jpeg,image/jpg,image/png" id="uploadImgFile" name="file" style="display:none" >'
+          '<input type="file" accept="image/gif,image/jpeg,image/jpg,image/png" id="uploadImgFile" name="file" style="display:none" >'
         );
         $("#uploadImgFile").click();
         $("#uploadImgFile").change(function (e) {
@@ -1091,7 +1094,7 @@
       uploadFile: function (url) {
         let _this = this;
         $('#uploadFile').after(
-                '<input type="file"  id="uploadRealFile" name="file2" style="display:none" >');
+          '<input type="file"  id="uploadRealFile" name="file2" style="display:none" >');
         $("#uploadRealFile").click();
         $("#uploadRealFile").change(function (e) {
           var formData = new FormData();
@@ -1115,7 +1118,7 @@
                 });
               } else {
                 _this.messageContent += 'file[/' + res.result.path +
-                        ']';
+                  ']';
                 _this.chatToUser();
               }
             },
@@ -1236,7 +1239,7 @@
         }, 20000);
 
         var getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator
-                .mozGetUserMedia;
+          .mozGetUserMedia;
         getUserMedia({
           video: false,
           audio: true
@@ -1436,7 +1439,7 @@
       },
       openNewWindow: function () {
         var features =
-                "height=580, width=400, top=10, left=500, toolbar=no, menubar=no,scrollbars=no,resizable=no, location=no, status=no"; //设置新窗口的特性
+          "height=580, width=400, top=10, left=500, toolbar=no, menubar=no,scrollbars=no,resizable=no, location=no, status=no"; //设置新窗口的特性
         var me = window.open(location.href, "newW", features);
       },
       //超时关闭
@@ -1536,7 +1539,7 @@
         }
         var child = '<div class="wechatTip">';
         child += '<img style="width:80px; margin:10px;" src="' + GOFLY_CONFIG.WECHAT_QR_URL +
-                '?snow_id=' + this.visitor.visitor_id + '&id_type=visitor">';
+          '?snow_id=' + this.visitor.visitor_id + '&id_type=visitor">';
         child += '扫描左侧二维码可直接用微信登录。<br>可防止更换浏览器丢失消息、收不到回复。<br>并可接收回复通知</div>';
         $(".chatBox").append(child);
       },
@@ -1599,6 +1602,20 @@
 
       this.getAutoReply();
       //this.getVersion();
+    },
+    computed: {
+      getKefuName() {
+        let name = ""
+        for (let index = 0; index < this.msgList.length; index++) {
+          const el = this.msgList[index];
+          if (el.is_kefu != true) {
+            name = el.name
+            break
+          }
+
+        }
+        return name || 'Online service'
+      },
     }
   })
 </script>
