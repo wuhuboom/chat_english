@@ -27,7 +27,7 @@
 </head>
 <body>
 <div id="app"  class="chatCenter">
-        <template>
+    <template>
         <!--客服代码-->
         <div class="chatEntTitle" v-show="!isIframe">
             <el-badge :type="onlineType" is-dot class="item">
@@ -98,16 +98,16 @@
                             :visible.sync="flagsDialog"
                             width="90%"
                             top="30px">
-<!--                        <el-button @click="selectLang('cn')" class="flagBtn" type="primary" plain><img src="/static/images/flags/cn.svg"/> 中文</el-button>-->
+                        <!--                        <el-button @click="selectLang('cn')" class="flagBtn" type="primary" plain><img src="/static/images/flags/cn.svg"/> 中文</el-button>-->
                         <el-button @click="selectLang('en')" class="flagBtn" type="primary" plain><img src="/static/images/flags/gb.svg"/> english</el-button>
-<!--                        <el-button @click="selectLang('jp')" class="flagBtn" type="primary" plain><img src="/static/images/flags/jp.svg"/> Japanese</el-button>-->
+                        <!--                        <el-button @click="selectLang('jp')" class="flagBtn" type="primary" plain><img src="/static/images/flags/jp.svg"/> Japanese</el-button>-->
                     </el-dialog>
                     <!--//切换语言-->
 
                     <el-row :gutter="12" v-for="v in msgList" v-bind:class="{'chatBoxMe': v.is_kefu==true}">
-                        
+
                         <div v-if="v.is_kefu!=true">
-                            
+
                             <el-col :xs="3" :sm="2" :md="2" :lg="2" :xl="2"><el-avatar shape="circle" :size="42" :src="v.avator"></el-avatar></el-col>
                             <el-col :xs="21" :sm="22" :md="22" :lg="22" :xl="22">
                                 <div style="display: flex;align-items: center;">
@@ -136,10 +136,10 @@
                     <div style="display: none" :title="flyLang.emotions" class="icono-smile visitorIconBtns visitorFaceBtn"></div>
                     <!-- <div :title="flyLang.photo" class="icono-image visitorIconBtns visitorImageBtn" id="uploadImg" v-on:click="uploadImg('/uploadimg')"></div> -->
                     <!-- <div :title="flyLang.file" class="icono-folder visitorIconBtns visitorFolderBtn" id="uploadFile" v-on:click="uploadFile('/uploadfile')"></div> -->
-<!--                    <div :title="flyLang.recoder" class="icono-microphone visitorIconBtns visitorHistoryBtn"  v-on:click="audioDialog=true"></div>-->
-<!--                    <div :title="flyLang.newWindow" class="icono-display visitorIconBtns visitorHistoryBtn"  v-on:click="openNewWindow()"></div>-->
-<!--                    <div style="display:none;" class="audioIcon visitorIconBtns visitorAudioIcon"  @click="callPeer" ></div>-->
-<!--                    <div class="icono-support visitorIconBtns" @click="flagsDialog='true'"> </div>-->
+                    <!--                    <div :title="flyLang.recoder" class="icono-microphone visitorIconBtns visitorHistoryBtn"  v-on:click="audioDialog=true"></div>-->
+                    <!--                    <div :title="flyLang.newWindow" class="icono-display visitorIconBtns visitorHistoryBtn"  v-on:click="openNewWindow()"></div>-->
+                    <!--                    <div style="display:none;" class="audioIcon visitorIconBtns visitorAudioIcon"  @click="callPeer" ></div>-->
+                    <!--                    <div class="icono-support visitorIconBtns" @click="flagsDialog='true'"> </div>-->
                     <div class="clear"></div>
                 </div>
                 <div class="faceBox visitorFaceBox" v-if="showFaceIcon">
@@ -165,7 +165,7 @@
                     <el-button type="text" class="visitorEditorBtn" :disabled="sendDisabled||messageContent==''" v-on:click="chatToUser()">
                         <img src="/static/images/send_btn-4.png" alt="" :style="{filter:sendDisabled||messageContent==''? 'grayscale(100%)':''}">
                     </el-button>
-                </div> 
+                </div>
 
                 <div class="footContact clear">
                     <a href="{{.CopyrightUrl}}" target="_blank">{{.CopyrightTxt}}</a>
@@ -1434,19 +1434,24 @@
                 $(".chatBox").append(child);
             },
             //格式化时间
+            // formatTime:function(time) {
+            //     var timeDate=new Date(time);
+            //     // var timeStamp = Math.round(timeDate.getTime()/1000);
+            //     // var nowTime=Math.round(new Date(new Date().toLocaleDateString()).getTime()/1000);
+            //     // var timeDiff=timeStamp-nowTime;
+            //     // if(timeDiff>=0){
+            //     //     return dateFormat("H:M:S",timeDate);
+            //     //     //return beautifyTime(timeStamp,LANG);
+            //     // }else{
+            //     //     return dateFormat("Y-m-d H:M:S",timeDate);
+            //     // }
+            //     console.log(dateFormat("dd/MM/yyyy HH:mm:SS",timeDate))
+            //     return dateFormat("dd/MM/YYYY HH:mm:SS",timeDate);
+            // },
             formatTime:function(time) {
-                var timeDate=new Date(time);
-                // var timeStamp = Math.round(timeDate.getTime()/1000);
-                // var nowTime=Math.round(new Date(new Date().toLocaleDateString()).getTime()/1000);
-                // var timeDiff=timeStamp-nowTime;
-                // if(timeDiff>=0){
-                //     return dateFormat("H:M:S",timeDate);
-                //     //return beautifyTime(timeStamp,LANG);
-                // }else{
-                //     return dateFormat("Y-m-d H:M:S",timeDate);
-                // }
-                console.log(dateFormat("dd/MM/yyyy HH:mm:SS",timeDate))
-                return dateFormat("dd/MM/YYYY HH:mm:SS",timeDate);
+                const parts = time.split(/[- :]/); // 使用正则表达式拆分日期字符串
+                const formattedDate = `${parts[1]}/${parts[2]}/${parts[0]} ${parts[3]}:${parts[4]}:${parts[5]}`;
+                return formattedDate;
             },
             getVersion:function(){
                 if(IS_TRY=="false"){
@@ -1503,7 +1508,7 @@
                         avator= el.avator
                         break
                     }
-                    
+
                 }
                 return avator
             },
@@ -1515,7 +1520,7 @@
                         name= el.name
                         break
                     }
-                    
+
                 }
                 return name||'Online service'
             },

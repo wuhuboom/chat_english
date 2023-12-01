@@ -81,8 +81,8 @@ func PostVisitorLogin(c *gin.Context) {
 		}
 	}
 
-	form.UserAgent = c.GetHeader("User-Agent")
 	if form.Avator == "" && !isWechat {
+		form.UserAgent = c.GetHeader("User-Agent")
 		if tools.IsMobile(form.UserAgent) {
 			form.Avator = "/static/images/phone.png"
 		} else {
