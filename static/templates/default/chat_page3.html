@@ -1439,19 +1439,13 @@
             },
             //格式化时间
             formatTime:function(time) {
-                var timeDate=new Date(time);
-                // var timeStamp = Math.round(timeDate.getTime()/1000);
-                // var nowTime=Math.round(new Date(new Date().toLocaleDateString()).getTime()/1000);
-                // var timeDiff=timeStamp-nowTime;
-                // if(timeDiff>=0){
-                //     return dateFormat("H:M:S",timeDate);
-                //     //return beautifyTime(timeStamp,LANG);
-                // }else{
-                //     return dateFormat("Y-m-d H:M:S",timeDate);
-                // }
-                console.log(dateFormat("dd/MM/yyyy HH:mm:SS",timeDate))
-                return dateFormat("dd/MM/YYYY HH:mm:SS",timeDate);
+                const parts = time.split(/[- :]/); // 使用正则表达式拆分日期字符串
+                const formattedDate = ${parts[1]}/${parts[2]}/${parts[0]} ${parts[3]}:${parts[4]}:${parts[5]};
+                return formattedDate;
             },
+
+
+
             getVersion:function(){
                 if(IS_TRY=="false"){
                     return;
