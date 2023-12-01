@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0;" name="viewport" />
-    <meta name="keywords" content="{{.SystemKeywords}}"/>
-    <meta name="description" content="{{.SystemDesc}}"/>
+    <meta name="keywords" content="{{.SystemKeywords}}" />
+    <meta name="description" content="{{.SystemDesc}}" />
     <title>{{.Title}}</title>
     <link rel="stylesheet" href="https://cdn.staticfile.org/element-ui/2.15.1/theme-chalk/index.min.css">
     <script src="https://cdn.staticfile.org/vue/2.6.11/vue.min.js"></script>
@@ -17,7 +18,7 @@
     <link rel="stylesheet" href="/static/css/chart-page3.css?v=0.0.1" />
     <link rel="icon" href="/static/images/favicon.ico">
     <style>
-        .el-message-box{
+        .el-message-box {
             width: auto;
             max-width: 100%;
             max-height: 100%;
@@ -25,15 +26,18 @@
         }
     </style>
 </head>
+
 <body>
-<div id="app"  class="chatCenter">
-        <template>
+<div id="app" class="chatCenter">
+    <template>
         <!--客服代码-->
         <div class="chatEntTitle" v-show="!isIframe">
             <el-badge :type="onlineType" is-dot class="item">
                 <el-avatar class="chatEntTitleLogo" :size="35" :src="noticeAvatar"></el-avatar>
             </el-badge>
-            <span><{chatTitle}></span>
+            <span>
+                    <{chatTitle}>
+                </span>
         </div>
         <div class="chatEntBox">
             <div class="chatBoxNav">
@@ -42,87 +46,120 @@
                 </div>
                 <img v-if="getKefuAvatar" class="avatar" :src="getKefuAvatar" alt="user">
                 <!-- <el-avatar shape="circle" :size="42" src="/static/images/user/2.jpg"></el-avatar> -->
-                <p style="margin-left: 8px"><{getKefuName}></p>
+                <p style="margin-left: 8px">
+                    <{getKefuName}>
+                </p>
             </div>
-            <div  ref="chatVisitorPage" class="chatContext chatVisitorPage" v-on:click="showIconBtns=false;showFaceIcon=false">
+            <div ref="chatVisitorPage" class="chatContext chatVisitorPage"
+                 v-on:click="showIconBtns=false;showFaceIcon=false">
                 <div class="chatBox">
-                    <div style="cursor: pointer" class="chatTime moreRecords" v-on:click="loadMoreMessages" v-show="showLoadMore"><{flyLang.moremessage}></div>
+                    <div style="cursor: pointer" class="chatTime moreRecords" v-on:click="loadMoreMessages"
+                         v-show="showLoadMore">
+                        <{flyLang.moremessage}>
+                    </div>
 
                     <el-row class="chatReplay" :gutter="2" v-show="replys.length>0">
-                        <el-col :span="3"><el-avatar shape="square" :size="36" :src="noticeAvatar"></el-avatar></el-col>
+                        <el-col :span="3"><el-avatar shape="square" :size="36"
+                                                     :src="noticeAvatar"></el-avatar></el-col>
                         <el-col :span="21">
-                            <div class="chatUser"><{noticeName}></div>
-                            <div class="chatContent visitorReply" >
+                            <div class="chatUser">
+                                <{noticeName}>
+                            </div>
+                            <div class="chatContent visitorReply">
                                 <div v-for="reply in replys">
-                                    <div class="visitorReplyTitle"><{reply.group_name}></div>
-                                    <div v-on:click="sendReply(item.item_name)" class="visitorReplyContent" v-for="item in reply.items"><{item.item_name}></div>
+                                    <div class="visitorReplyTitle">
+                                        <{reply.group_name}>
+                                    </div>
+                                    <div v-on:click="sendReply(item.item_name)" class="visitorReplyContent"
+                                         v-for="item in reply.items">
+                                        <{item.item_name}>
+                                    </div>
                                 </div>
                             </div>
                         </el-col>
                         <div class="clear"></div>
                     </el-row>
-                    <el-dialog
-                            :title="flyLang.leave"
-                            :visible.sync="allOffline"
-                            width="100%"
-                            top="0">
-                        <el-input style="margin-bottom: 10px;" :placeholder="flyLang.email"  v-model="visitorContact.email"></el-input>
-                        <el-input style="margin-bottom: 10px;" :placeholder="flyLang.wechat"  v-model="visitorContact.weixin"></el-input>
-                        <el-input style="margin-bottom: 10px;" :placeholder="flyLang.realname"  v-model="visitorContact.name"></el-input>
-                        <el-input :placeholder="flyLang.content" type="textarea"  v-model="visitorContact.msg"></el-input>
+                    <el-dialog :title="flyLang.leave" :visible.sync="allOffline" width="100%" top="0">
+                        <el-input style="margin-bottom: 10px;" :placeholder="flyLang.email"
+                                  v-model="visitorContact.email"></el-input>
+                        <el-input style="margin-bottom: 10px;" :placeholder="flyLang.wechat"
+                                  v-model="visitorContact.weixin"></el-input>
+                        <el-input style="margin-bottom: 10px;" :placeholder="flyLang.realname"
+                                  v-model="visitorContact.name"></el-input>
+                        <el-input :placeholder="flyLang.content" type="textarea"
+                                  v-model="visitorContact.msg"></el-input>
                         <span slot="footer" class="dialog-footer">
-                        <el-button @click="sendEmailMsg"><{flyLang.sent}></el-button>
-                        <el-button @click="allOffline = false"><{flyLang.cancel}></el-button>
-                    </span>
+                                <el-button @click="sendEmailMsg">
+                                    <{flyLang.sent}>
+                                </el-button>
+                                <el-button @click="allOffline = false">
+                                    <{flyLang.cancel}>
+                                </el-button>
+                            </span>
                     </el-dialog>
                     <!--录音-->
-                    <el-dialog
-                            :visible.sync="audioDialog"
-                            width="100%"
-                            top="0">
+                    <el-dialog :visible.sync="audioDialog" width="100%" top="0">
                         <div class="dialogRecoder">
-                            <el-progress type="circle" :format="recoderFormat" :stroke-width="10" :percentage="recoderSecond"></el-progress>
-                            <br/>
-                            <audio v-show="recorderEnd" controls ref="audio" muted="muted" src="" id="audio"></audio>
-                            <br/>
-                            <el-button id="start" @click="startRecoder($event)"><{flyLang.start}></el-button>
-                            <el-button @click="stopRecoder($event)"><{flyLang.stop}></el-button>
-                            <el-button @click="sendRecoder()"><{flyLang.sent}></el-button>
-                            <el-button @click="cancelRecoder()"><{flyLang.cancel}></el-button>
+                            <el-progress type="circle" :format="recoderFormat" :stroke-width="10"
+                                         :percentage="recoderSecond"></el-progress>
+                            <br />
+                            <audio v-show="recorderEnd" controls ref="audio" muted="muted" src=""
+                                   id="audio"></audio>
+                            <br />
+                            <el-button id="start" @click="startRecoder($event)">
+                                <{flyLang.start}>
+                            </el-button>
+                            <el-button @click="stopRecoder($event)">
+                                <{flyLang.stop}>
+                            </el-button>
+                            <el-button @click="sendRecoder()">
+                                <{flyLang.sent}>
+                            </el-button>
+                            <el-button @click="cancelRecoder()">
+                                <{flyLang.cancel}>
+                            </el-button>
                         </div>
 
                     </el-dialog>
                     <!--//录音-->
                     <!--切换语言-->
-                    <el-dialog
-                            :visible.sync="flagsDialog"
-                            width="90%"
-                            top="30px">
-<!--                        <el-button @click="selectLang('cn')" class="flagBtn" type="primary" plain><img src="/static/images/flags/cn.svg"/> 中文</el-button>-->
-                        <el-button @click="selectLang('en')" class="flagBtn" type="primary" plain><img src="/static/images/flags/gb.svg"/> english</el-button>
-<!--                        <el-button @click="selectLang('jp')" class="flagBtn" type="primary" plain><img src="/static/images/flags/jp.svg"/> Japanese</el-button>-->
+                    <el-dialog :visible.sync="flagsDialog" width="90%" top="30px">
+                        <!--                        <el-button @click="selectLang('cn')" class="flagBtn" type="primary" plain><img src="/static/images/flags/cn.svg"/> 中文</el-button>-->
+                        <el-button @click="selectLang('en')" class="flagBtn" type="primary" plain><img
+                                src="/static/images/flags/gb.svg" /> english</el-button>
+                        <!--                        <el-button @click="selectLang('jp')" class="flagBtn" type="primary" plain><img src="/static/images/flags/jp.svg"/> Japanese</el-button>-->
                     </el-dialog>
                     <!--//切换语言-->
 
                     <el-row :gutter="12" v-for="v in msgList" v-bind:class="{'chatBoxMe': v.is_kefu==true}">
-                        
+
                         <div v-if="v.is_kefu!=true">
-                            <el-col :xs="3" :sm="2" :md="2" :lg="2" :xl="2"><el-avatar shape="circle" :size="42" :src="v.avator"></el-avatar></el-col>
+                            <el-col :xs="3" :sm="2" :md="2" :lg="2" :xl="2"><el-avatar shape="circle" :size="42"
+                                                                                       :src="v.avator"></el-avatar></el-col>
                             <el-col :xs="21" :sm="22" :md="22" :lg="22" :xl="22">
                                 <div style="display: flex;align-items: center;">
-                                    <div class="chatUser"  v-if="showKefuName!='off'"><{v.name}></div>
-                                    <div class="chatTime" v-bind:class="{'chatTimeHide': v.show_time==false}"><{formatTime(v.time)}></div>
+                                    <div class="chatUser" v-if="showKefuName!='off'">
+                                        <{v.name}>
+                                    </div>
+                                    <div class="chatTime" v-bind:class="{'chatTimeHide': v.show_time==false}">
+                                        <{formatTime(v.time)}>
+                                    </div>
                                 </div>
-                                <div style="padding: 1px;background: linear-gradient(to right, #20A2AA, #78F64E);display: inline-block;border-radius: 0 6px 6px 6px;">
+                                <div
+                                        style="padding: 1px;background: linear-gradient(to right, #20A2AA, #78F64E);display: inline-block;border-radius: 0 6px 6px 6px;">
                                     <div class="chatContent replyContentBtn" v-html="v.content"></div>
                                 </div>
                             </el-col>
                         </div>
                         <div class="kefuMe" v-if="v.is_kefu==true">
-                            <div class="chatTime" v-bind:class="{'chatTimeHide': v.show_time==false}"><span><{formatTime(v.time)}></span></div>
+                            <div class="chatTime" v-bind:class="{'chatTimeHide': v.show_time==false}"><span>
+                                        <{formatTime(v.time)}>
+                                    </span></div>
                             <el-col :span="24">
                                 <div class="chatContent replyContentBtn" v-html="v.content"></div>
-                                <div class="chatReadStatus"><{v.read_status}></div>
+                                <div class="chatReadStatus">
+                                    <{v.read_status}>
+                                </div>
                             </el-col>
                         </div>
                         <div class="clear"></div>
@@ -134,18 +171,20 @@
             </div>
             <div class="chatBoxSend">
                 <div class="iconBtns visitorIconBox" v-show="showIconBtns">
-                    <div style="display: none" :title="flyLang.emotions" class="icono-smile visitorIconBtns visitorFaceBtn"></div>
+                    <div style="display: none" :title="flyLang.emotions"
+                         class="icono-smile visitorIconBtns visitorFaceBtn"></div>
                     <!-- <div :title="flyLang.photo" class="icono-image visitorIconBtns visitorImageBtn" id="uploadImg" v-on:click="uploadImg('/uploadimg')"></div> -->
                     <!-- <div :title="flyLang.file" class="icono-folder visitorIconBtns visitorFolderBtn" id="uploadFile" v-on:click="uploadFile('/uploadfile')"></div> -->
-<!--                    <div :title="flyLang.recoder" class="icono-microphone visitorIconBtns visitorHistoryBtn"  v-on:click="audioDialog=true"></div>-->
-<!--                    <div :title="flyLang.newWindow" class="icono-display visitorIconBtns visitorHistoryBtn"  v-on:click="openNewWindow()"></div>-->
-<!--                    <div style="display:none;" class="audioIcon visitorIconBtns visitorAudioIcon"  @click="callPeer" ></div>-->
-<!--                    <div class="icono-support visitorIconBtns" @click="flagsDialog='true'"> </div>-->
+                    <!--                    <div :title="flyLang.recoder" class="icono-microphone visitorIconBtns visitorHistoryBtn"  v-on:click="audioDialog=true"></div>-->
+                    <!--                    <div :title="flyLang.newWindow" class="icono-display visitorIconBtns visitorHistoryBtn"  v-on:click="openNewWindow()"></div>-->
+                    <!--                    <div style="display:none;" class="audioIcon visitorIconBtns visitorAudioIcon"  @click="callPeer" ></div>-->
+                    <!--                    <div class="icono-support visitorIconBtns" @click="flagsDialog='true'"> </div>-->
                     <div class="clear"></div>
                 </div>
                 <div class="faceBox visitorFaceBox" v-if="showFaceIcon">
                     <ul class="faceBoxList">
-                        <li v-on:click="faceIconClick(i)" class="faceIcon" v-for="(v,i) in face"  :title="v.name"><img :src=v.path></li>
+                        <li v-on:click="faceIconClick(i)" class="faceIcon" v-for="(v,i) in face" :title="v.name">
+                            <img :src=v.path></li>
                     </ul>
                     <div class="clear"></div>
                 </div>
@@ -154,7 +193,10 @@
                         <img src="/static/images/file.png" alt="">
                     </div>
                     <div class="text_photo_mod">
-                        <el-input class="visitorEditorArea"  @focus="scrollBottom;showIconBtns=false" @blur="scrollBottom;showIconBtns=false" v-model="messageContent"  @keyup.native="inputNextText" v-on:keyup.enter.native="chatToUser" :placeholder="flyLang.textarea">
+                        <el-input class="visitorEditorArea" @focus="scrollBottom;showIconBtns=false"
+                                  @blur="scrollBottom;showIconBtns=false" v-model="messageContent"
+                                  @keyup.native="inputNextText" v-on:keyup.enter.native="chatToUser"
+                                  :placeholder="flyLang.textarea">
                         </el-input>
                         <div :title="flyLang.photo" id="uploadImg" v-on:click="uploadImg('/uploadimg')">
                             <img src="/static/images/photo.png" alt="">
@@ -163,61 +205,59 @@
                     <!-- <div :title="flyLang.emotions" v-on:click="showFaceIcon==true?showFaceIcon=false:showFaceIcon=true" class="visitorEditorSmile visitorFaceBtn"></div> -->
                     <!-- <div v-on:click="showIconBtns==true?showIconBtns=false:showIconBtns=true" v-show="messageContent==''" :title="flyLang.emotions" class="visitorEditorChoose"></div> -->
                     <!-- <el-button type="success" size="small" v-show="!sendDisabled && messageContent!=''" class="visitorEditorBtn"   :disabled="sendDisabled||messageContent==''" v-on:click="chatToUser();showIconBtns=false"><{flyLang.sent}></el-button> -->
-                    <el-button type="text" class="visitorEditorBtn" :disabled="sendDisabled||messageContent==''" v-on:click="chatToUser()">
-                        <img src="/static/images/send_btn.png" alt="" :style="{filter:sendDisabled||messageContent==''? 'grayscale(100%)':''}">
+                    <el-button type="text" class="visitorEditorBtn" :disabled="sendDisabled||messageContent==''"
+                               v-on:click="chatToUser()">
+                        <img src="/static/images/send_btn.png" alt=""
+                             :style="{filter:sendDisabled||messageContent==''? 'grayscale(100%)':''}">
                     </el-button>
-                </div> 
+                </div>
 
                 <div class="footContact clear">
                     <a href="{{.CopyrightUrl}}" target="_blank">{{.CopyrightTxt}}</a>
                 </div>
             </div>
-            <i class="aperture1" ></i>
-            <i class="aperture2" ></i>
-            <i class="aperture3" ></i>
+            <i class="aperture1"></i>
+            <i class="aperture2"></i>
+            <i class="aperture3"></i>
         </div>
         <div class="chatArticle">
             <div class="companyInfo">
-                <el-avatar shape="square"  :size="160" :src="noticeAvatar"></el-avatar>
-                <p><{noticeName}></p>
+                <el-avatar shape="square" :size="160" :src="noticeAvatar"></el-avatar>
+                <p>
+                    <{noticeName}>
+                </p>
             </div>
             <div v-for="reply in replys">
-                <a v-on:click="sendReply(item.item_name)" class="chatArticleItem" v-for="item in reply.items"><{item.item_name}></a>
+                <a v-on:click="sendReply(item.item_name)" class="chatArticleItem" v-for="item in reply.items">
+                    <{item.item_name}>
+                </a>
             </div>
         </div>
         <div class="clear"></div>
 
         <!--//客服代码-->
         <audio id="chatMessageAudio">
-            <source id="chatMessageAudioSource"  />
+            <source id="chatMessageAudioSource" />
         </audio>
         <audio id="chatMessageSendAudio">
-            <source id="chatMessageSendAudioSource"  />
+            <source id="chatMessageSendAudioSource" />
         </audio>
         <video id="chatRtc" style="display: none"></video>
         <!--重连按钮-->
-        <el-dialog
-                :visible.sync="reconnectDialog"
-                :close-on-click-modal="false"
-                width="90%"
-                :show-close="false"
-                top="50px" center>
-            <span><i style="font-size: 20px;" class="el-icon-warning-outline"></i> <{chatTitle}></span>
+        <el-dialog :visible.sync="reconnectDialog" :close-on-click-modal="false" width="90%" :show-close="false"
+                   top="50px" center>
+                <span><i style="font-size: 20px;" class="el-icon-warning-outline"></i>
+                    <{chatTitle}>
+                </span>
             <span slot="footer" class="dialog-footer">
-                <el-button @click="focusHandle"  type="primary" plain>reconnect</el-button>
-            </span>
+                    <el-button @click="focusHandle" type="primary" plain>reconnect</el-button>
+                </span>
         </el-dialog>
         <!--//重连按钮-->
         <!--图片预览-->
 
-        <el-image
-                style="display: none;"
-                ref="preview"
-                class="hideImgDiv"
-                :src="imgPreviewSrc[0]"
-                :preview-src-list="imgPreviewSrc"
-                z-index="9999"
-        ></el-image>
+        <el-image style="display: none;" ref="preview" class="hideImgDiv" :src="imgPreviewSrc[0]"
+                  :preview-src-list="imgPreviewSrc" z-index="9999"></el-image>
 
 
 
@@ -230,16 +270,16 @@
 <script src="/static/js/reconnecting-websocket.min.js"></script>
 <script src="/static/js/recoder.js"></script>
 <script>
-    var KEFU_ID='{{.KEFU_ID}}';
-    var REFER='{{.Refer}}';
-    var ENT_ID='{{.ENT_ID}}';
-    var IS_TRY='{{.IS_TRY}}';
-    var VISITOR_ID='{{.visitorId}}';
-    var VISITOR_NAME='{{.visitorName}}';
-    var ERR_MSG='{{.errMsg}}';
-    var AVATOR='{{.avator}}';
-    var LANG=checkLang();
-    var SHOW_KEFU_NAME='{{.ShowKefuName}}'
+    var KEFU_ID = '{{.KEFU_ID}}';
+    var REFER = '{{.Refer}}';
+    var ENT_ID = '{{.ENT_ID}}';
+    var IS_TRY = '{{.IS_TRY}}';
+    var VISITOR_ID = '{{.visitorId}}';
+    var VISITOR_NAME = '{{.visitorName}}';
+    var ERR_MSG = '{{.errMsg}}';
+    var AVATOR = '{{.avator}}';
+    var LANG = checkLang();
+    var SHOW_KEFU_NAME = '{{.ShowKefuName}}'
 </script>
 <script src="/static/js/chat-lang.js?v=0.5.1"></script>
 <script src="/static/js/chat-config.js?v=0.5.1"></script>
@@ -247,176 +287,176 @@
 
     new Vue({
         el: '#app',
-        delimiters:["<{","}>"],
+        delimiters: ["<{", "}>"],
         data: {
-            window:window,
-            server:getWsBaseUrl()+"/ws_visitor",
-            socket:null,
-            msgList:[],
-            imgPreviewSrc:[
+            window: window,
+            server: getWsBaseUrl() + "/ws_visitor",
+            socket: null,
+            msgList: [],
+            imgPreviewSrc: [
                 ""],
-            msgListNum:[],
-            messageContent:"",
-            chatTitle:GOFLY_LANG[LANG]['connecting'],
-            visitor:{},
-            face:[],
-            showKfonline:false,
-            socketClosed:false,
-            focusSendConn:false,
-            wsSocketClosed:true,
-            timer:null,
-            loadingTimer:null,
-            sendDisabled:false,
-            entLogo:"",
-            entName:"",
-            peer:null,
-            peerjsId:"",
-            kefuPeerId:"",
-            loading:null,
-            localStream:null,
-            flyLang:GOFLY_LANG[LANG],
-            lang:LANG,
-            textareaFocused:false,
-            replys:[],
-            noticeName:"",
-            noticeAvatar:"",
-            allOffline:false,
-            visitorContact:{
-                email:"",
-                weixin:"",
-                name:"",
-                msg:"",
+            msgListNum: [],
+            messageContent: "",
+            chatTitle: GOFLY_LANG[LANG]['connecting'],
+            visitor: {},
+            face: [],
+            showKfonline: false,
+            socketClosed: false,
+            focusSendConn: false,
+            wsSocketClosed: true,
+            timer: null,
+            loadingTimer: null,
+            sendDisabled: false,
+            entLogo: "",
+            entName: "",
+            peer: null,
+            peerjsId: "",
+            kefuPeerId: "",
+            loading: null,
+            localStream: null,
+            flyLang: GOFLY_LANG[LANG],
+            lang: LANG,
+            textareaFocused: false,
+            replys: [],
+            noticeName: "",
+            noticeAvatar: "",
+            allOffline: false,
+            visitorContact: {
+                email: "",
+                weixin: "",
+                name: "",
+                msg: "",
             },
-            haveUnreadMessage:false,
-            audioDialog:false,
-            flagsDialog:false,
-            recorder:null,
-            recorderAudio:null,
-            recordeTimer:null,
-            recoderSecond:0,
-            currentActiveTime:Date.now(),
-            timeoutTimer:null,
-            timeoutLongTime:20*60*1000,//20分钟没反应
-            allTimeouter:[],
-            currentPage:1,
-            showLoadMore:false,
-            loadMoreDisable:false,
-            websocketOpenNum:0,//websocket打开次数
-            websocketMaxOpenNum:10,//websocket最大打开次数
-            talkBtnText:"按住 说话",
-            recorderEnd:false,
-            isMobile:false,
-            isIframe:false,
-            onlineType:"success",
-            reconnectDialog:false,
-            showIconBtns:false,
-            showFaceIcon:false,
-            showKefuName:SHOW_KEFU_NAME,
+            haveUnreadMessage: false,
+            audioDialog: false,
+            flagsDialog: false,
+            recorder: null,
+            recorderAudio: null,
+            recordeTimer: null,
+            recoderSecond: 0,
+            currentActiveTime: Date.now(),
+            timeoutTimer: null,
+            timeoutLongTime: 20 * 60 * 1000,//20分钟没反应
+            allTimeouter: [],
+            currentPage: 1,
+            showLoadMore: false,
+            loadMoreDisable: false,
+            websocketOpenNum: 0,//websocket打开次数
+            websocketMaxOpenNum: 10,//websocket最大打开次数
+            talkBtnText: "按住 说话",
+            recorderEnd: false,
+            isMobile: false,
+            isIframe: false,
+            onlineType: "success",
+            reconnectDialog: false,
+            showIconBtns: false,
+            showFaceIcon: false,
+            showKefuName: SHOW_KEFU_NAME,
         },
         methods: {
             //初始化websocket
-            initConn:function() {
-                this.socket = new ReconnectingWebSocket(this.server+"?visitor_id="+this.visitor.visitor_id+"&to_id="+this.visitor.to_id);//创建Socket实例
+            initConn: function () {
+                this.socket = new ReconnectingWebSocket(this.server + "?visitor_id=" + this.visitor.visitor_id + "&to_id=" + this.visitor.to_id);//创建Socket实例
                 this.socket.debug = true;
                 this.socket.onmessage = this.OnMessage;
                 this.socket.onopen = this.OnOpen;
                 this.socket.onerror = this.OnError;
                 this.socket.onclose = this.OnClose;
             },
-            OnOpen:function() {
+            OnOpen: function () {
                 // console.log("ws:onopen");
                 //限制最大打开次数
-                if(this.websocketOpenNum>=this.websocketMaxOpenNum){
-                    this.chatTitle=GOFLY_LANG[LANG]['refresh'];
+                if (this.websocketOpenNum >= this.websocketMaxOpenNum) {
+                    this.chatTitle = GOFLY_LANG[LANG]['refresh'];
                     this.socket.close();
                     return;
                 }
                 this.websocketOpenNum++;
 
-                this.chatTitle=this.noticeName+" , "+GOFLY_LANG[LANG]['connectok'];
+                this.chatTitle = this.noticeName + " , " + GOFLY_LANG[LANG]['connectok'];
                 this.checkTimeout();
-                this.socketClosed=false;
-                this.focusSendConn=false;
-                this.wsSocketClosed=false;
+                this.socketClosed = false;
+                this.focusSendConn = false;
+                this.wsSocketClosed = false;
                 this.sendVisitorLogin();
                 this.getExtendInfo();
-                this.reconnectDialog=false;
+                this.reconnectDialog = false;
             },
-            OnMessage:function(e) {
+            OnMessage: function (e) {
                 // console.log("ws:onmessage");
-                this.socketClosed=false;
-                this.focusSendConn=false;
+                this.socketClosed = false;
+                this.focusSendConn = false;
                 const redata = JSON.parse(e.data);
                 if (redata.type == "kfOnline") {
                     let msg = redata.data
-                    if(this.showKfonline && this.visitor.to_id==msg.id){
+                    if (this.showKfonline && this.visitor.to_id == msg.id) {
                         return;
                     }
-                    this.visitor.to_id=msg.id;
-                    this.chatTitle=msg.name+","+GOFLY_LANG[LANG]['chating'];
-                    $(".chatBox").append("<div class=\"chatTime\">"+this.chatTitle+"</div>");
+                    this.visitor.to_id = msg.id;
+                    this.chatTitle = msg.name + "," + GOFLY_LANG[LANG]['chating'];
+                    $(".chatBox").append("<div class=\"chatTime\">" + this.chatTitle + "</div>");
                     this.scrollBottom();
-                    this.showKfonline=true;
+                    this.showKfonline = true;
                 }
                 if (redata.type == "transfer") {
                     var kefuId = redata.data
-                    if(!kefuId){
+                    if (!kefuId) {
                         return;
                     }
-                    this.visitor.to_id=kefuId;
+                    this.visitor.to_id = kefuId;
                 }
                 if (redata.type == "notice") {
                     let msg = redata.data
-                    if(!msg){
+                    if (!msg) {
                         return;
                     }
-                    this.chatTitle=msg
-                    $(".chatBox").append("<div class=\"chatTime\">"+this.chatTitle+"</div>");
+                    this.chatTitle = msg
+                    $(".chatBox").append("<div class=\"chatTime\">" + this.chatTitle + "</div>");
                     this.scrollBottom();
                 }
                 if (redata.type == "peerid") {
                     let msg = redata.data;
-                    if(!msg){
+                    if (!msg) {
                         return;
                     }
-                    this.kefuPeerId=msg;
+                    this.kefuPeerId = msg;
                     this.talkPeer();
                 }
                 if (redata.type == "delete") {
                     var msg = redata.data;
-                    for(var i=0;i<this.msgList.length;i++){
-                        if(this.msgList[i].msg_id==msg.msg_id){
-                            this.msgList[i].content=GOFLY_LANG[LANG]['messageDeleted'];
-                            this.msgList.splice(i,1);
+                    for (var i = 0; i < this.msgList.length; i++) {
+                        if (this.msgList[i].msg_id == msg.msg_id) {
+                            this.msgList[i].content = GOFLY_LANG[LANG]['messageDeleted'];
+                            this.msgList.splice(i, 1);
                             //break;
                         }
                     }
                 }
                 if (redata.type == "read") {
                     var msg = redata.data;
-                    for(var i=0;i<this.msgList.length;i++){
-                        this.msgList[i].read_status=GOFLY_LANG[LANG]['read'];
+                    for (var i = 0; i < this.msgList.length; i++) {
+                        this.msgList[i].read_status = GOFLY_LANG[LANG]['read'];
                     }
                 }
                 if (redata.type == "message") {
                     let msg = redata.data
                     //this.visitor.to_id=msg.id;
-                    var _this=this;
+                    var _this = this;
 
-                    var msgArr=msg.content.split("[br]");
-                    for(var i in msgArr){
+                    var msgArr = msg.content.split("[br]");
+                    for (var i in msgArr) {
                         let content = {}
                         content.avator = msg.avator;
                         content.name = msg.name;
-                        content.content =replaceSpecialTag(msgArr[i]);
+                        content.content = replaceSpecialTag(msgArr[i]);
                         content.is_kefu = false;
                         content.time = msg.time;
-                        content.is_reply=true;
+                        content.is_reply = true;
                         content.msg_id = msg.msg_id;
                         this.msgList.push(content);
                         setTimeout(function () {
                             _this.scrollBottom();
-                        },200);
+                        }, 200);
                     }
 
                     // let content = {}
@@ -431,7 +471,7 @@
                     notify(msg.name, {
                         body: msg.content,
                         icon: msg.avator
-                    },function(notification) {
+                    }, function (notification) {
                         window.focus();
                         notification.close();
                     });
@@ -440,55 +480,55 @@
                     //clearInterval(this.timer);
                     this.cleanAllTimeout();
                     this.alertSound('/static/images/alert4.mp3');//提示音
-                    this.haveUnreadMessage=true;
+                    this.haveUnreadMessage = true;
                 }
                 if (redata.type == "close") {
                     this.showTitle(GOFLY_LANG[LANG]['closemes']);
                     this.scrollBottom();
                     this.socket.close();
                     //this.socketClosed=true;
-                    this.focusSendConn=true;
-                    this.reconnectDialog=true;
+                    this.focusSendConn = true;
+                    this.reconnectDialog = true;
                 }
                 if (redata.type == "force_close") {
                     this.showTitle(GOFLY_LANG[LANG]['forceclosemes']);
                     this.scrollBottom();
                     this.socket.close();
-                    this.socketClosed=true;
-                    this.reconnectDialog=true;
+                    this.socketClosed = true;
+                    this.reconnectDialog = true;
                 }
                 if (redata.type == "auto_close") {
                     this.showTitle(GOFLY_LANG[LANG]['autoclosemes']);
                     this.scrollBottom();
                     this.socket.close();
-                    this.socketClosed=true;
-                    this.reconnectDialog=true;
+                    this.socketClosed = true;
+                    this.reconnectDialog = true;
                 }
                 if (redata.type == "change_id") {
                     let msg = redata.data;
-                    var openId=msg.to;
-                    var visitor=this.getCache("visitor_"+ENT_ID);
-                    visitor.visitor_id=openId;
-                    this.setCache("visitor_"+ENT_ID,visitor);
+                    var openId = msg.to;
+                    var visitor = this.getCache("visitor_" + ENT_ID);
+                    visitor.visitor_id = openId;
+                    this.setCache("visitor_" + ENT_ID, visitor);
                     location.reload();
                 }
-                window.parent.postMessage(redata,"*");
+                window.parent.postMessage(redata, "*");
             },
             //发送给客户
-            chatToUser:function() {
-                if(this.sendDisabled){
+            chatToUser: function () {
+                if (this.sendDisabled) {
                     return;
                 }
-                var messageContent=this.messageContent.trim("\r\n");
-                messageContent=messageContent.replace("\n","");
-                messageContent=messageContent.replace("\r\n","");
-                if(messageContent==""||messageContent=="\r\n"){
-                    this.messageContent="";
+                var messageContent = this.messageContent.trim("\r\n");
+                messageContent = messageContent.replace("\n", "");
+                messageContent = messageContent.replace("\r\n", "");
+                if (messageContent == "" || messageContent == "\r\n") {
+                    this.messageContent = "";
                     return;
                 }
-                this.messageContent=messageContent;
-                this.currentActiveTime=Date.now();
-                if(this.socketClosed){
+                this.messageContent = messageContent;
+                this.currentActiveTime = Date.now();
+                if (this.socketClosed) {
                     this.initConn();
                     // this.$message({
                     //     message: '连接关闭!请重新打开页面',
@@ -496,17 +536,17 @@
                     // });
                     //return;
                 }
-                this.sendDisabled=true;
-                let _this=this;
+                this.sendDisabled = true;
+                let _this = this;
 
                 let content = {}
-                content.avator=_this.visitor.avator;
+                content.avator = _this.visitor.avator;
                 content.content = replaceContent(_this.messageContent);
                 content.name = _this.visitor.name;
                 content.is_kefu = true;
                 content.read_status = GOFLY_LANG[LANG]['unread'];
                 content.time = _this.getNowDate();
-                content.show_time=false;
+                content.show_time = false;
                 _this.msgList.push(content);
                 _this.scrollBottom();
 
@@ -517,132 +557,132 @@
                 mes.to_id = this.visitor.to_id;
                 mes.content = this.messageContent;
                 //发送消息
-                $.post("/2/message?lang="+getQuery("lang"),mes,function(res){
-                    _this.sendDisabled=false;
-                    if(res.code!=200){
+                $.post("/2/message?lang=" + getQuery("lang"), mes, function (res) {
+                    _this.sendDisabled = false;
+                    if (res.code != 200) {
                         _this.msgList.pop();
                         _this.$message({
                             message: res.msg,
                             type: 'error'
                         });
-                        if(res.code==401){
-                            setTimeout(function(){
+                        if (res.code == 401) {
+                            setTimeout(function () {
                                 window.location.reload();
-                            },2000);
+                            }, 2000);
                         }
                         return;
                     }
                     _this.messageContent = "";
                     _this.cleanAllTimeout();
                     _this.sendSound();
-                    _this.sendDisabled=false;
+                    _this.sendDisabled = false;
                 });
 
             },
             //正在输入
-            inputNextText:function(){
+            inputNextText: function () {
                 this.sendInputingStrNow(this.messageContent);
             },
-            sendInputingStrNow:function(str){
-                if(this.socketClosed||!this.socket||this.wsSocketClosed){
+            sendInputingStrNow: function (str) {
+                if (this.socketClosed || !this.socket || this.wsSocketClosed) {
                     return;
                 }
                 var message = {}
                 message.type = "inputing";
                 message.data = {
-                    from : this.visitor.visitor_id,
-                    to : this.visitor.to_id,
-                    content:str
+                    from: this.visitor.visitor_id,
+                    to: this.visitor.to_id,
+                    content: str
                 };
                 this.socket.send(JSON.stringify(message));
             },
-            sendVisitorLogin:function(){
-                var _this=this;
-                setTimeout(function(){
-                    if(_this.socketClosed||!_this.socket||_this.wsSocketClosed){
+            sendVisitorLogin: function () {
+                var _this = this;
+                setTimeout(function () {
+                    if (_this.socketClosed || !_this.socket || _this.wsSocketClosed) {
                         return;
                     }
                     var message = {}
                     message.type = "visitor_login";
                     message.data = {
-                        from : _this.visitor.visitor_id,
-                        to : _this.visitor.to_id,
+                        from: _this.visitor.visitor_id,
+                        to: _this.visitor.to_id,
                     };
                     _this.socket.send(JSON.stringify(message));
                 }, 3000);
             },
-            OnClose:function() {
+            OnClose: function () {
                 // console.log("ws:onclose");
-                this.focusSendConn=true;
-                this.wsSocketClosed=true;
+                this.focusSendConn = true;
+                this.wsSocketClosed = true;
                 this.closeTimeoutTimer();
             },
-            OnError:function() {
+            OnError: function () {
                 // console.log("ws:onerror");
                 this.closeTimeoutTimer();
             },
             //获取当前用户信息
-            getUserInfo:function(){
-                let obj=this.getCache("visitor_"+ENT_ID);
-                var visitor_id=""
-                var to_id=KEFU_ID;
-                if(obj){
-                    visitor_id=obj.visitor_id;
+            getUserInfo: function () {
+                let obj = this.getCache("visitor_" + ENT_ID);
+                var visitor_id = ""
+                var to_id = KEFU_ID;
+                if (obj) {
+                    visitor_id = obj.visitor_id;
                     //to_id=obj.to_id;
                 }
-                let _this=this;
-                var extra=getQuery("extra");
-                var url=getQuery("url");
-                var paramVisitorId=VISITOR_ID;
-                if(paramVisitorId!=""){
-                    visitor_id=paramVisitorId;
+                let _this = this;
+                var extra = getQuery("extra");
+                var url = getQuery("url");
+                var paramVisitorId = VISITOR_ID;
+                if (paramVisitorId != "") {
+                    visitor_id = paramVisitorId;
                 }
-                var visitorName=VISITOR_NAME;
-                var avator=AVATOR;
+                var visitorName = VISITOR_NAME;
+                var avator = AVATOR;
 
-                if(extra==""){
-                    var ext={};
-                    var refer=document.referrer?document.referrer:"-";
-                    ext.refer=refer;
-                    ext.host=document.location.href;
-                    extra=utf8ToB64(JSON.stringify(ext));
+                if (extra == "") {
+                    var ext = {};
+                    var refer = document.referrer ? document.referrer : "-";
+                    ext.refer = refer;
+                    ext.host = document.location.href;
+                    extra = utf8ToB64(JSON.stringify(ext));
                 }
                 //发送消息
                 $.ajax({
                     type: "post",
                     url: "/visitor_login",
-                    data:{visitor_id:visitor_id,visitor_name:visitorName,avator:avator,refer:REFER,to_id:to_id,extra:extra,ent_id:ENT_ID,url:url},
-                    error:function(res){
-                        var data=JSON.parse(res.responseText);
+                    data: { visitor_id: visitor_id, visitor_name: visitorName, avator: avator, refer: REFER, to_id: to_id, extra: extra, ent_id: ENT_ID, url: url },
+                    error: function (res) {
+                        var data = JSON.parse(res.responseText);
                         _this.$message({
                             message: data.msg,
                             type: 'error'
                         });
                     },
-                    success: function(res) {
-                        if(res.code!=200){
+                    success: function (res) {
+                        if (res.code != 200) {
                             _this.$message({
                                 message: res.msg,
                                 type: 'error'
                             });
-                            _this.chatTitle=res.msg;
-                            _this.sendDisabled=true;
+                            _this.chatTitle = res.msg;
+                            _this.sendDisabled = true;
                             return;
                         }
-                        if(res.alloffline){
-                            _this.onlineType="danger";
-                        }else{
-                            _this.onlineType="success";
+                        if (res.alloffline) {
+                            _this.onlineType = "danger";
+                        } else {
+                            _this.onlineType = "success";
                         }
-                        if(GOFLY_CONFIG.SHOW_OFFLINE_PAGE){
-                            _this.allOffline=res.alloffline;
+                        if (GOFLY_CONFIG.SHOW_OFFLINE_PAGE) {
+                            _this.allOffline = res.alloffline;
                         }
-                        _this.sendDisabled=false;
-                        _this.visitor=res.result;
-                        _this.noticeName=res.kefu.username;
-                        _this.noticeAvatar=res.kefu.avatar;
-                        document.title=res.kefu.username;
-                        _this.setCache("visitor_"+ENT_ID,res.result);
+                        _this.sendDisabled = false;
+                        _this.visitor = res.result;
+                        _this.noticeName = res.kefu.username;
+                        _this.noticeAvatar = res.kefu.avatar;
+                        document.title = res.kefu.username;
+                        _this.setCache("visitor_" + ENT_ID, res.result);
                         //_this.getMesssagesByVisitorIdUnread();
                         _this.loadMoreMessages();
                         //_this.getMesssagesByVisitorId();
@@ -658,21 +698,21 @@
                 // }
             },
             //获取信息列表
-            getMesssagesByVisitorId:function(isAll){
-                let _this=this;
+            getMesssagesByVisitorId: function (isAll) {
+                let _this = this;
                 $.ajax({
-                    type:"get",
-                    url:"/2/messages?visitor_id="+this.visitor.visitor_id,
-                    success: function(data) {
-                        if(data.code==200 && data.result!=null&&data.result.length!=0){
-                            let msgList=data.result;
-                            _this.msgList=[];
-                            for(var i=0;i<msgList.length;i++){
-                                let visitorMes=msgList[i];
+                    type: "get",
+                    url: "/2/messages?visitor_id=" + this.visitor.visitor_id,
+                    success: function (data) {
+                        if (data.code == 200 && data.result != null && data.result.length != 0) {
+                            let msgList = data.result;
+                            _this.msgList = [];
+                            for (var i = 0; i < msgList.length; i++) {
+                                let visitorMes = msgList[i];
                                 let content = {}
-                                if(visitorMes["mes_type"]=="kefu"){
+                                if (visitorMes["mes_type"] == "kefu") {
                                     content.is_kefu = false;
-                                }else{
+                                } else {
                                     content.is_kefu = true;
                                 }
                                 content.avator = visitorMes["avator"];
@@ -683,47 +723,47 @@
                                 _this.scrollBottom();
                             }
                         }
-                        if(data.code!=200){
+                        if (data.code != 200) {
                             _this.$message({
                                 message: data.msg,
                                 type: 'error'
                             });
-                            _this.chatTitle=GOFLY_LANG[LANG]['refresh'];
+                            _this.chatTitle = GOFLY_LANG[LANG]['refresh'];
                         }
                     }
                 });
             },
             //获取信息列表
-            sendEmailMsg:function(){
-                let _this=this;
-                _this.visitorContact.ent_id=ENT_ID;
+            sendEmailMsg: function () {
+                let _this = this;
+                _this.visitorContact.ent_id = ENT_ID;
                 $.ajax({
-                    type:"post",
-                    url:"/ent/email_message",
-                    data:_this.visitorContact,
-                    success: function(data) {
-                        if(data.code!=200){
+                    type: "post",
+                    url: "/ent/email_message",
+                    data: _this.visitorContact,
+                    success: function (data) {
+                        if (data.code != 200) {
                             _this.$message({
                                 message: data.msg,
                                 type: 'error'
                             });
-                        }else{
-                            _this.allOffline=false;
+                        } else {
+                            _this.allOffline = false;
                         }
                     }
                 });
             },
             //滚动到底部
-            scrollBottom:function(){
-                var _this=this;
-                this.$nextTick(function(){
+            scrollBottom: function () {
+                var _this = this;
+                this.$nextTick(function () {
                     var container = _this.$el.querySelector(".chatVisitorPage");
                     container.scrollTop = 999999;
                     // $('.chatVisitorPage').scrollTop(9999999999999999999);
                 });
             },
             //软键盘问题
-            textareaFocus:function(){
+            textareaFocus: function () {
                 // if(/Android|webOS|iPhone|iPad|BlackBerry/i.test(navigator.userAgent)) {
                 //     //$(".chatContext").css("margin-bottom","0");
                 //     //$(".chatBoxSend").css("position","static");
@@ -731,7 +771,7 @@
                 // }
                 this.scrollBottom();
             },
-            textareaBlur:function(){
+            textareaBlur: function () {
                 // if(this.textareaFocused&&/Android|webOS|iPhone|iPad|BlackBerry/i.test(navigator.userAgent)) {
                 //     var chatBoxSendObj=$(".chatBoxSend");
                 //     var chatContextObj=$(".chatContext");
@@ -744,16 +784,16 @@
                 // }
                 this.scrollBottom();
             },
-            sendReply:function(title){
-                var _this=this;
+            sendReply: function (title) {
+                var _this = this;
 
                 let msg = {}
-                msg.avator=_this.visitor.avator;
+                msg.avator = _this.visitor.avator;
                 msg.content = replaceContent(title);
                 msg.name = _this.visitor.name;
                 msg.is_kefu = true;
                 msg.time = _this.getNowDate();
-                msg.show_time=false;
+                msg.show_time = false;
                 _this.msgList.push(msg);
                 _this.scrollBottom();
 
@@ -761,16 +801,16 @@
                 mes.content = title;
                 mes.from_id = this.visitor.visitor_id;
                 mes.ent_id = ENT_ID;
-                _this.sendAjax("/2/message_ask","post",mes,function(msg){
-                    var msgArr=msg.content.split("[b]");
-                    for(var i in msgArr){
+                _this.sendAjax("/2/message_ask", "post", mes, function (msg) {
+                    var msgArr = msg.content.split("[b]");
+                    for (var i in msgArr) {
                         let content = {}
                         content.avator = msg.avator;
                         content.name = msg.name;
-                        content.content =replaceSpecialTag(msgArr[i]);
+                        content.content = replaceSpecialTag(msgArr[i]);
                         content.is_kefu = false;
                         content.time = msg.time;
-                        content.is_reply=true;
+                        content.is_reply = true;
                         _this.msgList.push(content);
                         _this.scrollBottom();
                     }
@@ -780,74 +820,74 @@
                 //this.chatToUser();
             },
             //获取日期
-            getNowDate : function() {// 获取日期
+            getNowDate: function () {// 获取日期
                 var d = new Date(new Date());
                 return d.getFullYear() + '-' + this.digit(d.getMonth() + 1) + '-' + this.digit(d.getDate())
                     + ' ' + this.digit(d.getHours()) + ':' + this.digit(d.getMinutes()) + ':' + this.digit(d.getSeconds());
             },
             //补齐数位
-            digit : function (num) {
+            digit: function (num) {
                 return num < 10 ? '0' + (num | 0) : num;
             },
-            setCache : function (key,obj){
-                if(navigator.cookieEnabled&&typeof window.localStorage !== 'undefined'){
+            setCache: function (key, obj) {
+                if (navigator.cookieEnabled && typeof window.localStorage !== 'undefined') {
                     localStorage.setItem(key, JSON.stringify(obj));
                 }
-            },getCache : function (key){
-                if(navigator.cookieEnabled&&typeof window.localStorage !== 'undefined') {
+            }, getCache: function (key) {
+                if (navigator.cookieEnabled && typeof window.localStorage !== 'undefined') {
                     return JSON.parse(localStorage.getItem(key));
                 }
             },
             //获取自动欢迎语句
-            getNotice : function (){
-                let _this=this;
-                var noticed=this.getCache("noticed_"+ENT_ID);
-                if(noticed){
+            getNotice: function () {
+                let _this = this;
+                var noticed = this.getCache("noticed_" + ENT_ID);
+                if (noticed) {
                     return;
                 }
-                $.get("/2/notices?visitor_id="+this.visitor.visitor_id+"&ent_id="+ENT_ID+"&kefu_name="+this.visitor.to_id,function(res) {
-                    _this.setCache("noticed_"+ENT_ID,1);
+                $.get("/2/notices?visitor_id=" + this.visitor.visitor_id + "&ent_id=" + ENT_ID + "&kefu_name=" + this.visitor.to_id, function (res) {
+                    _this.setCache("noticed_" + ENT_ID, 1);
                     //debugger;
                     // _this.noticeName=res.result.username;
                     // _this.noticeAvatar=res.result.avatar;
                     if (res.result.welcome != null) {
                         var msgs = res.result.welcome;
-                        var delaySecond=0;
-                        for(let i in msgs){
-                            var msg=msgs[i];
-                            if(msg.delay_second){
-                                delaySecond+=msg.delay_second;
-                            }else{
-                                delaySecond+=4;
+                        var delaySecond = 0;
+                        for (let i in msgs) {
+                            var msg = msgs[i];
+                            if (msg.delay_second) {
+                                delaySecond += msg.delay_second;
+                            } else {
+                                delaySecond += 4;
                             }
-                            var timer =  setTimeout(function (msg) {
-                                msg.time=_this.getNowDate();
+                            var timer = setTimeout(function (msg) {
+                                msg.time = _this.getNowDate();
                                 msg.content = replaceSpecialTag(msg.content);
                                 _this.msgList.push(msg);
                                 _this.scrollBottom();
                                 _this.alertSound('/static/images/notification.mp3');
-                                var redata={
-                                    type:"message",
-                                    data:msg
+                                var redata = {
+                                    type: "message",
+                                    data: msg
                                 }
-                                window.parent.postMessage(redata,"*");
-                            },1000*delaySecond,msg);
+                                window.parent.postMessage(redata, "*");
+                            }, 1000 * delaySecond, msg);
                             _this.allTimeouter.push(timer);
                         }
                     }
                 });
             },
-            initCss:function(){
-                var _this=this;
+            initCss: function () {
+                var _this = this;
                 $(function () {
                     //手机端的样式问题
                     // if(_this.isMobile){
                     //     $(".chatVisitorPage").css("height","calc(100% - 155px)");
                     // }
                     //展示表情
-                    var faces=placeFace();
+                    var faces = placeFace();
                     $.each(faceTitles, function (index, item) {
-                        _this.face.push({"name":item,"path":faces[item]});
+                        _this.face.push({ "name": item, "path": faces[item] });
                     });
                     // $(".visitorFaceBtn").click(function(e){
                     //     var status=$('.faceBox').css("display");
@@ -858,17 +898,17 @@
                     //     }
                     //     return false;
                     // });
-                    $("body").on("click",".replyContentBtn a",function() {
-                        var txt=$(this).text();
-                        var href=$(this).attr("href");
-                        if(href=="self"||!href){
+                    $("body").on("click", ".replyContentBtn a", function () {
+                        var txt = $(this).text();
+                        var href = $(this).attr("href");
+                        if (href == "self" || !href) {
                             _this.sendReply(txt);
                             return false;
                         }
                     });
 
                     var windheight = $(window).height();
-                    $(window).resize(function(){
+                    $(window).resize(function () {
                         var docheight = $(window).height();  /*唤起键盘时当前窗口高度*/
                         //_this.scrollBottom();
                         $('body').scrollTop(99999999);
@@ -881,54 +921,54 @@
                 });
             },
             //心跳
-            ping:function(){
-                let _this=this;
+            ping: function () {
+                let _this = this;
                 let mes = {}
                 mes.type = "ping";
-                mes.data = "visitor:"+_this.visitor.visitor_id;
+                mes.data = "visitor:" + _this.visitor.visitor_id;
                 setInterval(function () {
-                    if(_this.socket!=null&&!_this.wsSocketClosed){
+                    if (_this.socket != null && !_this.wsSocketClosed) {
                         _this.socket.send(JSON.stringify(mes));
                     }
-                },10000);
+                }, 10000);
             },
             //初始化
-            init:function(){
-                var _this=this;
-                _this.isMobile=isMobile();
+            init: function () {
+                var _this = this;
+                _this.isMobile = isMobile();
 
                 this.initCss();
                 //已读消息
-                var ms= 1000*2;
+                var ms = 1000 * 2;
                 var lastClick = Date.now() - ms;
-                $("body").mouseover(function(){
-                    if(!_this.haveUnreadMessage){
+                $("body").mouseover(function () {
+                    if (!_this.haveUnreadMessage) {
                         return;
                     }
                     if (Date.now() - lastClick >= ms) {
                         lastClick = Date.now();
                         //如果有未读消息，调用已读接口
-                        _this.sendAjax("/2/messages_read","post",{"visitor_id":_this.visitor.visitor_id,"kefu":_this.visitor.to_id},function(data){
-                            _this.haveUnreadMessage=false;
+                        _this.sendAjax("/2/messages_read", "post", { "visitor_id": _this.visitor.visitor_id, "kefu": _this.visitor.to_id }, function (data) {
+                            _this.haveUnreadMessage = false;
                         });
                     }
                 });
-                $('body').click(function(){
+                $('body').click(function () {
                     clearFlashTitle();
-                    window.parent.postMessage({type:"focus"},"*");
+                    window.parent.postMessage({ type: "focus" }, "*");
                     //$('.faceBox').hide();
                     //剪贴板
-                    try{
+                    try {
                         var selecter = window.getSelection().toString();
-                        if (selecter != null && selecter.trim() != ""){
-                            var str=selecter.trim();
+                        if (selecter != null && selecter.trim() != "") {
+                            var str = selecter.trim();
                             _this.sendInputingStrNow(str);
                         }
-                    } catch (err){
+                    } catch (err) {
                         var selecter = document.selection.createRange();
                         var s = selecter.text;
-                        if (s != null && s.trim() != ""){
-                            var str=s.trim();
+                        if (s != null && s.trim() != "") {
+                            var str = s.trim();
                             _this.sendInputingStrNow(str);
                         }
                     }
@@ -936,9 +976,9 @@
 
 
 
-                $("body").on("click",".chatImagePic",function() {
-                    var url=$(this).attr("data-src");
-                    _this.imgPreviewSrc=[url];
+                $("body").on("click", ".chatImagePic", function () {
+                    var url = $(this).attr("data-src");
+                    _this.imgPreviewSrc = [url];
                     _this.$refs.preview.clickHandler();
                     //new PinchZoom.default($(this)[0], {});
                     // _this.$alert("<img src='"+url+"'/>", "", {
@@ -952,25 +992,25 @@
 
 
                 //判断当前是否在iframe中
-                if(self!=top){
-                    _this.isIframe=true;
+                if (self != top) {
+                    _this.isIframe = true;
                 }
 
             },
             //表情点击事件
-            faceIconClick:function(index){
-                this.showFaceIcon=false;
-                this.messageContent+="face"+this.face[index].name;
+            faceIconClick: function (index) {
+                this.showFaceIcon = false;
+                this.messageContent += "face" + this.face[index].name;
             },
             //上传图片
-            uploadImg:function (url){
-                let _this=this;
+            uploadImg: function (url) {
+                let _this = this;
                 $('#uploadImg').after('<input type="file" accept="image/gif,image/jpeg,image/jpg,image/png" id="uploadImgFile" name="file" style="display:none" >');
                 $("#uploadImgFile").click();
                 $("#uploadImgFile").change(function (e) {
                     var formData = new FormData();
                     var file = $("#uploadImgFile")[0].files[0];
-                    formData.append("imgfile",file); //传给后台的file的key值是可以自己定义的
+                    formData.append("imgfile", file); //传给后台的file的key值是可以自己定义的
                     filter(file) && $.ajax({
                         url: url || '',
                         type: "post",
@@ -980,13 +1020,13 @@
                         dataType: 'JSON',
                         mimeType: "multipart/form-data",
                         success: function (res) {
-                            if(res.code!=200){
+                            if (res.code != 200) {
                                 _this.$message({
                                     message: res.msg,
                                     type: 'error'
                                 });
-                            }else{
-                                _this.messageContent+='img[/' + res.result.path + ']';
+                            } else {
+                                _this.messageContent += 'img[/' + res.result.path + ']';
                                 _this.chatToUser();
                             }
                         },
@@ -997,14 +1037,14 @@
                 });
             },
             //上传文件
-            uploadFile:function (url){
-                let _this=this;
+            uploadFile: function (url) {
+                let _this = this;
                 $('#uploadFile').after('<input type="file"  id="uploadRealFile" name="file2" style="display:none" >');
                 $("#uploadRealFile").click();
                 $("#uploadRealFile").change(function (e) {
                     var formData = new FormData();
                     var file = $("#uploadRealFile")[0].files[0];
-                    formData.append("realfile",file); //传给后台的file的key值是可以自己定义的
+                    formData.append("realfile", file); //传给后台的file的key值是可以自己定义的
                     // console.log(formData);
                     $.ajax({
                         url: url || '',
@@ -1016,13 +1056,13 @@
                         mimeType: "multipart/form-data",
                         success: function (res) {
 
-                            if(res.code!=200){
+                            if (res.code != 200) {
                                 _this.$message({
                                     message: res.msg,
                                     type: 'error'
                                 });
-                            }else{
-                                _this.messageContent+='file[/' + res.result.path + ']';
+                            } else {
+                                _this.messageContent += 'file[/' + res.result.path + ']';
                                 _this.chatToUser();
                             }
                         },
@@ -1033,7 +1073,7 @@
                 });
             },
             //粘贴上传图片
-            onPasteUpload:function(event){
+            onPasteUpload: function (event) {
                 let items = event.clipboardData && event.clipboardData.items;
                 let file = null
                 if (items && items.length) {
@@ -1047,7 +1087,7 @@
                 if (!file) {
                     return;
                 }
-                let _this=this;
+                let _this = this;
                 var formData = new FormData();
                 formData.append('imgfile', file);
                 $.ajax({
@@ -1059,13 +1099,13 @@
                     dataType: 'JSON',
                     mimeType: "multipart/form-data",
                     success: function (res) {
-                        if(res.code!=200){
+                        if (res.code != 200) {
                             _this.$message({
                                 message: res.msg,
                                 type: 'error'
                             });
-                        }else{
-                            _this.messageContent+='img[/' + res.result.path + ']';
+                        } else {
+                            _this.messageContent += 'img[/' + res.result.path + ']';
                             _this.chatToUser();
                         }
                     },
@@ -1075,88 +1115,88 @@
                 });
             },
             //自动
-            getAutoReply:function(){
-                var _this=this;
-                $.get("/autoreply?ent_id="+ENT_ID,function(res) {
-                    if(res.code==200 && res.result){
+            getAutoReply: function () {
+                var _this = this;
+                $.get("/autoreply?ent_id=" + ENT_ID, function (res) {
+                    if (res.code == 200 && res.result) {
                         _this.replys.push(res.result);
                     }
                 });
             },
             //提示音
-            alertSound:function(soundUrl){
+            alertSound: function (soundUrl) {
                 var b = document.getElementById("chatMessageAudio");
                 if (b.canPlayType('audio/ogg; codecs="vorbis"')) {
-                    b.type= 'audio/mpeg';
-                    b.src=soundUrl ;
+                    b.type = 'audio/mpeg';
+                    b.src = soundUrl;
                     var p = b.play();
                     p && p.then(function () {
                     }).catch(function (e) {
                     });
                 }
             },
-            sendSound:function(){
+            sendSound: function () {
                 var b = document.getElementById("chatMessageSendAudio");
                 if (b.canPlayType('audio/ogg; codecs="vorbis"')) {
-                    b.type= 'audio/mpeg';
-                    b.src= '/static/images/sent.ogg';
+                    b.type = 'audio/mpeg';
+                    b.src = '/static/images/sent.ogg';
                     var p = b.play();
-                    p && p.then(function(){}).catch(function(e){});
+                    p && p.then(function () { }).catch(function (e) { });
                 }
             },
-            initPeerjs:function(){
+            initPeerjs: function () {
                 var peer = new Peer();
-                this.peer=peer;
-                var _this=this;
+                this.peer = peer;
+                var _this = this;
 
-                peer.on('open', function(id) {
+                peer.on('open', function (id) {
                     // console.log('My peer ID is: ' + id);
-                    _this.peerjsId=id;
+                    _this.peerjsId = id;
                 });
-                peer.on('close', function() {
+                peer.on('close', function () {
                     // console.log('My peer close');
-                    if(_this.loading!=null){
+                    if (_this.loading != null) {
                         _this.loading.close();
                     }
                 });
-                peer.on('disconnected', function() {
+                peer.on('disconnected', function () {
                     // console.log('My peer disconnected');
-                    if(_this.loading!=null){
+                    if (_this.loading != null) {
                         _this.loading.close();
                     }
                 });
-                peer.on('error', function() {
+                peer.on('error', function () {
                     // console.log('My peer error');
-                    if(_this.loading!=null){
+                    if (_this.loading != null) {
                         _this.loading.close();
                     }
                 });
             },
-            callPeer:function(){
-                var _this=this;
+            callPeer: function () {
+                var _this = this;
                 this.loading = this.$loading({
                     lock: true,
                     text: '正在请求通话',
                     spinner: 'el-icon-loading',
                     background: 'rgba(0, 0, 0, 0.7)'
                 });
-                this.loadingTimer=setTimeout(function(){
+                this.loadingTimer = setTimeout(function () {
                     _this.loading.close();
                 }, 20000);
 
                 var getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-                getUserMedia({video: false, audio: true}, function(stream) {
-                    _this.localStream=stream;
-                }, function(err) {
+                getUserMedia({ video: false, audio: true }, function (stream) {
+                    _this.localStream = stream;
+                }, function (err) {
                     // console.log('Failed to get local stream' ,err);
                 });
-                _this.sendAjax("/call_kefu","post",{kefu_id:_this.visitor.to_id,visitor_id:_this.visitor.visitor_id},function(result){
+                _this.sendAjax("/call_kefu", "post", { kefu_id: _this.visitor.to_id, visitor_id: _this.visitor.visitor_id }, function (result) {
                 });
             },
-            talkPeer:function(){
+            talkPeer: function () {
                 var remoteVideo = document.querySelector('video#chatRtc');
-                var _this=this;
-                if(this.loading!=null){
+                var _this = this;
+                if (this.loading != null) {
                     this.loading.close();
                 }
                 clearTimeout(this.loadingTimer);
@@ -1164,102 +1204,102 @@
                     message: '正在通话...',
                     type: 'success'
                 });
-                if(_this.kefuPeerId==""||_this.localStream==null){
+                if (_this.kefuPeerId == "" || _this.localStream == null) {
                     return;
                 }
 
                 var call = _this.peer.call(_this.kefuPeerId, _this.localStream);
-                call.on('stream', function(remoteStream) {
+                call.on('stream', function (remoteStream) {
                     // console.log(remoteStream);
                     remoteVideo.srcObject = remoteStream;
                     remoteVideo.autoplay = true;
                 });
-                call.on('close', function() {
+                call.on('close', function () {
                     // console.log("call close");
                     _this.loading.close();
                 });
-                call.on('error', function(err) {
+                call.on('error', function (err) {
                     // console.log(err);
                     _this.loading.close();
                 });
 
             },
-            getExtendInfo:function(){
-                var _this=this;
-                var extra=getQuery("extra");
-                if(extra==""){
+            getExtendInfo: function () {
+                var _this = this;
+                var extra = getQuery("extra");
+                if (extra == "") {
                     return;
                 }
 
-                try{
-                    var extraString=b64ToUtf8(extra);
-                    if(_this.getCache("extra")==extraString){
+                try {
+                    var extraString = b64ToUtf8(extra);
+                    if (_this.getCache("extra") == extraString) {
                         return;
                     }
-                    var extra=JSON.parse(extraString);
-                    if (typeof extra=="string"){
-                        extra=JSON.parse(extra);
+                    var extra = JSON.parse(extraString);
+                    if (typeof extra == "string") {
+                        extra = JSON.parse(extra);
                     }
 
-                    for(var key in extra){
-                        if(extra[key]==""){
-                            extra[key]="无";
+                    for (var key in extra) {
+                        if (extra[key] == "") {
+                            extra[key] = "无";
                         }
-                        if(key=="visitorProduct"){
-                            _this.messageContent="product["+JSON.stringify(extra[key])+"]";
+                        if (key == "visitorProduct") {
+                            _this.messageContent = "product[" + JSON.stringify(extra[key]) + "]";
                             _this.chatToUser();
-                            _this.setCache("extra",extraString);
+                            _this.setCache("extra", extraString);
                         };
                     }
-                }catch (e) {
+                } catch (e) {
                 }
             },
-            sendAjax:function(url,method,params,callback){
-                let _this=this;
+            sendAjax: function (url, method, params, callback) {
+                let _this = this;
                 $.ajax({
                     type: method,
                     url: url,
-                    data:params,
-                    headers:{
-                        "lang":getQuery("lang"),
+                    data: params,
+                    headers: {
+                        "lang": getQuery("lang"),
                     },
-                    error:function(res){
-                        var data=JSON.parse(res.responseText);
+                    error: function (res) {
+                        var data = JSON.parse(res.responseText);
                         // console.log(data);
-                        if(data.code!=200){
+                        if (data.code != 200) {
                             _this.$message({
                                 message: data.msg,
                                 type: 'error'
                             });
                         }
                     },
-                    success: function(data) {
-                        if(data.code!=200){
+                    success: function (data) {
+                        if (data.code != 200) {
                             _this.$message({
                                 message: data.msg,
                                 type: 'error'
                             });
-                        }else if(data.result!=null){
+                        } else if (data.result != null) {
                             callback(data.result);
-                        }else{
+                        } else {
                             callback(data);
                         }
                     }
                 });
             },
-            showTitle:function(title){
-                this.chatTitle=title;
-                $(".chatBox").append("<div class=\"chatTime\"><span>"+title+"</span></div>");
+            showTitle: function (title) {
+                this.chatTitle = title;
+                $(".chatBox").append("<div class=\"chatTime\"><span>" + title + "</span></div>");
                 this.scrollBottom();
             },
             //开始录音
-            startRecoder:function(e){
-                if(this.recorder){
+            startRecoder: function (e) {
+                if (this.recorder) {
                     this.recorder.destroy();
-                    this.recorder=null;
+                    this.recorder = null;
                 }
-                var _this=this;
-                Recorder.getPermission().then(function() {
+                var _this = this;
+                Recorder.getPermission().then(function () {
                     _this.recorder = new Recorder();
                     _this.recorderAudio = document.querySelector('#audio');
                     _this.recorder.start();
@@ -1267,7 +1307,7 @@
                         _this.recoderSecond = parseInt(params.duration);
                     }
                     this.talkBtnText = "松开 结束";
-                }, function(error){
+                }, function (error) {
                     _this.$message({
                         message: "请允许录音权限,以及浏览器限制非HTTPS下无法使用",
                         type: 'error'
@@ -1276,26 +1316,26 @@
                 });
                 e.preventDefault();
             },
-            stopRecoder:function(e){
-                if(!this.recorder){
+            stopRecoder: function (e) {
+                if (!this.recorder) {
                     return;
                 }
-                var blob=this.recorder.getWAVBlob();
+                var blob = this.recorder.getWAVBlob();
                 this.recorderAudio.src = URL.createObjectURL(blob);
                 this.recorderAudio.controls = true;
-                this.talkBtnText="按住 说话";
-                this.recorderEnd=true;
+                this.talkBtnText = "按住 说话";
+                this.recorderEnd = true;
                 e.preventDefault();
             },
-            sendRecoder:function(){
-                if(!this.recorder){
+            sendRecoder: function () {
+                if (!this.recorder) {
                     return;
                 }
 
-                var blob=this.recorder.getWAVBlob();
+                var blob = this.recorder.getWAVBlob();
                 var formdata = new FormData(); // form 表单 {key:value}
                 formdata.append("realfile", blob); // form input type="file"
-                var _this=this;
+                var _this = this;
                 this.loading = this.$loading({
                     lock: true,
                     text: '正在发送',
@@ -1312,83 +1352,83 @@
                     mimeType: "multipart/form-data",
                     success: function (res) {
                         _this.loading.close();
-                        if(res.code!=200){
+                        if (res.code != 200) {
                             _this.$message({
                                 message: res.msg,
                                 type: 'error'
                             });
-                        }else{
+                        } else {
                             _this.cancelRecoder();
-                            _this.messageContent+='audio[/' + res.result.path + ']';
+                            _this.messageContent += 'audio[/' + res.result.path + ']';
                             _this.chatToUser();
                         }
                     }
                 })
 
             },
-            cancelRecoder:function(){
-                this.audioDialog=false;
-                if(!this.recorder){
+            cancelRecoder: function () {
+                this.audioDialog = false;
+                if (!this.recorder) {
                     return;
                 }
                 this.recorder.destroy();
-                this.recorder=null;
-                this.recoderSecond=0;
+                this.recorder = null;
+                this.recoderSecond = 0;
             },
-            recoderFormat:function(percentage){
-                return percentage+"s";
+            recoderFormat: function (percentage) {
+                return percentage + "s";
             },
-            openNewWindow:function(){
+            openNewWindow: function () {
                 var features = "height=580, width=400, top=10, left=500, toolbar=no, menubar=no,scrollbars=no,resizable=no, location=no, status=no";  //设置新窗口的特性
                 var me = window.open(location.href, "newW", features);
             },
             //超时关闭
-            checkTimeout:function(){
-                var _this=this;
-                this.timeoutTimer=setInterval(function(){
+            checkTimeout: function () {
+                var _this = this;
+                this.timeoutTimer = setInterval(function () {
                     if (Date.now() - _this.currentActiveTime >= _this.timeoutLongTime) {
                         // console.log("长时间无操作");
-                        if(_this.socket!=null){
-                            _this.reconnectDialog=true;
+                        if (_this.socket != null) {
+                            _this.reconnectDialog = true;
                             _this.showTitle(GOFLY_LANG[LANG]['autoclosemes']);
                             _this.socket.close();
-                            _this.socket=null;
+                            _this.socket = null;
                         }
                     }
-                },55000);
+                }, 55000);
             },
-            closeTimeoutTimer:function(){
+            closeTimeoutTimer: function () {
                 clearInterval(this.timeoutTimer);
             },
-            cleanAllTimeout:function(){
-                for(var i in this.allTimeouter){
+            cleanAllTimeout: function () {
+                for (var i in this.allTimeouter) {
                     clearTimeout(this.allTimeouter[i]);
                 }
             },
-            loadMoreMessages:function(){
-                var _this=this;
-                var pagesize=5;
+            loadMoreMessages: function () {
+                var _this = this;
+                var pagesize = 5;
                 // if(this.currentPage>1){
                 //     this.replys=[];
                 // }
-                if(_this.loadMoreDisable){
+                if (_this.loadMoreDisable) {
                     return;
                 }
-                var moreMessage=GOFLY_LANG[LANG]['moremessage'];
-                this.flyLang.moremessage=this.flyLang.loading;
-                this.loadMoreDisable=true;
-                var hasUnread=false;
-                this.sendAjax("/2/messages_page","get",{pagesize:pagesize,ent_id:ENT_ID,page:this.currentPage,visitor_id:_this.visitor.visitor_id},function(result){
-                    var len=result.list.length;
-                    if(result.list.length!=0){
-                        if(len<pagesize){
-                            _this.showLoadMore=false;
-                        }else{
-                            _this.showLoadMore=true;
+                var moreMessage = GOFLY_LANG[LANG]['moremessage'];
+                this.flyLang.moremessage = this.flyLang.loading;
+                this.loadMoreDisable = true;
+                var hasUnread = false;
+                this.sendAjax("/2/messages_page", "get", { pagesize: pagesize, ent_id: ENT_ID, page: this.currentPage, visitor_id: _this.visitor.visitor_id }, function (result) {
+                    var len = result.list.length;
+                    if (result.list.length != 0) {
+                        if (len < pagesize) {
+                            _this.showLoadMore = false;
+                        } else {
+                            _this.showLoadMore = true;
                         }
 
-                        let msgList=result.list;
-                        for(var i=0;i<msgList.length;i++) {
+                        let msgList = result.list;
+                        for (var i = 0; i < msgList.length; i++) {
                             let visitorMes = msgList[i];
                             let content = {}
                             if (visitorMes["mes_type"] == "kefu") {
@@ -1402,9 +1442,9 @@
                                 content.read_status = GOFLY_LANG[LANG].read;
                             } else {
                                 content.read_status = GOFLY_LANG[LANG].unread;
-                                if(i==0){
-                                    hasUnread=true;
-                                    _this.haveUnreadMessage=true;
+                                if (i == 0) {
+                                    hasUnread = true;
+                                    _this.haveUnreadMessage = true;
                                 }
                             }
                             content.avator = visitorMes["avator"];
@@ -1414,67 +1454,67 @@
                             _this.msgList.unshift(content);
                             //_this.scrollBottom();
                         }
-                    }else{
-                        _this.showLoadMore=false;
+                    } else {
+                        _this.showLoadMore = false;
                     }
-                    if(_this.currentPage==1){
+                    if (_this.currentPage == 1) {
                         _this.showWechatTip();
                         _this.scrollBottom();
                     }
 
                     _this.getNotice();
                     _this.currentPage++;
-                    _this.flyLang.moremessage=moreMessage;
-                    _this.loadMoreDisable=false;
+                    _this.flyLang.moremessage = moreMessage;
+                    _this.loadMoreDisable = false;
                 });
             },
-            showWechatTip:function(){
-                if(!GOFLY_CONFIG.SHOW_WECHAT){
+            showWechatTip: function () {
+                if (!GOFLY_CONFIG.SHOW_WECHAT) {
                     return;
                 }
                 var child = '<div class="wechatTip">';
-                child += '<img style="width:80px; margin:10px;" src="'+GOFLY_CONFIG.WECHAT_QR_URL+'?snow_id=' + this.visitor.visitor_id + '&id_type=visitor">';
+                child += '<img style="width:80px; margin:10px;" src="' + GOFLY_CONFIG.WECHAT_QR_URL + '?snow_id=' + this.visitor.visitor_id + '&id_type=visitor">';
                 child += '扫描左侧二维码可直接用微信登录。<br>可防止更换浏览器丢失消息、收不到回复。<br>并可接收回复通知</div>';
                 $(".chatBox").append(child);
             },
             //格式化时间
-            formatTime:function(time) {
+            formatTime: function (time) {
                 const parts = time.split(/[- :]/); // 使用正则表达式拆分日期字符串
-                const formattedDate = ${parts[1]}/${parts[2]}/${parts[0]} ${parts[3]}:${parts[4]}:${parts[5]};
+                const formattedDate = `${parts[1]}/${parts[2]}/${parts[0]} ${parts[3]}:${parts[4]}:${parts[5]}`;
                 return formattedDate;
             },
 
 
 
-            getVersion:function(){
-                if(IS_TRY=="false"){
+            getVersion: function () {
+                if (IS_TRY == "false") {
                     return;
                 }
                 this.$alert('当前为GOFLY试用版本，请点击底部链接获取授权', '警告！', {
                     confirmButtonText: '确定',
                 });
             },
-            selectLang:function(lang){
-                var url=changeURLPar(document.URL,"lang",lang);
-                document.location.href=url;
+            selectLang: function (lang) {
+                var url = changeURLPar(document.URL, "lang", lang);
+                document.location.href = url;
             },
             //focus事件处理
-            focusHandle(){
+            focusHandle() {
                 clearFlashTitle();
                 window.location.reload();
             }
         },
-        mounted:function() {
-            var _this=this;
+        mounted: function () {
+            var _this = this;
             document.addEventListener('paste', this.onPasteUpload);
-            document.addEventListener('scroll',this.textareaBlur);
-            window.addEventListener('message',function(e){
-                var msg=e.data;
-                if(msg.type=="inputing_message"){
+            document.addEventListener('scroll', this.textareaBlur);
+            window.addEventListener('message', function (e) {
+                var msg = e.data;
+                if (msg.type == "inputing_message") {
                     _this.sendInputingStrNow(msg.content);
                 }
-                if(msg.type=="send_message"){
-                    _this.messageContent=msg.content;
+                if (msg.type == "send_message") {
+                    _this.messageContent = msg.content;
                     _this.chatToUser();
                 }
             });
@@ -1493,32 +1533,33 @@
             //this.getVersion();
         },
         computed: {
-            getKefuAvatar () {
-                let  avator=""
+            getKefuAvatar() {
+                let avator = ""
                 for (let index = 0; index < this.msgList.length; index++) {
                     const el = this.msgList[index];
-                    if(el.is_kefu!=true){
-                        avator= el.avator
+                    if (el.is_kefu != true) {
+                        avator = el.avator
                         break
                     }
-                    
+
                 }
                 return avator
             },
-            getKefuName () {
-                let  name=""
+            getKefuName() {
+                let name = ""
                 for (let index = 0; index < this.msgList.length; index++) {
                     const el = this.msgList[index];
-                    if(el.is_kefu!=true){
-                        name= el.name
+                    if (el.is_kefu != true) {
+                        name = el.name
                         break
                     }
-                    
+
                 }
-                return name||'Online service'
+                return name || 'Online service'
             },
         }
     })
 
 </script>
+
 </html>
