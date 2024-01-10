@@ -98,4 +98,733 @@ some-comfig:
   #短信平台secretKey
   sms-secret-key: 'R77SRleU'
   #短信验证码,{0}为验证码参数，必须
-  sms-message: 'Your verification code is {0}, please ignore this message unless you operate by yourself'
+  sms-message: 'Your verification code is {0}, please ignore this message unless you operate by yourself'2023/12/18 16:03:56 565544
+2023/12/18 16:03:56 GOFLY服务运行路径:/www/wwwroot/chat_english
+成功结束进程: 
+2023/12/18 16:03:56 cleanRoom start...
+2023/12/18 16:03:56 28387 : 启动子进程成功: -> 28393 
+ 
+2023/12/18 16:03:56 565544
+2023/12/18 16:03:56 GOFLY服务运行路径:/www/wwwroot/chat_english
+成功结束进程: 
+2023/12/18 16:03:56 cleanRoom start...
+2023/12/18 16:03:56 子进程pid=28393: 开始运行...
+值:读取配置成功
+2023-12-18 21:33:56 
+2023/12/18 21:33:56 cleanLimitQueue start...
+2023/12/18 21:33:56 GOFLY服务开始运行:0.0.0.0:8081
+======
+2023/12/18 21:34:02 ws/user.go  websocket: close 1001 (going away)
+2023/12/18 21:34:07 send_kefu_message websocket: close sent {"type":"notice","data":{"avator":"/static/images/computer.png","content":"中国四川成都来了","username":"中国四川成都"}}
+2023/12/18 21:34:09 send_kefu_message websocket: close sent {"type":"userOnline","data":{"avator":"/static/images/computer.png","last_message":"新访客","uid":"1|1112263e-a09f-4e65-9b6f-36d4b95b45d8","unread_num":"0","username":"#1中国四川成都","visitor_id":"1|1112263e-a09f-4e65-9b6f-36d4b95b45d8"}}
+2023/12/18 21:34:18 send_kefu_message websocket: close sent {"type":"inputing","data":{"from":"1|1112263e-a09f-4e65-9b6f-36d4b95b45d8","to":"caonima888","content":"fg"}}
+2023/12/18 21:34:18 send_kefu_message websocket: close sent {"type":"inputing","data":{"from":"1|1112263e-a09f-4e65-9b6f-36d4b95b45d8","to":"caonima888","content":"fg"}}
+1
+2023/12/18 21:34:19 send_kefu_message websocket: close sent {"type":"message","data":{"msg_id":1,"name":"中国四川成都","avator":"/static/images/computer.png","id":"1|1112263e-a09f-4e65-9b6f-36d4b95b45d8","visitor_id":"1|1112263e-a09f-4e65-9b6f-36d4b95b45d8","group":"","time":"2023-12-18 21:34:19","to_id":"caonima888","content":"fgdfgdfg","city":"","client_ip":"","refer":"","is_kefu":"no"}}
+2023/12/18 21:34:28 send_kefu_message websocket: close sent {"type":"inputing","data":{"from":"1|1112263e-a09f-4e65-9b6f-36d4b95b45d8","to":"caonima888","content":"菜地"}}
+======
+2023/12/18 21:34:42 caonima888
+======
+1
+2023/12/18 21:35:50 ws/visitor.go conn.ReadMessage: websocket: close 1000 (normal) [] -1
+2023/12/18 21:35:54 ws/visitor.go conn.ReadMessage: websocket: close 1001 (going away) [] -1
+
+[35m(/www/wwwroot/chat_english/models/users.go:66)[0m 
+[33m[2023-12-18 21:35:54][0m [31;1m Error 1690: BIGINT UNSIGNED value is out of range in '(`go_fly_pro`.`user`.`rec_num` + ?)' [0m
+1
+2023/12/18 21:37:00 map[]
+1
+1
+2023/12/18 21:38:52 ws/user.go  websocket: close 1001 (going away)
+2023/12/18 21:38:52 map[]
+2023/12/18 21:39:03 map[]
+2023/12/18 21:39:32 caonima888
+======
+2023/12/18 21:39:54 ws/visitor.go conn.ReadMessage: websocket: close 1006 (abnormal closure): unexpected EOF [] -1
+
+[35m(/www/wwwroot/chat_english/models/users.go:66)[0m 
+[33m[2023-12-18 21:39:54][0m [31;1m Error 1690: BIGINT UNSIGNED value is out of range in '(`go_fly_pro`.`user`.`rec_num` + ?)' [0m
+2023/12/18 21:41:02 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 21:41:02 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/18 21:41:27 ws/visitor.go conn.ReadMessage: websocket: close 1006 (abnormal closure): unexpected EOF [] -1
+
+[35m(/www/wwwroot/chat_english/models/users.go:66)[0m 
+[33m[2023-12-18 21:41:27][0m [31;1m Error 1690: BIGINT UNSIGNED value is out of range in '(`go_fly_pro`.`user`.`rec_num` + ?)' [0m
+2023/12/18 21:41:54 ws/visitor.go conn.ReadMessage: websocket: close 1006 (abnormal closure): unexpected EOF [] -1
+2023/12/18 21:41:57 访客visitorId不存在: 1|1112263e-a09f-4e65-9b6f-36d4b95b45d8
+2023/12/18 21:42:01 访客visitorId不存在: 1|1112263e-a09f-4e65-9b6f-36d4b95b45d8
+2023/12/18 21:42:03 访客visitorId不存在: 1|1112263e-a09f-4e65-9b6f-36d4b95b45d8
+2023/12/18 21:42:06 访客visitorId不存在: 1|1112263e-a09f-4e65-9b6f-36d4b95b45d8
+2023/12/18 21:42:08 访客visitorId不存在: 1|1112263e-a09f-4e65-9b6f-36d4b95b45d8
+2023/12/18 21:42:10 访客visitorId不存在: 1|1112263e-a09f-4e65-9b6f-36d4b95b45d8
+2023/12/18 21:42:13 访客visitorId不存在: 1|1112263e-a09f-4e65-9b6f-36d4b95b45d8
+2023/12/18 21:42:16 访客visitorId不存在: 1|1112263e-a09f-4e65-9b6f-36d4b95b45d8
+2023/12/18 21:42:18 访客visitorId不存在: 1|1112263e-a09f-4e65-9b6f-36d4b95b45d8
+2023/12/18 21:42:20 访客visitorId不存在: 1|1112263e-a09f-4e65-9b6f-36d4b95b45d8
+2023/12/18 21:42:22 访客visitorId不存在: 1|1112263e-a09f-4e65-9b6f-36d4b95b45d8
+2023/12/18 21:42:29 ws/visitor.go conn.ReadMessage: websocket: close 1006 (abnormal closure): unexpected EOF [] -1
+
+[35m(/www/wwwroot/chat_english/models/users.go:66)[0m 
+[33m[2023-12-18 21:42:29][0m [31;1m Error 1690: BIGINT UNSIGNED value is out of range in '(`go_fly_pro`.`user`.`rec_num` + ?)' [0m
+2023/12/18 21:43:32 ws/visitor.go conn.ReadMessage: websocket: close 1006 (abnormal closure): unexpected EOF [] -1
+2023/12/18 21:44:35 ws/visitor.go conn.ReadMessage: websocket: close 1006 (abnormal closure): unexpected EOF [] -1
+2023/12/18 21:45:39 ws/visitor.go conn.ReadMessage: websocket: close 1006 (abnormal closure): unexpected EOF [] -1
+2023/12/18 21:46:17 ws/visitor.go conn.ReadMessage: websocket: close 1006 (abnormal closure): unexpected EOF [] -1
+2023/12/18 21:47:50 ws/visitor.go conn.ReadMessage: websocket: close 1006 (abnormal closure): unexpected EOF [] -1
+2023/12/18 21:49:10 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 21:49:10 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/18 21:50:54 ws/visitor.go conn.ReadMessage: websocket: close 1006 (abnormal closure): unexpected EOF [] -1
+
+[35m(/www/wwwroot/chat_english/models/users.go:66)[0m 
+[33m[2023-12-18 21:50:54][0m [31;1m Error 1690: BIGINT UNSIGNED value is out of range in '(`go_fly_pro`.`user`.`rec_num` + ?)' [0m
+2023/12/18 21:52:13 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 21:52:13 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/18 21:52:54 ws/visitor.go conn.ReadMessage: websocket: close 1006 (abnormal closure): unexpected EOF [] -1
+
+[35m(/www/wwwroot/chat_english/models/users.go:66)[0m 
+[33m[2023-12-18 21:52:54][0m [31;1m Error 1690: BIGINT UNSIGNED value is out of range in '(`go_fly_pro`.`user`.`rec_num` + ?)' [0m
+2023/12/18 21:53:09 ws/visitor.go conn.ReadMessage: websocket: close 1000 (normal) [] -1
+2023/12/18 21:54:15 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 21:54:15 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/18 21:56:17 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 21:56:17 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/18 21:58:19 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 21:58:19 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/18 22:00:21 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/18 22:02:23 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 22:02:23 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/18 22:02:28 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/18 22:04:25 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 22:04:25 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/18 22:06:27 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 22:06:27 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/18 22:08:29 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 22:08:29 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/18 22:10:31 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/18 22:12:33 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 22:12:33 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/18 22:14:35 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 22:14:35 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/18 22:16:37 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 22:16:37 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/18 22:18:39 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 22:18:39 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/18 22:20:41 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/18 22:22:43 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 22:22:43 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/18 22:24:45 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 22:24:45 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/18 22:26:47 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 22:26:47 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/18 22:28:49 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 22:28:49 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/18 22:28:54 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/18 22:30:51 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/18 22:32:53 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 22:32:53 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/18 22:34:55 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/18 22:36:57 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 22:36:57 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/18 22:38:59 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 22:38:59 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/18 22:41:01 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/18 22:41:01 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 00:00:00 cleanLimitQueue start...
+2023/12/19 05:30:00 cleanRoom start...
+2023/12/19 00:00:00 cleanRoom start...
+======
+======
+2023/12/19 11:53:20 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 11:53:20 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 11:55:22 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 11:57:24 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 11:57:24 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 11:59:26 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 11:59:26 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:01:28 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:01:28 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:03:30 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:03:30 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:03:36 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 12:05:32 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 12:07:34 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:07:34 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:09:36 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:09:36 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:11:38 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:11:38 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:13:40 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:13:40 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:15:42 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 12:17:44 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:17:44 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:19:46 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:19:46 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:21:48 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:21:48 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:23:50 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:23:50 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:25:52 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:25:52 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:27:54 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:27:54 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:29:56 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 12:31:58 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:31:58 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:34:00 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:34:00 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:36:02 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:36:02 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:38:04 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:38:04 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:40:06 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 12:42:08 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:42:08 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:44:10 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:44:10 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:46:12 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:46:12 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:48:15 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:48:15 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:50:17 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 12:52:19 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:52:19 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:54:21 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:54:21 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:56:23 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:56:23 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 12:58:25 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 12:58:25 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:00:27 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 13:02:29 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:02:29 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:04:31 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:04:31 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:06:33 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:06:33 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:08:35 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:08:35 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:10:37 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 13:12:39 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:12:39 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:14:41 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:14:41 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:16:43 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:16:43 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:18:45 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:18:45 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:20:47 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 13:22:49 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:22:49 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:24:51 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:24:51 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:26:53 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:26:53 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:28:55 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:28:55 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:30:57 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:30:57 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:32:59 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:32:59 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:35:01 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 13:37:03 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:37:03 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:39:05 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:39:05 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:41:07 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:41:07 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:43:09 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:43:09 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:45:11 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 13:47:13 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:47:13 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:49:15 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:49:15 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:51:17 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:51:17 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:53:19 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:53:19 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 13:55:21 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 13:55:21 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:01:27 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:01:27 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:03:29 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:03:29 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:05:31 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 15:07:33 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:07:33 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:09:35 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:09:35 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:11:37 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:11:37 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:13:39 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:13:39 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:15:41 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 15:17:43 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:17:43 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:19:45 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:19:45 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:19:50 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 15:21:47 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:21:47 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:23:49 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:23:49 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:25:51 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 15:27:53 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:27:53 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:29:55 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 15:31:57 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:31:57 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:33:59 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:33:59 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:36:01 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:36:01 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:38:03 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:38:03 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:40:05 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 15:42:07 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:42:07 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:44:09 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:44:09 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:46:11 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:46:11 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:48:13 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:48:13 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:50:15 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 15:52:17 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:52:17 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:54:19 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:54:19 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:56:21 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:56:21 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 15:58:23 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 15:58:23 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 16:00:25 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 16:01:26 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:01:28 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:01:28 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:03:30 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:03:30 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:03:34 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 19:05:32 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 19:07:34 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:07:34 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:09:36 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:09:36 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:09:40 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 19:11:38 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:11:38 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:13:40 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:13:40 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:15:42 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 19:17:44 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:17:44 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:19:46 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:19:46 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:19:50 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 19:21:48 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:21:48 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:23:50 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:23:50 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:25:52 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:25:52 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:27:54 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:27:54 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:29:56 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 19:31:58 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:31:58 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:34:00 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:34:00 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:36:02 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:36:02 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:38:04 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:38:04 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:40:06 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 19:42:08 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:42:08 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:44:10 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:44:10 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:46:12 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:46:12 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:46:16 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 19:48:14 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:48:14 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:50:16 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 19:52:18 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:52:18 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:54:20 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:54:20 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:56:22 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:56:22 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 19:58:24 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 19:58:24 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 20:00:26 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 20:01:27 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 21:05:31 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 21:05:32 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 21:07:33 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 21:07:33 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 21:09:35 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 21:09:35 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 21:11:37 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 21:11:37 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 21:13:39 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 21:13:39 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 21:15:41 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 21:17:43 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 21:17:43 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 21:17:48 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 21:19:45 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 21:19:45 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 21:21:47 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 21:21:47 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 21:23:49 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 21:23:49 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 21:25:51 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 21:27:53 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 21:27:53 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+======
+2023/12/19 21:29:55 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 21:30:00 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+======
+2023/12/19 21:31:57 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/19 21:31:57 ws/user.go  websocket: close 1006 (abnormal closure): unexpected EOF
+2023/12/20 00:00:00 cleanRoom start...
+2023/12/20 00:00:00 cleanLimitQueue start...
+2023/12/20 00:00:00 cleanRoom start...
+2023/12/21 00:00:00 cleanRoom start...
+2023/12/21 00:00:00 cleanLimitQueue start...
+2023/12/21 00:00:00 cleanRoom start...
+2023/12/22 00:00:00 cleanLimitQueue start...
+2023/12/22 00:00:00 cleanRoom start...
+2023/12/22 00:00:00 cleanRoom start...
+2023/12/23 00:00:00 cleanRoom start...
+2023/12/23 00:00:00 cleanLimitQueue start...
+2023/12/23 00:00:00 cleanRoom start...
+2023/12/24 00:00:00 cleanRoom start...
+2023/12/24 00:00:00 cleanLimitQueue start...
+2023/12/24 00:00:00 cleanRoom start...
+2023/12/25 00:00:00 cleanRoom start...
+2023/12/25 00:00:00 cleanLimitQueue start...
+2023/12/25 00:00:00 cleanRoom start...
+2023/12/26 00:00:00 cleanRoom start...
+2023/12/26 00:00:00 cleanLimitQueue start...
+2023/12/26 00:00:00 cleanRoom start...
+2023/12/27 00:00:00 cleanRoom start...
+2023/12/27 00:00:00 cleanLimitQueue start...
+2023/12/27 00:00:00 cleanRoom start...
+2023/12/28 00:00:00 cleanRoom start...
+2023/12/28 00:00:00 cleanLimitQueue start...
+2023/12/28 00:00:00 cleanRoom start...
+用户名:caonima888
+密码:caonima888
+======
+2023/12/28 22:03:33 caonima888
+======
+2023/12/28 22:03:34 ws/user.go  websocket: close 1001 (going away)
+2023/12/28 22:03:35 map[]
+[{1 2020-07-02 14:36:46 +0530 IST 2023-12-28 22:03:34 +0530 IST 2030-07-04 09:32:20 +0530 IST caonima888 7607e2066670eb663e316329d805d5ae 菜地超管 /static/images/user/2.jpg 0 0 10 0 1 0 超级管理员 1 }]
+2023/12/28 22:03:50 ws/user.go  websocket: close 1001 (going away)
+======
+2023/12/28 22:31:22 ws/user.go  websocket: close 1001 (going away)
+======
+2023/12/28 22:31:28 ws/user.go  websocket: close 1001 (going away)
+======
