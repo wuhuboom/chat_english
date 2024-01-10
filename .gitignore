@@ -7,4 +7,5 @@ config.yaml
 config/mysql.json
 web_app.log
 static/images/favicon.ico
+static/upload/
 
