@@ -6,7 +6,6 @@ import (
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/zh-five/xdaemon"
 	"go-fly-muti/common"
 	"go-fly-muti/controller"
@@ -74,12 +73,12 @@ func run(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	//设置时区
-	loc, err := time.LoadLocation(viper.GetString("app.timeZone"))
-	if err == nil {
-		time.Local = loc // -> this is setting the global timezone
-		fmt.Println(time.Now().Format("2006-01-02 15:04:05 "))
-	}
+	////设置时区
+	//loc, err := time.LoadLocation(viper.GetString("app.timeZone"))
+	//if err == nil {
+	//	time.Local = loc // -> this is setting the global timezone
+	//	fmt.Println(time.Now().Format("2006-01-02 15:04:05 "))
+	//}
 
 	gin.SetMode(gin.ReleaseMode)
 	//engine := gin.Default()
@@ -140,7 +139,7 @@ func run(cmd *cobra.Command, args []string) {
 
 }
 
-//初始化目录
+// 初始化目录
 func initDir() {
 	if rootPath == "" {
 		rootPath = tools.GetRootPath()
@@ -170,7 +169,7 @@ func initDir() {
 	}
 }
 
-//初始化守护进程
+// 初始化守护进程
 func initDaemon() {
 	//启动进程之前要先杀死之前的金额
 
