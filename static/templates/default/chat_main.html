@@ -222,7 +222,7 @@
                             <el-tab-pane :label="flyLang.visitorProfile" name="visitorInfo">
                                 <div class="profile">
                                     <el-tooltip content="点击加入黑名单" placement="left">
-                                    <div class="profileItem" v-on:click="showAddIpBlackDialog(visitor.source_ip)">
+                                    <div class="profileItem" v-on:click="addIpblack(visitor.source_ip)">
                                         <div class="profileLeft"><i class="el-icon-place"></i>
                                             <{flyLang.ipAddress}>
                                         </div>
@@ -578,18 +578,7 @@
                 <el-button @click="editReplyContentDialog = false"><{flyLang.cancel}></el-button>
               </span>
         </el-dialog>
-        <!--IP黑名单确认对话框-->
-        <el-dialog
-                title="确认加入黑名单"
-                :visible.sync="ipBlackDialog"
-                width="30%"
-                top="0">
-            <span>确定要将IP <{tempIp}> 加入黑名单吗？</span>
-            <span slot="footer" class="dialog-footer">
-                <el-button @click="ipBlackDialog = false">取消</el-button>
-                <el-button type="primary" @click="confirmAddIpBlack">确定</el-button>
-            </span>
-        </el-dialog>
+        <!--//回复内容-->
     </template>
 </div>
 </body>
