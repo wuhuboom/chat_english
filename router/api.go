@@ -6,7 +6,6 @@ import (
 	controllerV2 "go-fly-muti/controller/v2"
 	"go-fly-muti/middleware"
 	"go-fly-muti/ws"
-
 )
 
 func InitApiRouter(engine *gin.Engine) {
@@ -14,7 +13,7 @@ func InitApiRouter(engine *gin.Engine) {
 	ucv1 := engine.Group("/uc/v1", middleware.Ipblack, middleware.SetLanguage)
 	{
 		//刷新token
-		ucv1.POST("/refreshToken", controllerV2.PostRefreshTokenV1)
+		ucv1.POST("/refreshgit remote -vToken", controllerV2.PostRefreshTokenV1)
 		//刷新token
 		ucv1.POST("/loginCheck", controller.LoginCheckPass)
 		//访客登录
@@ -179,7 +178,7 @@ func InitApiRouter(engine *gin.Engine) {
 	}
 	engine.GET("/captcha", controller.GetCaptcha)
 	engine.POST("/check", controller.LoginCheckPass)
-	engine.POST("/JyKey",controller.JyKey)
+	engine.POST("/JyKey", controller.JyKey)
 
 	engine.POST("/check_auth", middleware.JwtApiMiddleware, controller.MainCheckAuth)
 	engine.GET("/userinfo", middleware.JwtApiMiddleware, controller.GetKefuInfoAll)
@@ -271,7 +270,7 @@ func InitApiRouter(engine *gin.Engine) {
 	{
 		systemGroup.GET("/stop", controller.GetStop)
 		//systemGroup.POST("/saveNews", controller.PostNews)
-	//	systemGroup.GET("/delNews", controller.DelNews)
+		//	systemGroup.GET("/delNews", controller.DelNews)
 	}
 	//版本信息
 	engine.GET("/version", controller.GetVersion)
