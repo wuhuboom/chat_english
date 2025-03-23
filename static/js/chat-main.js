@@ -1,5 +1,22 @@
 var getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 var LANG=checkLang();
+
+// 定义确认方法
+function confirmAddIpblack(ip) {
+    this.$confirm('确认要将该IP加入黑名单吗?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+    }).then(() => {
+        this.addIpblack(ip);
+    }).catch(() => {
+        this.$message({
+            type: 'info',
+            message: '已取消操作'
+        });
+    });
+}
+
 var app=new Vue({
     el: '#app',
     delimiters:["<{","}>"],
@@ -95,6 +112,7 @@ var app=new Vue({
         openUrl(url) {
             window.location.href = url;
         },
+        confirmAddIpblack: confirmAddIpblack,
         sendKefuOnline(){
             let mes = {}
             mes.type = "kfOnline";
