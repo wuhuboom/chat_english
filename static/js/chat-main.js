@@ -89,6 +89,8 @@ var app=new Vue({
         inputValue: '',
         allTags:[],
         editor:null,
+        ipBlackDialog: false,
+        tempIp: '',
     },
     methods: {
         //跳转
@@ -1430,6 +1432,14 @@ var app=new Vue({
             }
             this.editor.destroy();
             this.editor = null;
+        },
+        showAddIpBlackDialog(ip) {
+            this.tempIp = ip;
+            this.ipBlackDialog = true;
+        },
+        confirmAddIpBlack() {
+            this.addIpblack(this.tempIp);
+            this.ipBlackDialog = false;
         },
     },
     mounted() {
