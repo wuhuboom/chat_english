@@ -16,7 +16,7 @@ var loadJs=function(url,callback){
     script.src = url;
     document.getElementsByTagName('head')[0].appendChild(script);
 };
-loadJs("https://cdn.staticfile.org/jquery/3.6.0/jquery.min.js",function(){
+loadJs("/static/jquery/3.6.0/jquery.min.js",function(){
     loadJs("https://cdn.bootcdn.net/ajax/libs/layer/3.1.1/layer.min.js" ,function () {
         $(function () {
             var goflyKefuId="";

@@ -71,13 +71,13 @@ GOFLY.init=function(config){
         _this.GOFLY_EXTRA=utf8ToB64(_this.GOFLY_EXTRA);
     });
     if (typeof $!="function"){
-        this.dynamicLoadJs("https://cdn.staticfile.org/jquery/3.6.0/jquery.min.js",function () {
-            _this.dynamicLoadJs("https://cdn.staticfile.org/layer/3.4.0/layer.min.js",function () {
+        this.dynamicLoadJs("/static/jquery/3.6.0/jquery.min.js",function () {
+            _this.dynamicLoadJs("/static/layer/3.4.0/layer.min.js",function () {
                 _this.jsCallBack();
             });
         });
     }else{
-        this.dynamicLoadJs("https://cdn.staticfile.org/layer/3.4.0/layer.min.js",function () {
+        this.dynamicLoadJs("/static/layer/3.4.0/layer.min.js",function () {
             _this.jsCallBack();
         });
     }
