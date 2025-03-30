@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/spf13/viper"
 	"go-fly-muti/models"
+	"go-fly-muti/tools"
 	"go.uber.org/zap"
 	"io"
 	"net/http"
@@ -12,9 +13,12 @@ import (
 	"time"
 )
 
+var AlliD []uint
+
 func CheckUnreadMes() {
 
 	type MessageKefu struct {
+		ID        uint      `gorm:"primary_key" json:"id"`
 		VisitorId string    `json:"visitor_id"`
 		Name      string    `json:"name"`
 		KefuId    string    `json:"kefu_id"`
@@ -30,9 +34,15 @@ func CheckUnreadMes() {
 			cu.KeFuUsername = v.KefuId
 			//大于5分钟
 			if time.Now().Unix()-v.CreatedAt.Unix() > 300 {
+				b, _ := tools.InArray(v.ID, AlliD)
+				if b {
+					//这个五分钟已经报警过了
+					fmt.Println(fmt.Sprintf("这个五分钟已经报警过了,%d", v.ID))
+					continue
+				}
 				cu.TimeOut = 5
 				msg = "\n❌已经超过5分钟已经没有回复玩家,\n❌玩家用户名: " + v.Name
-
+				AlliD = append(AlliD, v.ID)
 			} else {
 				//大于1分钟 小于 5分钟
 				cu.TimeOut = 1
