@@ -49,6 +49,8 @@ func NewConnect(mysqlConfigFile string) error {
 		return err
 	}
 	DB.SingularTable(true)
+
+	CheckIsExistModelAdmin()
 	//DB.LogMode(true)
 	DB.DB().SetMaxIdleConns(10)
 	DB.DB().SetMaxOpenConns(100)
