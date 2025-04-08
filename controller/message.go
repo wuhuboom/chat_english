@@ -10,6 +10,7 @@ import (
 	"go-fly-muti/tools"
 	"go-fly-muti/types"
 	"go-fly-muti/ws"
+	"go.uber.org/zap"
 	"log"
 	"os"
 	"path"
@@ -255,6 +256,8 @@ func UploadImg(c *gin.Context) {
 			"code": 400,
 			"msg":  "上传失败!",
 		})
+
+		zap.L().Debug("err: 261 ->" + err.Error())
 		return
 	} else {
 
@@ -264,6 +267,7 @@ func UploadImg(c *gin.Context) {
 				"code": 400,
 				"msg":  "上传失败!只允许png,jpg,gif,jpeg文件",
 			})
+			zap.L().Debug("err: 271 ->上传失败!只允许png,jpg,gif,jpeg文件")
 			return
 		}
 
@@ -591,7 +595,7 @@ func DeleteMessage(c *gin.Context) {
 	})
 }
 
-//删除访客聊天记录
+// 删除访客聊天记录
 func DeleteVisitorMessage(c *gin.Context) {
 	entId, _ := c.Get("ent_id")
 	visitorId := c.Query("visitor_id")
