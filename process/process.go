@@ -43,11 +43,10 @@ func CheckUnreadMes() {
 				cu.TimeOut = 5
 				msg = "\n❌已经超过5分钟已经没有回复玩家,\n❌玩家用户名: " + v.Name
 				AlliD = append(AlliD, v.ID)
-			} else {
+			} else if time.Now().Unix()-v.CreatedAt.Unix() > 60 {
 				//大于1分钟 小于 5分钟
 				cu.TimeOut = 1
-				msg = "\n已经超过分钟已经没有回复玩家,\n玩家用户名: " + v.Name
-
+				msg = "\n已经超过1分钟已经没有回复玩家,\n玩家用户名: " + v.Name
 			}
 			//生成日志
 			cu.Created()
