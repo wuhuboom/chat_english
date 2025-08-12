@@ -85,6 +85,9 @@ func run(cmd *cobra.Command, args []string) {
 	//engine := gin.Default()
 	engine := gin.New()
 	engine.Use(gin.Recovery())
+
+	engine.MaxMultipartMemory = 32 << 20 // 8MB
+
 	//是否编译模板
 	if common.IsCompireTemplate {
 		templ := template.Must(template.New("").ParseFS(static.TemplatesEmbed, "templates/**/*.html"))

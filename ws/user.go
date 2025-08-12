@@ -111,6 +111,7 @@ func OneKefuMessage(toId string, str []byte) {
 		for _, kefu := range mKefuConns {
 			kefu.Mux.Lock()
 			defer kefu.Mux.Unlock()
+
 			error := kefu.Conn.WriteMessage(websocket.TextMessage, str)
 			if error != nil {
 				//if websocket.IsCloseError(error, websocket.CloseGoingAway) {
