@@ -3,6 +3,7 @@ package tools
 import (
 	"errors"
 	"github.com/ipipdotnet/ipdb-go"
+	"github.com/oschwald/geoip2-golang"
 	"net"
 	"strings"
 )
@@ -80,7 +81,25 @@ func getIpFromAddr(addr net.Addr) net.IP {
 	return ip
 }
 
-//获取出站IP地址
+func ParseIpNew2(myip string) *CityInfo {
+	var cityInfo = &CityInfo{}
+	db, err := geoip2.Open("./config/GeoLite2-Country.mmdb")
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+	ip := net.ParseIP(myip)
+	record, err := db.City(ip)
+	if err != nil {
+		panic(err)
+	}
+	cityInfo.CountryName = record.Country.Names["en"]
+	cityInfo.CityName = record.City.Names["en"]
+	cityInfo.RegionName = record.RegisteredCountry.Names["en"]
+	return cityInfo
+}
+
+// 获取出站IP地址
 func GetOutboundIP() (net.IP, error) {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {

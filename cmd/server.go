@@ -12,7 +12,6 @@ import (
 	"go-fly-muti/logger"
 	"go-fly-muti/middleware"
 	"go-fly-muti/models"
-	"go-fly-muti/process"
 	"go-fly-muti/router"
 	"go-fly-muti/setting"
 	"go-fly-muti/static"
@@ -118,7 +117,7 @@ func run(cmd *cobra.Command, args []string) {
 	go ws.UpdateVisitorStatusCron()
 
 	//定时检查客服是否有未读信息
-	go process.CheckUnreadMes()
+	//go process.CheckUnreadMes()
 
 	log.Println("GOFLY服务开始运行:" + baseServer)
 	//性能监控

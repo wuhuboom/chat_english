@@ -92,7 +92,15 @@ func PostVisitorLogin(c *gin.Context) {
 		form.Avator, _ = url.QueryUnescape(form.Avator)
 	}
 
-	ipCity := tools.ParseIpNew(c.ClientIP())
+	//ipCity := tools.ParseIpNew(c.ClientIP())
+
+	//ipCity := tools.ParseIpNew("101.44.80.66")
+
+	//fmt.Println(c.ClientIP())
+	//fmt.Println(ipCity)
+	ipCity := tools.ParseIpNew2(c.ClientIP())
+	//fmt.Println(ipCity)
+
 	if ipCity != nil {
 		form.CityAddress = ipCity.CountryName + ipCity.RegionName + ipCity.CityName
 	} else {
