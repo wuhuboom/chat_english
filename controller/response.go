@@ -16,13 +16,14 @@ type Response struct {
 	result interface{} `json:"result"`
 }
 type ChatMessage struct {
-	MsgId      uint   `json:"msg_id"`
-	Time       string `json:"time"`
-	Content    string `json:"content"`
-	MesType    string `json:"mes_type"`
-	Name       string `json:"name"`
-	Avator     string `json:"avator"`
-	ReadStatus string `json:"read_status"`
+	MsgId      uint      `json:"msg_id"`
+	Time       string    `json:"time"`
+	Content    string    `json:"content"`
+	MesType    string    `json:"mes_type"`
+	Name       string    `json:"name"`
+	Avator     string    `json:"avator"`
+	ReadStatus string    `json:"read_status"`
+	Time2      time.Time `json:"time2" `
 }
 type VisitorOnline struct {
 	Id          uint      `json:"id"`

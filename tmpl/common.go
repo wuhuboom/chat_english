@@ -1,11 +1,12 @@
 package tmpl
 
 import (
-	"github.com/gin-gonic/gin"
 	"go-fly-muti/models"
 	"go-fly-muti/tools"
 	"html/template"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type CommonHtml struct {
@@ -42,7 +43,7 @@ func (obj *CommonHtml) Display(file string, data interface{}) {
 	t.Execute(obj.Rw, data)
 }
 
-//登陆界面
+// 登陆界面
 func PageMain(c *gin.Context) {
 	SystemTitle := models.FindConfig("SystemTitle")
 	SystemKefu := models.FindConfig("SystemKefu")
@@ -54,12 +55,12 @@ func PageMain(c *gin.Context) {
 	})
 }
 
-//客服界面
+// 客服界面
 func PageChatMain(c *gin.Context) {
 	c.HTML(http.StatusOK, "chat_main.html", nil)
 }
 
-//安装界面
+// 安装界面
 func PageInstall(c *gin.Context) {
 	if noExist, _ := tools.IsFileNotExist("./install.lock"); !noExist {
 		c.Redirect(302, "/login")

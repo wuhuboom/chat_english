@@ -38,6 +38,8 @@ func CreateMessage(kefu_id string, visitor_id string, content string, mes_type s
 		Status:    status,
 		EntId:     ent_id,
 	}
+	//fmt.Println("消息入库")
+	//fmt.Println(v)
 	DB.Create(v)
 	return v.ID
 }

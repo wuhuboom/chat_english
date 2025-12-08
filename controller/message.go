@@ -3,20 +3,21 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
 	"go-fly-muti/common"
 	"go-fly-muti/models"
 	"go-fly-muti/tools"
 	"go-fly-muti/types"
 	"go-fly-muti/ws"
-	"go.uber.org/zap"
 	"log"
 	"os"
 	"path"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
+	"go.uber.org/zap"
 )
 
 type VisitorMessageForm struct {
@@ -615,6 +616,11 @@ func CommonMessagesPage(page, pagesize uint, visitorId, entId string) []ChatMess
 		var chatMessage ChatMessage
 		chatMessage.MsgId = message.ID
 		chatMessage.Time = message.CreatedAt.Format("2006-01-02 15:04:05")
+
+		//--
+		chatMessage.Time2 = message.CreatedAt
+		//fmt.Println(message.CreatedAt)
+
 		chatMessage.Content = message.Content
 		chatMessage.MesType = message.MesType
 		chatMessage.ReadStatus = message.Status
