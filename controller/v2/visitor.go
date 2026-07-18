@@ -80,7 +80,7 @@ func VisitorLogin(form VisitorLoginForm) gin.H {
 	//自动分配
 	serviceUser := entUserInfo
 	allOffline := true
-	if _, ok := ws.KefuList[form.ToId]; ok {
+	if ws.IsKefuOnline(form.ToId) {
 		serviceUser = entUserInfo
 		allOffline = false
 	} else {
@@ -92,7 +92,7 @@ func VisitorLogin(form VisitorLoginForm) gin.H {
 			form.ToId = entUserInfo.Name
 		} else {
 			for _, kefu := range kefus {
-				if _, ok := ws.KefuList[kefu.Name]; ok {
+				if ws.IsKefuOnline(kefu.Name) {
 					serviceUser = kefu
 					form.ToId = kefu.Name
 					allOffline = false

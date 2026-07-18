@@ -12,7 +12,7 @@ func TestJwt(t *testing.T) {
 		Username:   "kefu2",
 		RoleId:     2,
 		Pid:        1,
-		CreateTime: time.Now(),
+		CreateTime: time.Now().Format("2006-01-02 15:04:05"),
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Unix() + 24*3600,
 		},

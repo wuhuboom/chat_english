@@ -136,18 +136,15 @@ func PostVisitorLogin(c *gin.Context) {
 	//判断商户是否在线
 	dstKefu := models.FindUser(form.ToId)
 	//判断是否在线
-	_, ok := ws.KefuList[form.ToId]
-	if dstKefu.OnlineStatus == 1 && ok {
+	if dstKefu.OnlineStatus == 1 && ws.IsKefuOnline(form.ToId) {
 		allOffline = false
 	} else {
-		fmt.Println("内存在线客服")
-		fmt.Println(ws.KefuList)
 		Mes := models.Message{}
 		err := models.DB.Where("visitor_id=?", form.VisitorId).Order("created_at desc").First(&Mes).Error
 		uu := models.User{}
 		err11 := models.DB.Where("name=? and  online_status = 1", Mes.KefuId).First(&uu).Error
 		if err == nil && err11 == nil {
-			if _, ok := ws.KefuList[uu.Name]; ok {
+			if ws.IsKefuOnline(uu.Name) {
 				form.ToId = uu.Name
 				allOffline = false
 				dstKefu = uu
@@ -159,7 +156,7 @@ func PostVisitorLogin(c *gin.Context) {
 				form.ToId = entKefuInfo.Name
 			} else {
 				for _, kefu := range kefus {
-					if _, ok := ws.KefuList[kefu.Name]; ok {
+					if ws.IsKefuOnline(kefu.Name) {
 						form.ToId = kefu.Name
 						allOffline = false
 						dstKefu = kefu

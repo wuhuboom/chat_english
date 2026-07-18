@@ -76,7 +76,7 @@ func NewVisitorServer(c *gin.Context) {
 		}
 
 		message <- &Message{
-			conn:        conn,
+			user:        user,
 			content:     receive,
 			context:     c,
 			messageType: messageType,
@@ -93,7 +93,7 @@ func AddVisitorToList(user *User) {
 			Data: user.Id,
 		}
 		closeStr, _ := json.Marshal(closemsg)
-		if err := oldUser.Conn.WriteMessage(websocket.TextMessage, closeStr); err != nil {
+		if err := writeUserMessage(oldUser, websocket.TextMessage, closeStr); err != nil {
 			oldUser.Conn.Close()
 			user.UpdateTime = oldUser.UpdateTime
 			delete(ClientList, user.Id)
@@ -160,7 +160,7 @@ func VisitorNotice(visitorId string, notice string) {
 	if !ok || visitor == nil || visitor.Conn == nil {
 		return
 	}
-	visitor.Conn.WriteMessage(websocket.TextMessage, str)
+	_ = writeUserMessage(visitor, websocket.TextMessage, str)
 }
 func VisitorCustomMessage(visitorId string, notice TypeMessage) {
 	str, _ := json.Marshal(notice)
@@ -168,7 +168,7 @@ func VisitorCustomMessage(visitorId string, notice TypeMessage) {
 	if !ok || visitor == nil || visitor.Conn == nil {
 		return
 	}
-	visitor.Conn.WriteMessage(websocket.TextMessage, str)
+	_ = writeUserMessage(visitor, websocket.TextMessage, str)
 }
 func VisitorTransfer(visitorId string, kefuId string) {
 	msg := TypeMessage{
@@ -180,7 +180,7 @@ func VisitorTransfer(visitorId string, kefuId string) {
 	if !ok || visitor == nil || visitor.Conn == nil {
 		return
 	}
-	visitor.Conn.WriteMessage(websocket.TextMessage, str)
+	_ = writeUserMessage(visitor, websocket.TextMessage, str)
 }
 func VisitorMessage(visitorId, content string, kefuInfo models.User) {
 	msg := TypeMessage{
@@ -200,7 +200,7 @@ func VisitorMessage(visitorId, content string, kefuInfo models.User) {
 	if !ok || visitor == nil || visitor.Conn == nil {
 		return
 	}
-	visitor.Conn.WriteMessage(websocket.TextMessage, str)
+	_ = writeUserMessage(visitor, websocket.TextMessage, str)
 }
 func VisitorAutoReply(vistorInfo models.Visitor, kefuInfo models.User, content string) {
 	//var entInfo models.User
@@ -236,7 +236,7 @@ func CleanVisitorExpire() {
 						Data: user.Id,
 					}
 					str, _ := json.Marshal(msg)
-					if err := user.Conn.WriteMessage(websocket.TextMessage, str); err != nil {
+					if err := writeUserMessage(user, websocket.TextMessage, str); err != nil {
 						user.Conn.Close()
 						delete(ClientList, user.Id)
 						VisitorOffline(user.To_id, user.Id, user.Name)

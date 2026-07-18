@@ -61,7 +61,7 @@ func GetNotice(c *gin.Context) {
 		if user.Name == kefuId {
 			kefu = user
 		}
-		if _, ok := ws.KefuList[user.Name]; ok {
+		if ws.IsKefuOnline(user.Name) {
 			allOffline = false
 			onlineUser = user
 		}
@@ -79,7 +79,7 @@ func GetNotice(c *gin.Context) {
 	if kefuId != "" {
 		welcomes = models.FindWelcomesByKeyword(kefu.Name, "welcome")
 	}
-	if _, ok := ws.KefuList[ent.Name]; ok {
+	if ws.IsKefuOnline(ent.Name) {
 		allOffline = false
 		onlineUser = ent
 	}

@@ -129,7 +129,7 @@ func GetStatistics(c *gin.Context) {
 		}
 	}
 	kefuSession := 0
-	for _, kefus := range ws.KefuList {
+	for _, kefus := range ws.KefuListSnapshot() {
 		for _, c := range kefus {
 			if c.Ent_id == fmt.Sprintf("%v", entId) {
 				kefuSession++

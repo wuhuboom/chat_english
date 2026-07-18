@@ -65,8 +65,7 @@ func GetOtherKefuList(c *gin.Context) {
 		item["nickname"] = kefu.Nickname
 		item["avator"] = kefu.Avator
 		item["status"] = "offline"
-		kefus, ok := ws.KefuList[kefu.Name]
-		if ok && len(kefus) != 0 {
+		if ws.IsKefuOnline(kefu.Name) {
 			item["status"] = "online"
 		}
 		result = append(result, item)
@@ -528,7 +527,7 @@ func DeleteKefuInfoOwn(c *gin.Context) {
 	})
 }
 
-//更新用户的在线状态
+// 更新用户的在线状态
 func GetUpdateOnlineStatus(c *gin.Context) {
 	status := c.Query("status")
 	statusInt, _ := strconv.Atoi(status)

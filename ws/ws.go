@@ -26,11 +26,10 @@ type User struct {
 	UpdateTime time.Time
 }
 type Message struct {
-	conn        *websocket.Conn
+	user        *User
 	context     *gin.Context
 	content     []byte
 	messageType int
-	Mux         sync.Mutex
 }
 type TypeMessage struct {
 	Type interface{} `json:"type"`
@@ -64,6 +63,18 @@ var message = make(chan *Message, 10)
 var upgrader = websocket.Upgrader{}
 var Mux sync.RWMutex
 
+const websocketWriteTimeout = 5 * time.Second
+
+func writeUserMessage(user *User, messageType int, content []byte) error {
+	if user == nil || user.Conn == nil {
+		return fmt.Errorf("websocket connection is unavailable")
+	}
+	user.Mux.Lock()
+	defer user.Mux.Unlock()
+	_ = user.Conn.SetWriteDeadline(time.Now().Add(websocketWriteTimeout))
+	return user.Conn.WriteMessage(messageType, content)
+}
+
 func init() {
 	upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -93,7 +104,7 @@ func SendServerJiang(title string, content string, domain string) string {
 func UpdateVisitorStatusCron() {
 	for {
 		SendPingToKefuClient()
-		time.Sleep(61 * time.Second)
+		time.Sleep(25 * time.Second)
 	}
 }
 
@@ -102,12 +113,14 @@ func WsServerBackend() {
 	for {
 		message := <-message
 		var typeMsg TypeMessage
-		json.Unmarshal(message.content, &typeMsg)
-		conn := message.conn
-		if typeMsg.Type == nil || typeMsg.Data == nil {
+		if err := json.Unmarshal(message.content, &typeMsg); err != nil {
+			log.Println("invalid websocket message:", err)
 			continue
 		}
-		msgType := typeMsg.Type.(string)
+		msgType, ok := typeMsg.Type.(string)
+		if !ok {
+			continue
+		}
 
 		switch msgType {
 		//心跳
@@ -116,13 +129,19 @@ func WsServerBackend() {
 				Type: "pong",
 			}
 			str, _ := json.Marshal(msg)
-			message.Mux.Lock()
-			defer message.Mux.Unlock()
-			conn.WriteMessage(websocket.TextMessage, str)
+			if err := writeUserMessage(message.user, websocket.TextMessage, str); err != nil {
+				log.Println("send websocket pong:", err)
+			}
 		case "inputing":
-			data := typeMsg.Data.(map[string]interface{})
-			from := data["from"].(string)
-			to := data["to"].(string)
+			data, ok := typeMsg.Data.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			from, fromOK := data["from"].(string)
+			to, toOK := data["to"].(string)
+			if !fromOK || !toOK {
+				continue
+			}
 			//限流
 			if tools.LimitFreqSingle("inputing:"+from, 1, 2) {
 				OneKefuMessage(to, message.content)
@@ -135,6 +154,5 @@ func UpdateVisitorUser(visitorId string, toId string) {
 	if guest, ok := ClientList[visitorId]; ok {
 		guest.To_id = toId
 	}
-
 
 }

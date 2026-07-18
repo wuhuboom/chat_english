@@ -107,8 +107,7 @@ func SendMessageV2(c *gin.Context) {
 	go SendAppGetuiPush(kefuInfo.Name, "[信息]"+vistorInfo.Name, content)
 	go SendWechatVisitorMessageTemplate(kefuInfo.Name, vistorInfo.Name, content, vistorInfo.EntId)
 	//go SendWechatKefuNotice(kefuInfo.Name, "[访客]"+vistorInfo.Name+",说："+content, vistorInfo.EntId)
-	kefus, ok := ws.KefuList[kefuInfo.Name]
-	if !ok || len(kefus) == 0 {
+	if !ws.IsKefuOnline(kefuInfo.Name) {
 		go SendNoticeEmail(vistorInfo.Name, "[留言]"+vistorInfo.Name, vistorInfo.EntId, content)
 	}
 	go ws.VisitorAutoReply(vistorInfo, kefuInfo, content)

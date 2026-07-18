@@ -114,6 +114,9 @@ var app=new Vue({
         },
         confirmAddIpblack: confirmAddIpblack,
         sendKefuOnline(){
+            if(this.socket==null || this.socket.readyState!==WebSocket.OPEN){
+                return;
+            }
             let mes = {}
             mes.type = "kfOnline";
             mes.data = this.kfConfig;
@@ -126,13 +129,13 @@ var app=new Vue({
             mes.type = "ping";
             mes.data = "";
             setInterval(function () {
-                if(_this.socket!=null){
+                if(_this.socket!=null && _this.socket.readyState===WebSocket.OPEN){
                     _this.socket.send(JSON.stringify(mes));
                 }
-            },300000);
+            },25000);
             setInterval(function(){
                 _this.getOnlineVisitors();
-            },300000);
+            },30000);
         },
         //初始化websocket
         initConn() {
@@ -143,6 +146,7 @@ var app=new Vue({
         },
         OnOpen() {
             this.sendKefuOnline();
+            this.getOnlineVisitors();
         },
         OnMessage(e) {
             const redata = JSON.parse(e.data);
@@ -339,6 +343,13 @@ var app=new Vue({
             }
             if(!flag){
                 this.users.unshift(newUser);
+                this.alertSound();
+                this.newMessageComing=true;
+                window.parent.postMessage({
+                    name:newUser.username,
+                    body:"新访客已接入",
+                    icon:newUser.avator
+                },"*");
             }
             var newUserflag=false;
             for(let i=0;i<this.visitors.length;i++){

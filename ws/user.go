@@ -44,27 +44,12 @@ func NewKefuServer(c *gin.Context) {
 		if err != nil {
 			log.Println("ws/user.go ", err)
 			conn.Close()
-			//go SendPingToKefuClient()
-			//var newKefuConns = []*User{}
-			//kfConns := KefuList[kefu.Id]
-			//	for _, kefuConn := range kfConns {
-			//		if kefuConn == nil {
-			//			continue
-			//		}
-			//		if kefuConn.Conn != conn {
-			//			newKefuConns = append(newKefuConns, kefuConn)
-			//		}
-			//	}
-			//if len(newKefuConns) > 0 {
-			//	KefuList[kefu.Id] = newKefuConns
-			//} else {
-			//	delete(KefuList, kefu.Id)
-			//}
+			RemoveKefuConnection(kefu.Id, &kefu)
 			return
 		}
 
 		message <- &Message{
-			conn:        conn,
+			user:        &kefu,
 			content:     receive,
 			context:     c,
 			messageType: messageType,
@@ -72,22 +57,46 @@ func NewKefuServer(c *gin.Context) {
 	}
 }
 func AddKefuToList(kefu *User) {
-	var newKefuConns = []*User{kefu}
-	kefuConns := KefuList[kefu.Id]
-	if kefuConns != nil {
-		for _, otherKefu := range kefuConns {
-			msg := TypeMessage{
-				Type: "many pong",
-			}
-			str, _ := json.Marshal(msg)
-			err := otherKefu.Conn.WriteMessage(websocket.TextMessage, str)
-			if err == nil {
-				newKefuConns = append(newKefuConns, otherKefu)
-			}
+	Mux.Lock()
+	KefuList[kefu.Id] = append(KefuList[kefu.Id], kefu)
+	Mux.Unlock()
+}
+
+func RemoveKefuConnection(kefuID string, target *User) {
+	Mux.Lock()
+	defer Mux.Unlock()
+	connections := KefuList[kefuID]
+	active := make([]*User, 0, len(connections))
+	for _, connection := range connections {
+		if connection != target {
+			active = append(active, connection)
 		}
 	}
+	if len(active) == 0 {
+		delete(KefuList, kefuID)
+		return
+	}
+	KefuList[kefuID] = active
+}
 
-	KefuList[kefu.Id] = newKefuConns
+func KefuConnections(kefuID string) []*User {
+	Mux.RLock()
+	defer Mux.RUnlock()
+	return append([]*User(nil), KefuList[kefuID]...)
+}
+
+func IsKefuOnline(kefuID string) bool {
+	return len(KefuConnections(kefuID)) > 0
+}
+
+func KefuListSnapshot() map[string][]*User {
+	Mux.RLock()
+	defer Mux.RUnlock()
+	snapshot := make(map[string][]*User, len(KefuList))
+	for kefuID, connections := range KefuList {
+		snapshot[kefuID] = append([]*User(nil), connections...)
+	}
+	return snapshot
 }
 
 // 给超管发消息
@@ -106,13 +115,10 @@ func SuperAdminMessage(str []byte) {
 // 给指定客服发消息
 func OneKefuMessage(toId string, str []byte) {
 	//新版
-	mKefuConns, ok := KefuList[toId]
-	if ok && len(mKefuConns) > 0 {
+	mKefuConns := KefuConnections(toId)
+	if len(mKefuConns) > 0 {
 		for _, kefu := range mKefuConns {
-			kefu.Mux.Lock()
-			defer kefu.Mux.Unlock()
-
-			error := kefu.Conn.WriteMessage(websocket.TextMessage, str)
+			error := writeUserMessage(kefu, websocket.TextMessage, str)
 			if error != nil {
 				//if websocket.IsCloseError(error, websocket.CloseGoingAway) {
 				//	// 连接已关闭，不再进行写入操作
@@ -148,30 +154,29 @@ func SendPingToKefuClient() {
 		Type: "many pong",
 	}
 	str, _ := json.Marshal(msg)
-	for kefuId, kfConns := range KefuList {
-		var newKefuConns = []*User{}
+	failed := make(map[*User]struct{})
+	for _, kfConns := range KefuListSnapshot() {
 		for _, kefuConn := range kfConns {
 			if kefuConn == nil {
 				continue
 			}
-			kefuConn.Mux.Lock()
-			err := kefuConn.Conn.WriteMessage(websocket.TextMessage, str)
-			kefuConn.Mux.Unlock()
-			if err == nil {
-				newKefuConns = append(newKefuConns, kefuConn)
+			if err := writeUserMessage(kefuConn, websocket.TextMessage, str); err != nil {
+				failed[kefuConn] = struct{}{}
 			}
 		}
-		if len(newKefuConns) > 0 {
-			KefuList[kefuId] = newKefuConns
-		} else {
-			delete(KefuList, kefuId)
+	}
+	for kefuID, connections := range KefuListSnapshot() {
+		for _, connection := range connections {
+			if _, ok := failed[connection]; ok {
+				RemoveKefuConnection(kefuID, connection)
+			}
 		}
 	}
 }
 
 // GetEntOnlineKefuId 获取企业下在线的客服
 func GetEntOnlineKefuId(entId string) string {
-	for kefuId, kefuConn := range KefuList {
+	for kefuId, kefuConn := range KefuListSnapshot() {
 		if len(kefuConn) > 0 {
 			if kefuConn[0].Ent_id == entId {
 				return kefuId
