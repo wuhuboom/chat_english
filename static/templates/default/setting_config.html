@@ -1,12 +1,81 @@
 {{template "header" }}
+<div id="h5TemplateInitialValue" data-template="{{.H5ChatTemplate}}" style="display:none;"></div>
 <div id="app" style="width:100%">
     <template>
         <el-container v-loading.fullscreen.lock="fullscreenLoading">
 
             <el-main class="mainMain">
+                <el-card shadow="never" style="margin-bottom: 18px;">
+                    <div slot="header">
+                        <span>系统时区</span>
+                    </div>
+                    <el-form label-width="110px">
+                        <el-form-item label="当前时区">
+                            <el-select
+                                    v-model="systemTimezone"
+                                    filterable
+                                    placeholder="请选择系统时区"
+                                    style="width: 420px; max-width: 100%;">
+                                <el-option
+                                        v-for="timezone in timezoneOptions"
+                                        :key="timezone.value"
+                                        :label="timezone.label"
+                                        :value="timezone.value">
+                                </el-option>
+                            </el-select>
+                            <el-button
+                                    type="primary"
+                                    style="margin-left: 10px;"
+                                    @click="saveSystemTimezone">
+                                保存时区
+                            </el-button>
+                        </el-form-item>
+                        <el-form-item label="说明">
+                            <span style="color:#7f8da3;">保存后立即用于新消息和页面时间显示，无需修改配置文件。</span>
+                        </el-form-item>
+                    </el-form>
+                </el-card>
+
+                <el-card shadow="never" class="h5TemplateSettingsCard" style="margin-bottom: 18px;">
+                    <div slot="header">
+                        <span>H5 访客界面</span>
+                    </div>
+                    <el-form label-width="110px">
+                        <el-form-item label="当前界面">
+                            <el-select
+                                    v-model="h5ChatTemplate"
+                                    placeholder="请选择H5访客界面"
+                                    style="width: 420px; max-width: 100%;">
+                                <el-option
+                                        v-for="template in h5ChatTemplateOptions"
+                                        :key="template.value"
+                                        :label="template.label"
+                                        :value="template.value">
+                                </el-option>
+                            </el-select>
+                            <el-button
+                                    type="primary"
+                                    style="margin-left: 10px;"
+                                    @click="saveH5ChatTemplate">
+                                保存界面
+                            </el-button>
+                            <el-button
+                                    style="margin-left: 8px;"
+                                    @click="previewH5ChatTemplate">
+                                打开H5预览
+                            </el-button>
+                        </el-form-item>
+                        <el-form-item label="界面说明">
+                            <span style="color:#7f8da3;"><{selectedH5TemplateDescription}></span>
+                        </el-form-item>
+                        <el-form-item label="生效方式">
+                            <span style="color:#7f8da3;">保存后立即生效，新打开或刷新的访客页面会使用所选界面，无需修改配置文件或重启服务。</span>
+                        </el-form-item>
+                    </el-form>
+                </el-card>
 
                 <el-table
-                        :data="configList"
+                        :data="regularConfigList"
                         border
                         style="width: 100%">
                     <el-table-column

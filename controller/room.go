@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-fly-muti/models"
+	"go-fly-muti/setting"
 	"go-fly-muti/tools"
 	"go-fly-muti/ws"
 	"math/rand"
@@ -144,13 +145,13 @@ func PostRoomMessage(c *gin.Context) {
 			Name:    fmt.Sprintf("#%d%s", vistorInfo.ID, vistorInfo.Name),
 			ToId:    kefuInfo.Name,
 			Content: content,
-			Time:    time.Now().Format("2006-01-02 15:04:05"),
+			Time:    setting.Now().Format("2006-01-02 15:04:05"),
 			IsKefu:  "no",
 		},
 	}
-	guest, ok := ws.ClientList[vistorInfo.VisitorId]
+	guest, ok := ws.VisitorConnection(vistorInfo.VisitorId)
 	if ok && guest != nil {
-		guest.UpdateTime = time.Now()
+		guest.Touch()
 	}
 	str, _ := json.Marshal(msg)
 	go ws.OneKefuMessage(kefuInfo.Name, str)

@@ -9,7 +9,7 @@ type New struct {
 	Title     string     `json:"title"`
 	Content   string     `json:"content"`
 	Tag       string     `json:"tag"`
-	status    uint       `json:"status"`
+	Status    uint       `json:"status"`
 	CreatedAt types.Time `json:"created_at"`
 }
 

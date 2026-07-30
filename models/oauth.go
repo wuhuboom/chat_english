@@ -9,18 +9,16 @@ type Oauth struct {
 	ID        uint       `gorm:"primary_key" json:"id"`
 	UserId    string     `json:"user_id"`
 	OauthId   string     `json:"oauth_id"`
-	status    uint       `json:"status"`
+	Status    uint       `json:"status"`
 	CreatedAt types.Time `json:"created_at"`
 }
 
 func CreateOauth(userId, oauthId string) Oauth {
 
 	model := Oauth{
-		OauthId: oauthId,
-		UserId:  userId,
-		CreatedAt: types.Time{
-			time.Now(),
-		},
+		OauthId:   oauthId,
+		UserId:    userId,
+		CreatedAt: types.Time{Time: time.Now()},
 	}
 	oauth := FindOauth(userId, oauthId)
 	if oauth.ID != 0 {

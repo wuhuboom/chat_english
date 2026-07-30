@@ -5,9 +5,17 @@ import (
 	"testing"
 )
 
-func TestClientRpc(t *testing.T) {
-	frpc.ClientRpc()
-}
-func TestServerRpc(t *testing.T) {
-	frpc.NewRpcServer("127.0.0.1:8082")
+func TestRPCServiceSendToVisitor(t *testing.T) {
+	service := new(frpc.Service)
+	reply := new(frpc.Reply)
+	err := service.SendToVisitor(frpc.Message{
+		VisitorId: "visitor-test",
+		Content:   "hello",
+	}, reply)
+	if err != nil {
+		t.Fatalf("SendToVisitor() error = %v", err)
+	}
+	if reply.Code != "200" || reply.Msg != "ok" {
+		t.Fatalf("SendToVisitor() reply = %+v", reply)
+	}
 }

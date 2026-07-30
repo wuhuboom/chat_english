@@ -53,6 +53,7 @@ func InitViewRouter(engine *gin.Engine) {
 	engine.GET("/setting_ipblack", tmpl.PageIpblack)
 	engine.GET("/setting_config", tmpl.PageConfig)
 	engine.GET("/setting_configs", tmpl.PageConfigs)
+	engine.GET("/setting_logs", tmpl.PageSystemLogs)
 	engine.GET("/setting_articles", tmpl.PageSettingArticles)
 	engine.GET("/setting_wechat_menu", tmpl.PageSettingWechatMenu)
 	engine.GET("/setting_news", tmpl.PageSettingNews)

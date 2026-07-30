@@ -529,11 +529,19 @@ new Vue({
         //获取自动欢迎语句
         getNotice : function (){
             let _this=this;
-            $.get("/notice?ent_id="+ENT_ID+"&kefu_id="+this.visitor.to_id,function(res) {
+            var versionCacheKey="welcome_version_"+ENT_ID+"_"+this.visitor.visitor_id;
+            var welcomeVersion=this.getCache(versionCacheKey)||"";
+            $.get("/notice?visitor_id="+this.visitor.visitor_id+"&ent_id="+ENT_ID+"&kefu_name="+this.visitor.to_id+"&welcome_version="+encodeURIComponent(welcomeVersion),function(res) {
 
                 //debugger;
                 // _this.noticeName=res.result.username;
                 // _this.noticeAvatar=res.result.avatar;
+                if(!res||res.code!==200||!res.result){
+                    return;
+                }
+                if(res.result.welcome_version){
+                    _this.setCache(versionCacheKey,res.result.welcome_version);
+                }
                 if (res.result.welcome != null) {
                     var msgs = res.result.welcome;
                     var delaySecond=0;

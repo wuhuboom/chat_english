@@ -44,7 +44,9 @@ func CreateUser(name string, password string, avator string, nickname string, pi
 		AgentNum:     agentNum,
 	}
 	user.UpdatedAt = time.Now()
-	DB.Create(user)
+	if err := DB.Create(user).Error; err != nil {
+		return 0
+	}
 	return user.ID
 }
 func UpdateUser(id string, name string, password string, avator string, nickname string, agentNum uint) {
@@ -60,10 +62,12 @@ func UpdateUser(id string, name string, password string, avator string, nickname
 	}
 	DB.Model(&User{}).Where("id = ?", id).Update(user)
 }
-func UpdateUserRecNum(name string, num interface{}) {
+func UpdateUserRecNum(name string, num int) {
 	user := &User{}
-
-	DB.Model(user).Where("name = ?", name).Update("RecNum", gorm.Expr("rec_num + ?", num))
+	DB.Model(user).Where("name = ?", name).Update(
+		"rec_num",
+		gorm.Expr("GREATEST(CAST(rec_num AS SIGNED) + ?, 0)", num),
+	)
 }
 func UpdateUserRecNumZero(name string) {
 	values := map[string]uint{
@@ -130,9 +134,12 @@ func DeleteUserById(id string) {
 func DeleteUserByIdPid(id string, pid interface{}) {
 	DB.Where("id = ? and pid=?", id, pid).Delete(User{})
 }
+
+const singleUserRoleJoin = "left join user_role on user.id=user_role.user_id and user_role.id=(select min(ur.id) from user_role ur where ur.user_id=user.id)"
+
 func FindUsers() []User {
 	var users []User
-	DB.Select("user.*,role.name role_name").Joins("left join user_role on user.id=user_role.user_id").Joins("left join role on user_role.role_id=role.id").Order("user.id desc").Find(&users)
+	DB.Select("user.*,role.name role_name").Joins(singleUserRoleJoin).Joins("left join role on user_role.role_id=role.id").Order("user.id desc").Find(&users)
 	return users
 }
 func FindUsersByEntId(entId interface{}) []User {
@@ -157,21 +164,21 @@ func FindUserRole(query interface{}, id interface{}) User {
 	return user
 }
 
-//查询条数
+// 查询条数
 func CountUsers() uint {
 	var count uint
 	DB.Model(&User{}).Count(&count)
 	return count
 }
 
-//根据where查询条数
+// 根据where查询条数
 func CountUsersWhere(query interface{}, args ...interface{}) uint {
 	var count uint
 	DB.Model(&User{}).Where(query, args...).Count(&count)
 	return count
 }
 
-//根据where分页查询
+// 根据where分页查询
 func FindUsersOwn(page uint, pagesize uint, query interface{}, args ...interface{}) []User {
 	if pagesize == 0 {
 		pagesize = common.PageSize
@@ -181,7 +188,7 @@ func FindUsersOwn(page uint, pagesize uint, query interface{}, args ...interface
 		offset = 0
 	}
 	var users []User
-	DB.Select("user.*,role.name role_name,role.id role_id").Joins("left join user_role on user.id=user_role.user_id").Joins("left join role on user_role.role_id=role.id").Where(query, args...).Offset(offset).Order("user.updated_at desc").Limit(pagesize).Find(&users)
+	DB.Select("user.*,role.name role_name,role.id role_id").Joins(singleUserRoleJoin).Joins("left join role on user_role.role_id=role.id").Where(query, args...).Offset(offset).Order("user.updated_at desc").Limit(pagesize).Find(&users)
 
 	fmt.Println(users)
 	return users
@@ -192,17 +199,17 @@ func FindUsersPages(page uint, pagesize uint) []User {
 		offset = 0
 	}
 	var users []User
-	DB.Select("user.*,role.name role_name").Joins("left join user_role on user.id=user_role.user_id").Joins("left join role on user_role.role_id=role.id").Offset(offset).Order("user.id desc").Limit(pagesize).Find(&users)
+	DB.Select("user.*,role.name role_name").Joins(singleUserRoleJoin).Joins("left join role on user_role.role_id=role.id").Offset(offset).Order("user.id desc").Limit(pagesize).Find(&users)
 	return users
 }
 
-//获取一条用户信息
+// 获取一条用户信息
 func (user *User) AddUser() uint {
 	DB.Create(user)
 	return user.ID
 }
 
-//获取一条用户信息
+// 获取一条用户信息
 func (user *User) GetOneUser(fields string) User {
 	var dUser User
 	var userRole User_role
@@ -219,7 +226,7 @@ func (user *User) GetOneUser(fields string) User {
 	return dUser
 }
 
-//获取多条用户信息
+// 获取多条用户信息
 func (user *User) GetUsers(fields string) []User {
 	var users []User
 	myDB := user.buildQuery()
@@ -227,7 +234,7 @@ func (user *User) GetUsers(fields string) []User {
 	return users
 }
 
-//更新user
+// 更新user
 func (user *User) UpdateUser() {
 	user.UpdatedAt = time.Now()
 
@@ -241,7 +248,7 @@ func (user *User) UpdateUser() {
 	user.buildQuery().Model(&User{}).Update(user)
 }
 
-//查询构造
+// 查询构造
 func (user *User) buildQuery() *gorm.DB {
 	userDB := DB
 	userDB.Model(user)
@@ -260,12 +267,12 @@ func (user *User) buildQuery() *gorm.DB {
 	return userDB
 }
 
-//设置属性
+// 设置属性
 func (this *User) SetOrder(orderBy string) {
 	this.orderBy = orderBy
 }
 
-//获检查用户的状态
+// 获检查用户的状态
 func (this *User) CheckStatusExpired() (bool, uint, string) {
 	if this.ID == 0 || this.Status == 0 {
 		return false, types.ApiCode.ACCOUNT_NO_EXIST, types.ApiCode.GetMessage(types.ApiCode.ACCOUNT_NO_EXIST)

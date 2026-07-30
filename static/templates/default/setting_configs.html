@@ -4,6 +4,59 @@
         <el-container>
 
             <el-main class="mainMain" style="margin:0px 10px;">
+                <el-card shadow="never" class="slaSettingsCard">
+                    <div slot="header" class="slaSettingsHeader">
+                        <div>
+                            <strong>会话响应 SLA</strong>
+                            <small>用于客服工作台的等待预警、超时标记和优先队列</small>
+                        </div>
+                        <el-button type="primary" @click="saveConversationSLASettings">保存 SLA</el-button>
+                    </div>
+                    <el-form :inline="true" label-position="top">
+                        <el-form-item label="预警时间">
+                            <el-input-number v-model="slaForm.warningMinutes" :min="1" :max="1439" :step="1"></el-input-number>
+                            <span class="slaUnit">分钟</span>
+                        </el-form-item>
+                        <el-form-item label="超时时间">
+                            <el-input-number v-model="slaForm.overdueMinutes" :min="2" :max="1440" :step="1"></el-input-number>
+                            <span class="slaUnit">分钟</span>
+                        </el-form-item>
+                    </el-form>
+                    <el-alert
+                            :closable="false"
+                            type="info"
+                            show-icon
+                            title="等待达到预警时间显示橙色，达到超时时间显示红色；超时会话可在工作台一键筛选。">
+                    </el-alert>
+                </el-card>
+                <el-card shadow="never" class="slaSettingsCard routingSettingsCard">
+                    <div slot="header" class="slaSettingsHeader">
+                        <div>
+                            <strong>客服离线保护</strong>
+                            <small>客服短暂断线时等待自动重连，持续离线则把在线客户转给其他客服</small>
+                        </div>
+                        <el-button type="primary" @click="saveRoutingSettings">保存分配设置</el-button>
+                    </div>
+                    <el-form :inline="true" label-position="top">
+                        <el-form-item label="离线自动转接">
+                            <el-switch
+                                    v-model="routingForm.autoReassign"
+                                    active-text="开启"
+                                    inactive-text="关闭">
+                            </el-switch>
+                        </el-form-item>
+                        <el-form-item label="重连宽限时间">
+                            <el-input-number v-model="routingForm.offlineGraceSeconds" :min="3" :max="300" :step="1"></el-input-number>
+                            <span class="slaUnit">秒</span>
+                        </el-form-item>
+                    </el-form>
+                    <el-alert
+                            :closable="false"
+                            type="warning"
+                            show-icon
+                            title="建议设置 10–30 秒，避免网络瞬断造成频繁转接。只有客服全部离线时，客户才会保留在原账号。">
+                    </el-alert>
+                </el-card>
                 <el-descriptions title="微信相关配置说明" style="margin-bottom: 10px;" direction="vertical" :column="2" border>
                     <el-descriptions-item label="微信公众号填写服务器地址(url)"><{wechatServerUrl}></el-descriptions-item>
                     <el-descriptions-item label="备注">

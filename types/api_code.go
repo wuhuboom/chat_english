@@ -1,6 +1,9 @@
 package types
 
+import "sync"
+
 type Codes struct {
+	mu                                                   sync.RWMutex
 	SUCCESS                                              uint
 	FAILED, CAPTCHA_FAILED, LOGIN_FAILED                 uint
 	INVALID, INVALID_PASSWORD, ACCOUNT_EXIST             uint
@@ -11,7 +14,7 @@ type Codes struct {
 	IP_BAN, FREQ_LIMIT, VISITOR_NO_EXIST                 uint
 	CnMessage                                            map[uint]string
 	EnMessage                                            map[uint]string
-	LANG                                                 string
+	lang                                                 string
 }
 
 var ApiCode = &Codes{
@@ -34,7 +37,7 @@ var ApiCode = &Codes{
 	IP_BAN:            40015,
 	FREQ_LIMIT:        40016,
 	VISITOR_NO_EXIST:  40017,
-	LANG:              "cn",
+	lang:              "cn",
 }
 
 func init() {
@@ -83,7 +86,10 @@ func init() {
 	}
 }
 func (c *Codes) GetMessage(code uint) string {
-	if c.LANG == "en" {
+	c.mu.RLock()
+	lang := c.lang
+	c.mu.RUnlock()
+	if lang == "en" {
 		message, ok := c.EnMessage[code]
 		if !ok {
 			return c.EnMessage[ApiCode.FAILED]
@@ -96,4 +102,13 @@ func (c *Codes) GetMessage(code uint) string {
 		}
 		return message
 	}
+}
+
+func (c *Codes) SetLanguage(lang string) {
+	if lang != "en" {
+		lang = "cn"
+	}
+	c.mu.Lock()
+	c.lang = lang
+	c.mu.Unlock()
 }

@@ -13,7 +13,7 @@ var (
 type Response struct {
 	Code   int         `json:"code"`
 	Msg    string      `json:"msg"`
-	result interface{} `json:"result"`
+	Result interface{} `json:"result"`
 }
 type ChatMessage struct {
 	MsgId      uint      `json:"msg_id"`
@@ -26,16 +26,20 @@ type ChatMessage struct {
 	Time2      time.Time `json:"time2" `
 }
 type VisitorOnline struct {
-	Id          uint      `json:"id"`
-	VisitorId   string    `json:"visitor_id"`
-	Username    string    `json:"username"`
-	Avator      string    `json:"avator"`
-	Ip          string    `json:"ip"`
-	LastMessage string    `json:"last_message"`
-	City        string    `json:"city"`
-	UpdatedAt   time.Time `json:"updated_at"`
-	UnreadNum   uint32    `json:"unread_num"`
-	Status      uint      `json:"status"`
+	Id             uint      `json:"id"`
+	VisitorId      string    `json:"visitor_id"`
+	Username       string    `json:"username"`
+	Avator         string    `json:"avator"`
+	Ip             string    `json:"ip"`
+	LastMessage    string    `json:"last_message"`
+	City           string    `json:"city"`
+	UpdatedAt      time.Time `json:"updated_at"`
+	UnreadNum      uint32    `json:"unread_num"`
+	Status         uint      `json:"status"`
+	ServiceStatus  string    `json:"service_status"`
+	Priority       string    `json:"priority"`
+	WaitingSince   string    `json:"waiting_since"`
+	WaitingSeconds int64     `json:"waiting_seconds"`
 }
 type GetuiResponse struct {
 	Code float64                `json:"code"`

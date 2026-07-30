@@ -15,7 +15,7 @@ import (
 type VisitorLoginForm struct {
 	VisitorId   string `form:"visitor_id" json:"visitor_id" uri:"visitor_id" xml:"visitor_id"`
 	Refer       string `form:"refer" json:"refer" uri:"refer" xml:"refer"`
-	ReferUrl    string `form:"refer_url" json:"refer" uri:"refer" xml:"refer"`
+	ReferUrl    string `form:"refer_url" json:"refer_url" uri:"refer_url" xml:"refer_url"`
 	Url         string `form:"url" json:"url" uri:"url" xml:"url"`
 	ToId        string `form:"to_id" json:"to_id" uri:"to_id" xml:"to_id"  binding:"required"`
 	EntId       string `form:"ent_id" json:"ent_id" uri:"ent_id" xml:"ent_id" binding:"required"`

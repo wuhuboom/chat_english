@@ -18,13 +18,13 @@ import (
 	"go-fly-muti/tools"
 	"go-fly-muti/ws"
 	"html/template"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
-	"runtime"
+	"os/signal"
+	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -72,6 +72,7 @@ func run(cmd *cobra.Command, args []string) {
 		fmt.Println("日志err", err)
 		return
 	}
+	defer logger.Sync()
 
 	////设置时区
 	//loc, err := time.LoadLocation(viper.GetString("app.timeZone"))
@@ -81,11 +82,10 @@ func run(cmd *cobra.Command, args []string) {
 	//}
 
 	gin.SetMode(gin.ReleaseMode)
-	//engine := gin.Default()
 	engine := gin.New()
-	engine.Use(gin.Recovery())
+	engine.Use(logger.GinLogger(), logger.GinRecovery(true))
 
-	engine.MaxMultipartMemory = 32 << 20 // 8MB
+	engine.MaxMultipartMemory = 32 << 20 // 32 MiB
 
 	//是否编译模板
 	if common.IsCompireTemplate {
@@ -110,9 +110,25 @@ func run(cmd *cobra.Command, args []string) {
 	go ws.WsServerBackend()
 	//初始化数据
 	//logger := lib.NewLogger()
-	models.NewConnect(common.ConfigDirPath + "/mysql.json")
+	if err := models.NewConnect(common.ConfigDirPath + "/mysql.json"); err != nil {
+		log.Printf("数据库初始化失败: %v", err)
+		return
+	}
+	defer models.CloseDB()
 	//初始化配置数据
 	models.InitConfig()
+	systemTimezone := models.FindConfig("SystemTimezone")
+	if systemTimezone == "" {
+		systemTimezone = setting.DefaultTimezone
+		if err := models.SaveConfig("系统时区", "SystemTimezone", systemTimezone); err != nil {
+			log.Printf("初始化系统时区配置失败: %v", err)
+		}
+	}
+	if err := setting.ConfigureTimezone(systemTimezone); err != nil {
+		log.Printf("系统时区配置无效，回退到 %s: %v", setting.DefaultTimezone, err)
+		_ = setting.ConfigureTimezone(setting.DefaultTimezone)
+	}
+	log.Printf("系统时区: %s", setting.CurrentTimezone())
 	//后端定时客服
 	go ws.UpdateVisitorStatusCron()
 
@@ -120,8 +136,10 @@ func run(cmd *cobra.Command, args []string) {
 	//go process.CheckUnreadMes()
 
 	log.Println("GOFLY服务开始运行:" + baseServer)
-	//性能监控
-	pprof.Register(engine)
+	// 性能监控默认关闭，避免在生产环境暴露运行时信息。
+	if strings.EqualFold(os.Getenv("GOFLY_ENABLE_PPROF"), "true") {
+		pprof.Register(engine)
+	}
 	//engine.Run(baseServer)
 
 	srv := &http.Server{
@@ -129,13 +147,24 @@ func run(cmd *cobra.Command, args []string) {
 		Handler: engine,
 	}
 
+	serverErrors := make(chan error, 1)
 	go func() {
-		if err := srv.ListenAndServe(); err != nil {
-			log.Printf("GOFLY服务监听: %s\n", err)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			serverErrors <- err
 		}
 	}()
 
-	<-controller.StopSign
+	shutdownSignals := make(chan os.Signal, 1)
+	signal.Notify(shutdownSignals, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(shutdownSignals)
+	receivedSignal, serverErr := waitForShutdown(controller.StopSign, shutdownSignals, serverErrors)
+	if serverErr != nil {
+		log.Printf("GOFLY服务监听失败: %v", serverErr)
+		return
+	}
+	if receivedSignal != nil {
+		log.Printf("收到系统信号 %s，开始关闭服务", receivedSignal)
+	}
 	log.Println("关闭服务...")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -144,6 +173,17 @@ func run(cmd *cobra.Command, args []string) {
 	}
 	log.Println("服务已关闭")
 
+}
+
+func waitForShutdown(stopSign <-chan int, signals <-chan os.Signal, serverErrors <-chan error) (os.Signal, error) {
+	select {
+	case <-stopSign:
+		return nil, nil
+	case receivedSignal := <-signals:
+		return receivedSignal, nil
+	case err := <-serverErrors:
+		return nil, err
+	}
 }
 
 // 初始化目录
@@ -178,29 +218,26 @@ func initDir() {
 
 // 初始化守护进程
 func initDaemon() {
-	//启动进程之前要先杀死之前的金额
-
-	pid, err := ioutil.ReadFile("gofly.sock")
-	if err != nil {
-		return
-	}
-	pidSlice := strings.Split(string(pid), ",")
-	var command *exec.Cmd
-	for _, pid := range pidSlice {
-		if runtime.GOOS == "windows" {
-			command = exec.Command("taskkill.exe", "/f", "/pid", pid)
-		} else {
-			fmt.Println("成功结束进程:", pid)
-			command = exec.Command("kill", pid)
+	pidPath := filepath.Join(common.RootPath, pidFileName)
+	// xdaemon 会让同一命令依次作为启动器、守护父进程和工作进程执行。
+	// 只允许最外层启动器清理旧实例，避免守护父进程误停刚启动的子进程。
+	if os.Getenv(xdaemon.ENV_NAME) == "" {
+		if err := stopProcesses(pidPath); err != nil {
+			log.Fatalf("停止旧服务失败: %v", err)
 		}
-		command.Start()
 	}
 
-	if daemon == true {
+	if daemon {
 		d := xdaemon.NewDaemon(common.LogDirPath + "gofly.log")
 		d.MaxError = 10
 		d.Run()
 	}
-	//记录pid
-	ioutil.WriteFile(common.RootPath+"/gofly.sock", []byte(fmt.Sprintf("%d,%d", os.Getppid(), os.Getpid())), 0666)
+
+	pids := []int{os.Getpid()}
+	if daemon {
+		pids = []int{os.Getppid(), os.Getpid()}
+	}
+	if err := writeProcessIDs(pidPath, pids...); err != nil {
+		log.Fatalf("写入 PID 文件失败: %v", err)
+	}
 }

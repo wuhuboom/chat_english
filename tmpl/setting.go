@@ -2,11 +2,13 @@ package tmpl
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 	"go-fly-muti/models"
+	"go-fly-muti/setting"
 	"net/http"
 )
 
-//设置界面
+// 设置界面
 func PageSetting(c *gin.Context) {
 	c.HTML(http.StatusOK, "setting.html", gin.H{
 		"tab_index": "1-1",
@@ -14,7 +16,7 @@ func PageSetting(c *gin.Context) {
 	})
 }
 
-//设置欢迎
+// 设置欢迎
 func PageSettingWelcome(c *gin.Context) {
 	c.HTML(http.StatusOK, "setting_welcome.html", gin.H{
 		"tab_index": "1-2",
@@ -22,7 +24,7 @@ func PageSettingWelcome(c *gin.Context) {
 	})
 }
 
-//统计
+// 统计
 func PageSettingStatis(c *gin.Context) {
 	c.HTML(http.StatusOK, "setting_statistics.html", gin.H{
 		"tab_index": "1-3",
@@ -30,7 +32,7 @@ func PageSettingStatis(c *gin.Context) {
 	})
 }
 
-//设置mysql
+// 设置mysql
 func PageSettingMysql(c *gin.Context) {
 	c.HTML(http.StatusOK, "setting_mysql.html", gin.H{
 		"tab_index": "2-4",
@@ -38,7 +40,7 @@ func PageSettingMysql(c *gin.Context) {
 	})
 }
 
-//设置部署
+// 设置部署
 func PageSettingDeploy(c *gin.Context) {
 	c.HTML(http.StatusOK, "setting_deploy.html", gin.H{
 		"tab_index": "2-5",
@@ -46,12 +48,12 @@ func PageSettingDeploy(c *gin.Context) {
 	})
 }
 
-//前台js部署
+// 前台js部署
 func PageWebJs(c *gin.Context) {
 	c.HTML(http.StatusOK, "chat_web.js", nil)
 }
 
-//前台css部署
+// 前台css部署
 func PageWebCss(c *gin.Context) {
 	c.HTML(http.StatusOK, "chat_web.css", nil)
 }
@@ -98,7 +100,7 @@ func PageModifypass(c *gin.Context) {
 	})
 }
 
-//角色列表
+// 角色列表
 func PageRoleList(c *gin.Context) {
 	c.HTML(http.StatusOK, "setting_role_list.html", gin.H{
 		"tab_index": "3-1",
@@ -106,7 +108,7 @@ func PageRoleList(c *gin.Context) {
 	})
 }
 
-//角色列表
+// 角色列表
 func PageIpblack(c *gin.Context) {
 	c.HTML(http.StatusOK, "setting_ipblack.html", gin.H{
 		"tab_index": "4-5",
@@ -114,15 +116,19 @@ func PageIpblack(c *gin.Context) {
 	})
 }
 
-//配置项列表
+// 配置项列表
 func PageConfig(c *gin.Context) {
 	c.HTML(http.StatusOK, "setting_config.html", gin.H{
 		"tab_index": "4-6",
 		"action":    "setting_config",
+		"H5ChatTemplate": setting.ResolveH5ChatTemplate(
+			models.FindConfig(setting.H5ChatTemplateConfigKey),
+			viper.GetString("app.FontVersion"),
+		),
 	})
 }
 
-//配置项列表
+// 配置项列表
 func PageConfigs(c *gin.Context) {
 	c.HTML(http.StatusOK, "setting_configs.html", gin.H{
 		"tab_index": "4-6",
@@ -130,7 +136,15 @@ func PageConfigs(c *gin.Context) {
 	})
 }
 
-//配置项编辑首页
+// PageSystemLogs renders the super administrator log console.
+func PageSystemLogs(c *gin.Context) {
+	c.HTML(http.StatusOK, "setting_logs.html", gin.H{
+		"tab_index": "4-10",
+		"action":    "setting_logs",
+	})
+}
+
+// 配置项编辑首页
 func PageSettingIndexPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "setting_pageindex.html", gin.H{
 		"tab_index": "4-7",
@@ -138,7 +152,7 @@ func PageSettingIndexPage(c *gin.Context) {
 	})
 }
 
-//配置项编辑首页
+// 配置项编辑首页
 func PageSettingArticles(c *gin.Context) {
 	c.HTML(http.StatusOK, "setting_articles.html", gin.H{
 		"tab_index": "4-8",
@@ -146,7 +160,7 @@ func PageSettingArticles(c *gin.Context) {
 	})
 }
 
-//配置项编辑首页
+// 配置项编辑首页
 func PageSettingNews(c *gin.Context) {
 	c.HTML(http.StatusOK, "setting_news.html", gin.H{
 		"tab_index": "4-3",
@@ -154,7 +168,7 @@ func PageSettingNews(c *gin.Context) {
 	})
 }
 
-//配置微信菜单
+// 配置微信菜单
 func PageSettingWechatMenu(c *gin.Context) {
 	entId := c.Query("ent_id")
 	wechatMenu := models.FindEntConfig(entId, "WechatMenu")

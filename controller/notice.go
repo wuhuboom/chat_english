@@ -1,19 +1,58 @@
 package controller
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-fly-muti/models"
+	"go-fly-muti/setting"
 	"go-fly-muti/types"
 	"go-fly-muti/ws"
+	"sort"
 	"strconv"
-	"time"
 )
 
 type KefuNoticeForm struct {
-	EntId     string `form:"ent_id" json:"ent_id" uri:"ent_id" xml:"ent_id"  binding:"required"`
-	KefuName  string `form:"kefu_name" json:"kefu_name" uri:"kefu_name" xml:"kefu_name"`
-	VisitorId string `form:"visitor_id" json:"visitor_id" uri:"visitor_id" xml:"visitor_id"`
+	EntId          string `form:"ent_id" json:"ent_id" uri:"ent_id" xml:"ent_id"  binding:"required"`
+	KefuName       string `form:"kefu_name" json:"kefu_name" uri:"kefu_name" xml:"kefu_name"`
+	VisitorId      string `form:"visitor_id" json:"visitor_id" uri:"visitor_id" xml:"visitor_id"`
+	WelcomeVersion string `form:"welcome_version" json:"welcome_version"`
+}
+
+type welcomeVersionItem struct {
+	ID          uint   `json:"id"`
+	UserID      string `json:"user_id"`
+	Keyword     string `json:"keyword"`
+	Content     string `json:"content"`
+	DelaySecond uint   `json:"delay_second"`
+}
+
+func welcomeVersion(welcomes []models.Welcome) string {
+	items := make([]welcomeVersionItem, 0, len(welcomes))
+	for _, welcome := range welcomes {
+		items = append(items, welcomeVersionItem{
+			ID:          welcome.ID,
+			UserID:      welcome.UserId,
+			Keyword:     welcome.Keyword,
+			Content:     welcome.Content,
+			DelaySecond: welcome.DelaySecond,
+		})
+	}
+	sort.Slice(items, func(i, j int) bool {
+		return items[i].ID < items[j].ID
+	})
+	encoded, _ := json.Marshal(items)
+	sum := sha256.Sum256(encoded)
+	return hex.EncodeToString(sum[:])
+}
+
+func welcomesForVersion(welcomes []models.Welcome, knownVersion string) []models.Welcome {
+	if knownVersion != "" && knownVersion == welcomeVersion(welcomes) {
+		return nil
+	}
+	return welcomes
 }
 
 func GetNotice(c *gin.Context) {
@@ -61,28 +100,25 @@ func GetNotice(c *gin.Context) {
 		if user.Name == kefuId {
 			kefu = user
 		}
-		if ws.IsKefuOnline(user.Name) {
-			allOffline = false
-			onlineUser = user
-		}
 	}
 
-	if kefuId == "" && allOffline {
-		kefu = ent
-		onlineUser = ent
-		welcomes = models.FindWelcomesByKeyword(ent.Name, "welcome")
-	}
-	if kefuId == "" && !allOffline {
-		kefu = onlineUser
-		welcomes = models.FindWelcomesByKeyword(onlineUser.Name, "welcome")
-	}
-	if kefuId != "" {
-		welcomes = models.FindWelcomesByKeyword(kefu.Name, "welcome")
-	}
-	if ws.IsKefuOnline(ent.Name) {
+	selected, assignedOnline, _ := selectAvailableKefu(
+		users,
+		[]string{kefuId},
+		ws.IsKefuOnline,
+		ws.ActiveVisitorCountsByKefu(entId),
+	)
+	if assignedOnline {
 		allOffline = false
-		onlineUser = ent
+		kefu = selected
+		onlineUser = selected
+	} else {
+		kefu = fallbackKefu(users, []string{kefuId}, ent)
+		onlineUser = kefu
 	}
+	welcomes = models.FindWelcomesByKeyword(kefu.Name, "welcome")
+	currentWelcomeVersion := welcomeVersion(welcomes)
+	welcomes = welcomesForVersion(welcomes, form.WelcomeVersion)
 	result := make([]gin.H, 0)
 	for _, welcome := range welcomes {
 		h := gin.H{
@@ -91,7 +127,7 @@ func GetNotice(c *gin.Context) {
 			"is_kefu":      false,
 			"content":      welcome.Content,
 			"delay_second": welcome.DelaySecond,
-			"time":         time.Now().Format("2006-01-02 15:04:05"),
+			"time":         setting.Now().Format("2006-01-02 15:04:05"),
 		}
 		result = append(result, h)
 		if form.KefuName != "" && form.VisitorId != "" {
@@ -102,11 +138,12 @@ func GetNotice(c *gin.Context) {
 		"code": 200,
 		"msg":  "ok",
 		"result": gin.H{
-			"welcome":     result,
-			"username":    onlineUser.Nickname,
-			"avatar":      onlineUser.Avator,
-			"agents":      agents,
-			"all_offline": allOffline,
+			"welcome":         result,
+			"username":        onlineUser.Nickname,
+			"avatar":          onlineUser.Avator,
+			"agents":          agents,
+			"all_offline":     allOffline,
+			"welcome_version": currentWelcomeVersion,
 		},
 	})
 }
@@ -120,7 +157,7 @@ func GetNotices(c *gin.Context) {
 	})
 }
 
-//获取客服的自动欢迎信息
+// 获取客服的自动欢迎信息
 func GetKefuNotice(c *gin.Context) {
 	kefuId, _ := c.Get("kefu_name")
 	welcomes := models.FindWelcomesByUserId(kefuId)

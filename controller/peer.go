@@ -2,11 +2,11 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
 	"go-fly-muti/models"
+	"go-fly-muti/setting"
 	"go-fly-muti/ws"
-	"time"
 )
 
 func PostCallKefu(c *gin.Context) {
@@ -29,7 +29,7 @@ func PostCallKefu(c *gin.Context) {
 			Name:    vistorInfo.Name,
 			ToId:    kefuInfo.Name,
 			Content: "请求通话",
-			Time:    time.Now().Format("2006-01-02 15:04:05"),
+			Time:    setting.Now().Format("2006-01-02 15:04:05"),
 			IsKefu:  "no",
 		},
 	}
@@ -57,8 +57,9 @@ func PostKefuPeerId(c *gin.Context) {
 		Data: peerId,
 	}
 	str, _ := json.Marshal(msg)
-	visitor, ok := ws.ClientList[visitorId]
-	if !ok || visitor.Name == "" || kefuName != visitor.To_id {
+	visitor, ok := ws.VisitorConnection(visitorId)
+	state := visitor.State()
+	if !ok || state.Name == "" || fmt.Sprintf("%v", kefuName) != state.ToID {
 		c.JSON(200, gin.H{
 			"code":   400,
 			"msg":    "客户不存在",
@@ -66,7 +67,14 @@ func PostKefuPeerId(c *gin.Context) {
 		})
 		return
 	}
-	visitor.Conn.WriteMessage(websocket.TextMessage, str)
+	if err := ws.SendMessageToVisitor(visitor, str); err != nil {
+		c.JSON(200, gin.H{
+			"code":   500,
+			"msg":    "发送失败",
+			"result": err.Error(),
+		})
+		return
+	}
 	c.JSON(200, gin.H{
 		"code": 200,
 		"msg":  "ok",

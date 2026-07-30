@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go-fly-muti/common"
 	"go-fly-muti/models"
+	"go-fly-muti/setting"
 	"go-fly-muti/tools"
 	"go-fly-muti/ws"
 	"strconv"
@@ -82,6 +83,7 @@ func PostTransKefu(c *gin.Context) {
 	kefuId := c.Query("kefu_id")
 	visitorId := c.Query("visitor_id")
 	curKefuId, _ := c.Get("kefu_name")
+	entId, _ := c.Get("ent_id")
 	user := models.FindUser(kefuId)
 	visitor := models.FindVisitorByVistorId(visitorId)
 	if user.Name == "" || visitor.Name == "" {
@@ -91,7 +93,25 @@ func PostTransKefu(c *gin.Context) {
 		})
 		return
 	}
+	if err := validateKefuConversation(fmt.Sprintf("%v", entId), fmt.Sprintf("%v", curKefuId), visitor); err != nil {
+		c.JSON(200, gin.H{"code": 409, "msg": err.Error()})
+		return
+	}
+	if !userBelongsToEnterprise(user, fmt.Sprintf("%v", entId)) {
+		c.JSON(200, gin.H{"code": 400, "msg": "目标客服不属于当前企业"})
+		return
+	}
+	if user.OnlineStatus != 1 || !ws.IsKefuOnline(user.Name) {
+		c.JSON(200, gin.H{"code": 400, "msg": "目标客服当前不在线，无法转接"})
+		return
+	}
 	models.UpdateVisitorKefu(visitorId, kefuId)
+	models.UpdateConversationKefu(visitor.EntId, visitorId, kefuId)
+	models.CreateConversationEvent(
+		visitor.EntId, visitorId, models.ConversationEventManualTransfer,
+		fmt.Sprintf("%v", curKefuId), fmt.Sprintf("%v", curKefuId), kefuId,
+		"客服手动转接会话", setting.Now(),
+	)
 	ws.UpdateVisitorUser(visitorId, kefuId)
 	go ws.VisitorOnline(kefuId, visitor)
 	go ws.VisitorOffline(curKefuId.(string), visitor.VisitorId, visitor.Name)

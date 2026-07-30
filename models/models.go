@@ -46,15 +46,22 @@ func NewConnect(mysqlConfigFile string) error {
 	if err != nil {
 		log.Println(err)
 		panic("数据库连接失败!")
-		return err
 	}
 	DB.SingularTable(true)
 
-	CheckIsExistModelAdmin()
-	//DB.LogMode(true)
 	DB.DB().SetMaxIdleConns(10)
 	DB.DB().SetMaxOpenConns(100)
 	DB.DB().SetConnMaxLifetime(59 * time.Second)
+	if err := validateMigrationModels(); err != nil {
+		_ = DB.Close()
+		DB = nil
+		return fmt.Errorf("invalid database migration registry: %w", err)
+	}
+	if _, err := RunSchemaMigrations(DB); err != nil {
+		_ = DB.Close()
+		DB = nil
+		return fmt.Errorf("automatic database migration failed: %w", err)
+	}
 	return nil
 }
 
@@ -68,5 +75,7 @@ func Execute(sql string) error {
 	return nil
 }
 func CloseDB() {
-	defer DB.Close()
+	if DB != nil {
+		_ = DB.Close()
+	}
 }

@@ -1,0 +1,23 @@
+[Unit]
+Description=GOFLY customer service
+After=network-online.target mysql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=gofly
+Group=gofly
+WorkingDirectory=/opt/gofly
+Environment=GOFLY_PORT=8081
+EnvironmentFile=-/etc/gofly/gofly.env
+ExecStart=/opt/gofly/main server -p ${GOFLY_PORT}
+Restart=always
+RestartSec=3
+TimeoutStopSec=20
+KillSignal=SIGTERM
+LimitNOFILE=65535
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

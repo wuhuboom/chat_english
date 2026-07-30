@@ -21,5 +21,22 @@ func TestJwt(t *testing.T) {
 	t.Log(token, err)
 
 	orgToken, err := ParseCliamsToken(token, true)
-	t.Logf("%+v,%+v", orgToken, err)
+	if err != nil {
+		t.Fatalf("parse claims token: %v", err)
+	}
+	if orgToken == nil || orgToken.Username != tokenCliams.Username {
+		t.Fatalf("claims = %+v", orgToken)
+	}
+}
+
+func TestParseTokenRejectsUnexpectedSigningMethod(t *testing.T) {
+	t.Setenv("GOFLY_JWT_SECRET", "test-secret")
+	token := jwt.NewWithClaims(jwt.SigningMethodHS384, jwt.MapClaims{"name": "attacker"})
+	tokenString, err := token.SignedString([]byte("test-secret"))
+	if err != nil {
+		t.Fatalf("sign token: %v", err)
+	}
+	if claims := ParseToken(tokenString); claims != nil {
+		t.Fatalf("unexpected claims from HS384 token: %+v", claims)
+	}
 }

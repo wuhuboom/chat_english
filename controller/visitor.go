@@ -7,6 +7,7 @@ import (
 	"go-fly-muti/common"
 	"go-fly-muti/models"
 	v2 "go-fly-muti/models/v2"
+	"go-fly-muti/setting"
 	"go-fly-muti/tools"
 	"go-fly-muti/types"
 	"go-fly-muti/ws"
@@ -20,7 +21,7 @@ import (
 type VisitorLoginForm struct {
 	VisitorId   string `form:"visitor_id" json:"visitor_id" uri:"visitor_id" xml:"visitor_id"`
 	Refer       string `form:"refer" json:"refer" uri:"refer" xml:"refer"`
-	ReferUrl    string `form:"refer_url" json:"refer" uri:"refer" xml:"refer"`
+	ReferUrl    string `form:"refer_url" json:"refer_url" uri:"refer_url" xml:"refer_url"`
 	Url         string `form:"url" json:"url" uri:"url" xml:"url"`
 	ToId        string `form:"to_id" json:"to_id" uri:"to_id" xml:"to_id"  binding:"required"`
 	EntId       string `form:"ent_id" json:"ent_id" uri:"ent_id" xml:"ent_id" binding:"required"`
@@ -133,42 +134,25 @@ func PostVisitorLogin(c *gin.Context) {
 		return
 	}
 
-	//判断商户是否在线
-	dstKefu := models.FindUser(form.ToId)
-	//判断是否在线
-	if dstKefu.OnlineStatus == 1 && ws.IsKefuOnline(form.ToId) {
+	visitor := models.FindVisitorByVistorId(form.VisitorId)
+	previousKefuId := visitor.ToId
+	lastMessage := models.FindLastMessageByVisitorId(form.VisitorId)
+	kefus := models.FindUsersWhere("pid = ? or id=?", form.EntId, form.EntId)
+	preferredKefus := []string{form.ToId, visitor.ToId, lastMessage.KefuId}
+	dstKefu, assignedOnline, assignedReason := selectAvailableKefu(
+		kefus,
+		preferredKefus,
+		ws.IsKefuOnline,
+		ws.ActiveVisitorCountsByKefu(form.EntId),
+	)
+	if assignedOnline {
+		form.ToId = dstKefu.Name
 		allOffline = false
 	} else {
-		Mes := models.Message{}
-		err := models.DB.Where("visitor_id=?", form.VisitorId).Order("created_at desc").First(&Mes).Error
-		uu := models.User{}
-		err11 := models.DB.Where("name=? and  online_status = 1", Mes.KefuId).First(&uu).Error
-		if err == nil && err11 == nil {
-			if ws.IsKefuOnline(uu.Name) {
-				form.ToId = uu.Name
-				allOffline = false
-				dstKefu = uu
-			}
-		} else {
-			kefus := models.FindUsersWhere("(pid = ? or id=?) and online_status=1", form.EntId, form.EntId)
-			//kefus := models.FindUsersByPid(form.EntId)
-			if len(kefus) == 0 {
-				form.ToId = entKefuInfo.Name
-			} else {
-				for _, kefu := range kefus {
-					if ws.IsKefuOnline(kefu.Name) {
-						form.ToId = kefu.Name
-						allOffline = false
-						dstKefu = kefu
-						break
-					}
-				}
-			}
-		}
-
+		dstKefu = fallbackKefu(kefus, preferredKefus, entKefuInfo)
+		form.ToId = dstKefu.Name
 	}
 
-	visitor := models.FindVisitorByVistorId(form.VisitorId)
 	visitor.ToId = form.ToId
 	if visitor.Name != "" {
 		if form.Avator == "" && isWechat {
@@ -189,6 +173,23 @@ func PostVisitorLogin(c *gin.Context) {
 	if form.VisitorName != "" {
 		visitor.Name = form.VisitorName
 	}
+	if previousKefuId == "" || previousKefuId != form.ToId {
+		eventType := models.ConversationEventAssigned
+		if previousKefuId != "" {
+			eventType = models.ConversationEventRerouted
+		}
+		detail := "按在线状态与当前负载完成分配"
+		if assignedReason == "preferred" {
+			detail = "保留指定或历史接待客服"
+		}
+		if allOffline {
+			detail = "全部客服离线，暂时保留到原账号"
+		}
+		models.CreateConversationEvent(
+			form.EntId, visitor.VisitorId, eventType,
+			"system", previousKefuId, form.ToId, detail, setting.Now(),
+		)
+	}
 	go SendVisitorLoginNotice(form.ToId, visitor.Name, visitor.Avator, visitor.Name+"来了", visitor.VisitorId)
 	go models.AddVisitorExt(visitor.VisitorId, Address, form.UserAgent, form.Url, form.Refer, form.ClientIp)
 	go SendWechatVisitorTemplate(form.ToId, visitor.Name, "上线", visitor.EntId)
@@ -196,10 +197,11 @@ func PostVisitorLogin(c *gin.Context) {
 	go SendNoticeEmail(visitor.Name, "[访客]"+visitor.Name, form.EntId, "访问："+form.Refer)
 	go SendAppGetuiPush(dstKefu.Name, "[访客]"+visitor.Name, visitor.Name+"来了")
 	c.JSON(200, gin.H{
-		"code":       200,
-		"msg":        "ok",
-		"alloffline": allOffline,
-		"result":     visitor,
+		"code":            200,
+		"msg":             "ok",
+		"alloffline":      allOffline,
+		"assigned_reason": assignedReason,
+		"result":          visitor,
 		"kefu": gin.H{
 			"username": dstKefu.Nickname,
 			"avatar":   dstKefu.Avator,
@@ -243,7 +245,7 @@ func GetVisitor(c *gin.Context) {
 		"code":        200,
 		"msg":         "ok",
 		"create_time": vistor.CreatedAt.Format("2006-01-02 15:04:05"),
-		"last_time":   vistor.UpdatedAt.Format("2006-01-02 15:04:05"),
+		"last_time":   setting.Format(vistor.UpdatedAt),
 		"os_version":  osVersion,
 		"browser":     browser,
 		"result":      vistor,
@@ -309,7 +311,7 @@ func GetVisitors(c *gin.Context) {
 	for _, visitor := range vistors {
 		visitorIds = append(visitorIds, visitor.VisitorId)
 	}
-	messagesMap := models.FindLastMessageMap(visitorIds)
+	messagesMap := models.FindLastMessageDetailsMap(visitorIds)
 	unreadMap := models.FindUnreadMessageNumByVisitorIds(visitorIds, "visitor")
 	//log.Println(unreadMap)
 	users := make([]VisitorOnline, 0)
@@ -318,14 +320,19 @@ func GetVisitors(c *gin.Context) {
 		if num, ok := unreadMap[visitor.VisitorId]; ok {
 			unreadNum = num
 		}
+		lastMessage := messagesMap[visitor.VisitorId]
+		updatedAt := visitor.UpdatedAt
+		if !lastMessage.CreatedAt.IsZero() {
+			updatedAt = lastMessage.CreatedAt
+		}
 		user := VisitorOnline{
 			Id:          visitor.ID,
 			VisitorId:   visitor.VisitorId,
 			Avator:      visitor.Avator,
 			Ip:          visitor.SourceIp,
 			Username:    fmt.Sprintf("#%d %s", visitor.ID, visitor.Name),
-			LastMessage: messagesMap[visitor.VisitorId],
-			UpdatedAt:   visitor.UpdatedAt,
+			LastMessage: lastMessage.Content,
+			UpdatedAt:   updatedAt,
 			UnreadNum:   unreadNum,
 			Status:      visitor.Status,
 		}
@@ -407,7 +414,7 @@ func GetVisitorsList(c *gin.Context) {
 		visitorIds = append(visitorIds, visitor.VisitorId)
 	}
 
-	messagesMap := models.FindLastMessageMap(visitorIds)
+	messagesMap := models.FindLastMessageDetailsMap(visitorIds)
 	//获取访客未读数
 	unreadMap := models.FindUnreadMessageNumByVisitorIds(visitorIds, "visitor")
 	log.Println(unreadMap)
@@ -422,6 +429,11 @@ func GetVisitorsList(c *gin.Context) {
 			username = visitor.RealName
 		}
 
+		lastMessage := messagesMap[visitor.VisitorId]
+		updatedAt := visitor.UpdatedAt
+		if !lastMessage.CreatedAt.IsZero() {
+			updatedAt = lastMessage.CreatedAt
+		}
 		user := VisitorOnline{
 			Id:          visitor.ID,
 			VisitorId:   visitor.VisitorId,
@@ -429,13 +441,14 @@ func GetVisitorsList(c *gin.Context) {
 			Avator:      visitor.Avator,
 			Ip:          visitor.SourceIp,
 			Username:    username,
-			LastMessage: messagesMap[visitor.VisitorId],
-			UpdatedAt:   visitor.UpdatedAt,
+			LastMessage: lastMessage.Content,
+			UpdatedAt:   updatedAt,
 			UnreadNum:   unreadNum,
 			Status:      visitor.Status,
 		}
 		users = append(users, user)
 	}
+	enrichConversationUserValues(users, fmt.Sprintf("%v", entId))
 
 	c.JSON(200, gin.H{
 		"code": 200,
@@ -486,13 +499,14 @@ func GetVisitorMessageByKefu(c *gin.Context) {
 func GetVisitorOnlines(c *gin.Context) {
 	users := make([]map[string]string, 0)
 	visitorIds := make([]string, 0)
-	for uid, visitor := range ws.ClientList {
+	for uid, visitor := range ws.VisitorConnectionsSnapshot() {
+		state := visitor.State()
 		userInfo := make(map[string]string)
 		userInfo["uid"] = uid
-		userInfo["name"] = visitor.Name
-		userInfo["avator"] = visitor.Avator
+		userInfo["name"] = state.Name
+		userInfo["avator"] = state.Avator
 		users = append(users, userInfo)
-		visitorIds = append(visitorIds, visitor.Id)
+		visitorIds = append(visitorIds, state.Id)
 	}
 
 	//查询最新消息
@@ -597,26 +611,31 @@ func GetKefusVisitorOnlines(c *gin.Context) {
 	}
 	users := make([]*VisitorOnline, 0)
 	visitorIds := make([]string, 0)
-	clientList := sortMapToSlice(ws.ClientList)
+	clientList := sortMapToSlice(ws.VisitorConnectionsSnapshot())
 	for _, visitor := range clientList {
-		if visitor.To_id != kefuName {
+		state := visitor.State()
+		if state.ToID != kefuName {
 			continue
 		}
 		userInfo := new(VisitorOnline)
-		userInfo.UpdatedAt = visitor.UpdateTime
-		userInfo.VisitorId = visitor.Id
-		userInfo.Username = visitor.Name
-		userInfo.Avator = visitor.Avator
+		userInfo.UpdatedAt = state.UpdateTime
+		userInfo.VisitorId = state.Id
+		userInfo.Username = state.Name
+		userInfo.Avator = state.Avator
 		users = append(users, userInfo)
-		visitorIds = append(visitorIds, visitor.Id)
+		visitorIds = append(visitorIds, state.Id)
 	}
 
 	//查询最新消息
-	messages := models.FindLastMessageMap(visitorIds)
+	messages := models.FindLastMessageDetailsMap(visitorIds)
 	//查未读数
 	unreadMap := models.FindUnreadMessageNumByVisitorIds(visitorIds, "visitor")
 	for _, user := range users {
-		user.LastMessage = messages[user.VisitorId]
+		lastMessage := messages[user.VisitorId]
+		user.LastMessage = lastMessage.Content
+		if !lastMessage.CreatedAt.IsZero() {
+			user.UpdatedAt = lastMessage.CreatedAt
+		}
 		if user.LastMessage == "" {
 			user.LastMessage = "new visitor"
 		}
@@ -626,6 +645,7 @@ func GetKefusVisitorOnlines(c *gin.Context) {
 		}
 		user.UnreadNum = unreadNum
 	}
+	enrichConversationUsers(users, fmt.Sprintf("%v", entId))
 
 	c.JSON(200, gin.H{
 		"code":   200,
@@ -649,14 +669,17 @@ func DelVisitor(c *gin.Context) {
 }
 
 func sortMapToSlice(youMap map[string]*ws.User) []*ws.User {
-	keys := make([]string, 0)
-	for k, _ := range youMap {
-		keys = append(keys, k)
+	visitors := make([]*ws.User, 0, len(youMap))
+	for _, visitor := range youMap {
+		visitors = append(visitors, visitor)
 	}
-	myMap := make([]*ws.User, 0)
-	sort.Strings(keys)
-	for _, k := range keys {
-		myMap = append(myMap, youMap[k])
-	}
-	return myMap
+	sort.SliceStable(visitors, func(i, j int) bool {
+		left := visitors[i].State()
+		right := visitors[j].State()
+		if left.UpdateTime.Equal(right.UpdateTime) {
+			return left.Id < right.Id
+		}
+		return left.UpdateTime.After(right.UpdateTime)
+	})
+	return visitors
 }

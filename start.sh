@@ -1,3 +1,5 @@
-go build main.go
+#!/bin/sh
+set -eu
 
-./main server -d
+go build -o main .
+exec ./main server -d -p "${GOFLY_PORT:-8081}"

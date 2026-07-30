@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go-fly-muti/common"
 	"go-fly-muti/models"
+	"go-fly-muti/setting"
 	"go-fly-muti/tools"
 	"go-fly-muti/types"
 	"go-fly-muti/ws"
@@ -16,7 +17,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 )
 
@@ -38,11 +38,10 @@ func SendMessageV2(c *gin.Context) {
 		return
 	}
 	fromId := form.FromId
-	toId := form.ToId
 	content := form.Content
 
 	//限流
-	if !tools.LimitFreqSingle("sendmessage:"+c.ClientIP(), 1, 1) {
+	if !tools.LimitFreqSingle(visitorMessageLimitKey(fromId, c.ClientIP()), 1, 1) {
 		c.JSON(200, gin.H{
 			"code": types.ApiCode.FREQ_LIMIT,
 			"msg":  c.ClientIP() + types.ApiCode.GetMessage(types.ApiCode.FREQ_LIMIT),
@@ -59,25 +58,32 @@ func SendMessageV2(c *gin.Context) {
 		return
 	}
 
-	var kefuInfo models.User
-	var vistorInfo models.Visitor
-
-	vistorInfo = models.FindVisitorByVistorId(fromId)
-	kefuInfo = models.FindUser(toId)
-
-	if kefuInfo.ID == 0 || vistorInfo.ID == 0 {
+	vistorInfo := models.FindVisitorByVistorId(fromId)
+	if vistorInfo.ID == 0 {
 		c.JSON(200, gin.H{
 			"code": types.ApiCode.ACCOUNT_NO_EXIST,
 			"msg":  types.ApiCode.GetMessage(types.ApiCode.ACCOUNT_NO_EXIST),
 		})
 		return
 	}
+	kefuInfo := models.FindUser(vistorInfo.ToId)
+	if kefuInfo.ID == 0 || !userBelongsToEnterprise(kefuInfo, vistorInfo.EntId) {
+		c.JSON(200, gin.H{
+			"code": types.ApiCode.ACCOUNT_NO_EXIST,
+			"msg":  "当前会话没有有效的接待客服，请重新连接",
+		})
+		return
+	}
+	if form.ToId != kefuInfo.Name {
+		ws.VisitorTransfer(vistorInfo.VisitorId, kefuInfo.Name)
+	}
 
 	msgId := models.CreateMessage(kefuInfo.Name, vistorInfo.VisitorId, content, "visitor", vistorInfo.EntId, "unread")
+	models.MarkConversationWaiting(vistorInfo.EntId, vistorInfo.VisitorId, kefuInfo.Name, setting.Now())
 
-	guest, ok := ws.ClientList[vistorInfo.VisitorId]
+	guest, ok := ws.VisitorConnection(vistorInfo.VisitorId)
 	if ok && guest != nil {
-		guest.UpdateTime = time.Now()
+		guest.Touch()
 	}
 
 	msg := ws.TypeMessage{
@@ -90,7 +96,7 @@ func SendMessageV2(c *gin.Context) {
 			Name:      vistorInfo.Name,
 			ToId:      kefuInfo.Name,
 			Content:   content,
-			Time:      time.Now().Format("2006-01-02 15:04:05"),
+			Time:      setting.Now().Format("2006-01-02 15:04:05"),
 			IsKefu:    "no",
 		},
 	}
@@ -99,7 +105,7 @@ func SendMessageV2(c *gin.Context) {
 	//affected := DB.Debug().Model(&models.Visitor{}).Where("visitor_id=?", toId).Updates(map[string]interface{}{"UpdateAt": time.Now().Format("2006-01-02 15:04:05")}).RowsAffected
 
 	//fmt.Println(toId)
-	affected := models.DB.Exec("UPDATE  visitor SET  updated_at=?   WHERE  visitor_id =?", time.Now().Format("2006-01-02 15:04:05"), form.FromId).RowsAffected
+	affected := models.DB.Exec("UPDATE  visitor SET  updated_at=?   WHERE  visitor_id =?", setting.Now().Format("2006-01-02 15:04:05"), form.FromId).RowsAffected
 	fmt.Println(affected)
 
 	str, _ := json.Marshal(msg)
@@ -113,11 +119,21 @@ func SendMessageV2(c *gin.Context) {
 	go ws.VisitorAutoReply(vistorInfo, kefuInfo, content)
 	go models.ReadMessageByVisitorId(vistorInfo.VisitorId, "kefu")
 	c.JSON(200, gin.H{
-		"code": 200,
-		"msg":  "ok",
+		"code":          200,
+		"msg":           "ok",
+		"assigned_kefu": kefuInfo.Name,
 	})
 
 }
+
+func visitorMessageLimitKey(visitorId, clientIp string) string {
+	visitorId = strings.TrimSpace(visitorId)
+	if visitorId == "" {
+		visitorId = clientIp
+	}
+	return "sendmessage:" + visitorId
+}
+
 func SendKefuMessage(c *gin.Context) {
 	entId, _ := c.Get("ent_id")
 	fromId, _ := c.Get("kefu_name")
@@ -144,13 +160,20 @@ func SendKefuMessage(c *gin.Context) {
 		})
 		return
 	}
+	if err := validateKefuConversation(entId.(string), kefuInfo.Name, vistorInfo); err != nil {
+		c.JSON(200, gin.H{
+			"code": 409,
+			"msg":  err.Error(),
+		})
+		return
+	}
 
 	var msg ws.TypeMessage
-	guest, ok := ws.ClientList[vistorInfo.VisitorId]
+	guest, ok := ws.VisitorConnection(vistorInfo.VisitorId)
 	isRead := "unread"
 	msgId := models.CreateMessage(kefuInfo.Name, vistorInfo.VisitorId, content, cType, entId.(string), isRead)
+	models.MarkConversationPending(entId.(string), vistorInfo.VisitorId, kefuInfo.Name, setting.Now())
 	if guest != nil && ok {
-		conn := guest.Conn
 		msg = ws.TypeMessage{
 			Type: "message",
 			Data: ws.ClientMessage{
@@ -158,14 +181,14 @@ func SendKefuMessage(c *gin.Context) {
 				Name:    kefuInfo.Nickname,
 				Avator:  kefuInfo.Avator,
 				Id:      kefuInfo.Name,
-				Time:    time.Now().Format("2006-01-02 15:04:05"),
+				Time:    setting.Now().Format("2006-01-02 15:04:05"),
 				ToId:    vistorInfo.VisitorId,
 				Content: content,
 				IsKefu:  "no",
 			},
 		}
 		str, _ := json.Marshal(msg)
-		conn.WriteMessage(websocket.TextMessage, str)
+		_ = ws.SendMessageToVisitor(guest, str)
 	} else {
 		go SendWechatKefuTemplate(vistorInfo.VisitorId, kefuInfo.Name, kefuInfo.Nickname, content, fmt.Sprintf("%v", entId))
 	}
@@ -178,7 +201,7 @@ func SendKefuMessage(c *gin.Context) {
 			Name:    kefuInfo.Nickname,
 			Avator:  kefuInfo.Avator,
 			Id:      vistorInfo.VisitorId,
-			Time:    time.Now().Format("2006-01-02 15:04:05"),
+			Time:    setting.Now().Format("2006-01-02 15:04:05"),
 			ToId:    vistorInfo.VisitorId,
 			Content: content,
 			IsKefu:  "yes",
@@ -207,8 +230,8 @@ func SendVisitorNotice(c *gin.Context) {
 		Data: notice,
 	}
 	str, _ := json.Marshal(msg)
-	for _, visitor := range ws.ClientList {
-		visitor.Conn.WriteMessage(websocket.TextMessage, str)
+	for _, visitor := range ws.VisitorConnectionsSnapshot() {
+		_ = ws.SendMessageToVisitor(visitor, str)
 	}
 	c.JSON(200, gin.H{
 		"code": 200,
@@ -218,6 +241,7 @@ func SendVisitorNotice(c *gin.Context) {
 
 func SendCloseMessageV2(c *gin.Context) {
 	ent_id, _ := c.Get("ent_id")
+	kefuId, _ := c.Get("kefu_name")
 	visitorId := c.Query("visitor_id")
 	if visitorId == "" {
 		c.JSON(200, gin.H{
@@ -226,10 +250,25 @@ func SendCloseMessageV2(c *gin.Context) {
 		})
 		return
 	}
+	visitor := models.FindVisitorByVistorId(visitorId)
+	if visitor.ID == 0 || visitor.EntId != fmt.Sprintf("%v", ent_id) || visitor.ToId != fmt.Sprintf("%v", kefuId) {
+		c.JSON(200, gin.H{
+			"code": 400,
+			"msg":  "只能结束分配给自己的会话",
+		})
+		return
+	}
+	now := setting.Now()
+	models.ResolveConversation(visitor.EntId, visitorId, visitor.ToId, now)
+	models.CreateConversationEvent(
+		visitor.EntId, visitorId, models.ConversationEventResolved,
+		fmt.Sprintf("%v", kefuId), visitor.ToId, visitor.ToId,
+		"客服结束并解决会话", now,
+	)
 	config := models.FindEntConfig(ent_id, "CloseVisitorMessage")
-	oldUser, ok := ws.ClientList[visitorId]
+	oldUser, ok := ws.VisitorConnection(visitorId)
 	if oldUser != nil || ok {
-		ws.VisitorOffline(oldUser.To_id, oldUser.Id, oldUser.Name)
+		oldState := oldUser.State()
 		if config.ConfValue != "" {
 			kefu := models.FindUserByUid(ent_id)
 			ws.VisitorMessage(visitorId, config.ConfValue, kefu)
@@ -239,9 +278,11 @@ func SendCloseMessageV2(c *gin.Context) {
 			Data: visitorId,
 		}
 		str, _ := json.Marshal(msg)
-		err := oldUser.Conn.WriteMessage(websocket.TextMessage, str)
-		oldUser.Conn.Close()
-		delete(ws.ClientList, visitorId)
+		err := ws.SendMessageToVisitor(oldUser, str)
+		_ = oldUser.Conn.Close()
+		if ws.RemoveVisitorConnection(visitorId, oldUser) {
+			ws.VisitorOffline(oldState.ToID, oldState.Id, oldState.Name)
+		}
 		log.Println("close_message", oldUser, err)
 	}
 	c.JSON(200, gin.H{
@@ -458,7 +499,7 @@ func PostMessagesAsk(c *gin.Context) {
 				"content": reply.Content,
 				"name":    entInfo.Nickname,
 				"avator":  entInfo.Avator,
-				"time":    time.Now().Format("2006-01-02 15:05:05"),
+				"time":    setting.Now().Format("2006-01-02 15:04:05"),
 			},
 		})
 		return

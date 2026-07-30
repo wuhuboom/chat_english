@@ -2,6 +2,7 @@
 
 <head>
     <meta charset="utf-8">
+    <meta name="system-timezone" content="{{.SystemTimezone}}">
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0;" name="viewport" />
     <meta name="keywords" content="{{.SystemKeywords}}" />
     <meta name="description" content="{{.SystemDesc}}" />
@@ -11,12 +12,13 @@
     <script src="/static/element-ui/2.15.1/index.js"></script>
     <script src="/static/jquery/3.6.0/jquery.min.js"></script>
 
-    <script src="/static/js/functions.js?v=0.6.0"></script>
+    <script src="/static/js/functions.js?v=0.7.1"></script>
     <link rel="stylesheet" href="/static/css/front.css?v=0.6.0" />
     <link rel="stylesheet" href="/static/css/common.css?v=0.6.3" />
     <link rel="stylesheet" href="/static/css/icono.min.css" />
     <link rel="icon" href="/static/images/favicon.ico">
     <link rel="stylesheet" href="/static/css/chart-page.css?v=0.0.1" />
+    <link rel="stylesheet" href="/static/css/visitor-modern.css?v=1.1.0" />
     <style>
         .el-message-box {
             width: auto;
@@ -27,15 +29,19 @@
     </style>
 </head>
 
-<body>
+<body class="visitorChatBody">
     <div id="app" class="chatCenter">
         <template>
             <!--客服代码-->
             <div class="chatEntTitle" v-show="!isIframe">
+                <button type="button" class="visitorHeaderBack" title="返回" aria-label="返回上一页"
+                    v-on:click="goBack">
+                    <i class="el-icon-arrow-left"></i>
+                </button>
                 <el-badge :type="onlineType" is-dot class="item">
                     <el-avatar class="chatEntTitleLogo" :size="35" :src="noticeAvatar"></el-avatar>
                 </el-badge>
-                <span>
+                <span class="visitorHeaderTitle">
                     <{chatTitle}>
                 </span>
             </div>
@@ -129,30 +135,32 @@
                         </el-dialog>
                         <!--//切换语言-->
 
-                        <el-row :gutter="2" v-for="v in msgList" v-bind:class="{'chatBoxMe': v.is_kefu==true}">
+                        <div class="visitorMessageRow"
+                             v-for="v in msgList"
+                             :key="v.msg_id || (v.time + '-' + v.content)"
+                             v-bind:class="{'chatBoxMe': v.is_kefu==true}">
                             <div class="chatTime" v-bind:class="{'chatTimeHide': v.show_time==false}"><span>
                                     <{formatTime(v.time)}>
                                 </span></div>
-                            <div v-if="v.is_kefu!=true">
-                                <el-col :span="3"><el-avatar shape="square" :size="36"
-                                        :src="v.avator"></el-avatar></el-col>
-                                <el-col :span="21">
+                            <div class="visitorMessageLine" v-if="v.is_kefu!=true">
+                                <el-avatar class="visitorMessageAvatar" shape="square" :size="40"
+                                        :src="v.avator"></el-avatar>
+                                <div class="visitorMessagePayload">
                                     <div class="chatUser" v-if="showKefuName!='off'">
                                         <{v.name}>
                                     </div>
                                     <div class="chatContent replyContentBtn" v-html="v.content"></div>
-                                </el-col>
+                                </div>
                             </div>
-                            <div class="kefuMe" v-if="v.is_kefu==true">
-                                <el-col :span="24">
+                            <div class="visitorMessageLine visitorMessageMine" v-if="v.is_kefu==true">
+                                <div class="visitorMessagePayload">
                                     <div class="chatContent replyContentBtn" v-html="v.content"></div>
                                     <div class="chatReadStatus">
                                         <{v.read_status}>
                                     </div>
-                                </el-col>
+                                </div>
                             </div>
-                            <div class="clear"></div>
-                        </el-row>
+                        </div>
 
                         <!--知识库返回-->
                         <!--//知识库返回-->
@@ -172,13 +180,36 @@
                         <!--                    <div class="icono-support visitorIconBtns" @click="flagsDialog='true'"> </div>-->
                         <div class="clear"></div>
                     </div>
-                    <div class="faceBox visitorFaceBox" v-if="showFaceIcon">
-                        <ul class="faceBoxList">
-                            <li v-on:click="faceIconClick(i)" class="faceIcon" v-for="(v,i) in face" :title="v.name">
-                                <img :src=v.path>
-                            </li>
-                        </ul>
-                        <div class="clear"></div>
+                    <div class="faceBox visitorFaceBox modernEmojiPicker" v-show="showFaceIcon"
+                        v-on:click.stop>
+                        <div class="emojiPickerHeader">
+                            <span class="emojiPickerTitle">Emoji</span>
+                            <span class="emojiPickerHint"><{activeEmojiGroupName}></span>
+                        </div>
+                        <div class="emojiPickerGrid">
+                            <button type="button" class="emojiPickerItem"
+                                v-for="emoji in visibleEmojis" :key="emoji"
+                                :title="emoji" :aria-label="emojiTexts.insert + ' ' + emoji"
+                                v-on:click.stop="selectEmoji(emoji)">
+                                <span><{emoji}></span>
+                            </button>
+                        </div>
+                        <div class="emojiPickerTabs" role="tablist" :aria-label="emojiTexts.categories">
+                            <button type="button" class="emojiPickerTab"
+                                v-if="recentEmojis.length"
+                                :class="{'is-active': activeEmojiGroup === 'recent'}"
+                                :title="emojiTexts.recent" :aria-label="emojiTexts.recent"
+                                v-on:click.stop="activeEmojiGroup='recent'">
+                                🕘
+                            </button>
+                            <button type="button" class="emojiPickerTab"
+                                v-for="group in emojiGroups" :key="group.id"
+                                :class="{'is-active': activeEmojiGroup === group.id}"
+                                :title="group.name" :aria-label="group.name"
+                                v-on:click.stop="activeEmojiGroup=group.id">
+                                <{group.icon}>
+                            </button>
+                        </div>
                     </div>
                     <div class="visitorEditor">
                         <el-input class="visitorEditorArea" @focus="scrollBottom;showIconBtns=false"
@@ -187,11 +218,11 @@
                             :placeholder="flyLang.textarea">
                         </el-input>
                         <div :title="flyLang.emotions"
-                            v-on:click="showFaceIcon==true?showFaceIcon=false:showFaceIcon=true"
+                            v-on:click.stop="toggleEmojiPicker"
                             class="visitorEditorSmile visitorFaceBtn"></div>
                         <div v-on:click="showIconBtns==true?showIconBtns=false:showIconBtns=true"
                             v-show="messageContent==''" :title="flyLang.emotions" class="visitorEditorChoose"></div>
-                        <el-button type="success" size="small" v-show="!sendDisabled && messageContent!=''"
+                        <el-button type="primary" size="small" v-show="!sendDisabled && messageContent!=''"
                             class="visitorEditorBtn" :disabled="sendDisabled||messageContent==''"
                             v-on:click="chatToUser();showIconBtns=false">
                             <{flyLang.sent}>
@@ -205,12 +236,20 @@
             </div>
             <div class="chatArticle">
                 <div class="companyInfo">
-                    <el-avatar shape="square" :size="160" :src="noticeAvatar"></el-avatar>
-                    <p>
+                    <div class="companyAvatarWrap">
+                        <el-avatar shape="square" :size="104" :src="noticeAvatar"></el-avatar>
+                        <span class="companyOnlineDot"></span>
+                    </div>
+                    <p class="companyName">
                         <{noticeName}>
                     </p>
+                    <div class="companyRole">在线客服</div>
+                    <div class="companyResponse">通常会在几分钟内回复</div>
                 </div>
-                <div v-for="reply in replys">
+                <div class="quickReplyPanel" v-show="replys.length>0">
+                    <div class="quickReplyHeading">猜你想问</div>
+                </div>
+                <div class="quickReplyGroup" v-for="reply in replys">
                     <a v-on:click="sendReply(item.item_name)" class="chatArticleItem" v-for="item in reply.items">
                         <{item.item_name}>
                     </a>
@@ -283,6 +322,10 @@
             chatTitle: GOFLY_LANG[LANG]['connecting'],
             visitor: {},
             face: [],
+            emojiGroups: getModernEmojiGroups(LANG),
+            emojiTexts: getEmojiPickerTexts(LANG),
+            activeEmojiGroup: "smileys",
+            recentEmojis: [],
             showKfonline: false,
             socketClosed: false,
             focusSendConn: false,
@@ -337,6 +380,13 @@
             showKefuName: SHOW_KEFU_NAME,
         },
         methods: {
+            goBack: function () {
+                if (window.history.length > 1) {
+                    window.history.back();
+                    return;
+                }
+                window.location.href = "/";
+            },
             //初始化websocket
             initConn: function () {
                 this.socket = new ReconnectingWebSocket(this.server + "?visitor_id=" + this.visitor.visitor_id + "&to_id=" + this.visitor.to_id);//创建Socket实例
@@ -824,12 +874,15 @@
             //获取自动欢迎语句
             getNotice: function () {
                 let _this = this;
-                var noticed = this.getCache("noticed_" + ENT_ID);
-                if (noticed) {
-                    return;
-                }
-                $.get("/2/notices?visitor_id=" + this.visitor.visitor_id + "&ent_id=" + ENT_ID + "&kefu_name=" + this.visitor.to_id, function (res) {
-                    _this.setCache("noticed_" + ENT_ID, 1);
+                var versionCacheKey = "welcome_version_" + ENT_ID + "_" + this.visitor.visitor_id;
+                var welcomeVersion = this.getCache(versionCacheKey) || "";
+                $.get("/2/notices?visitor_id=" + this.visitor.visitor_id + "&ent_id=" + ENT_ID + "&kefu_name=" + this.visitor.to_id + "&welcome_version=" + encodeURIComponent(welcomeVersion), function (res) {
+                    if (!res || res.code !== 200 || !res.result) {
+                        return;
+                    }
+                    if (res.result.welcome_version) {
+                        _this.setCache(versionCacheKey, res.result.welcome_version);
+                    }
                     //debugger;
                     // _this.noticeName=res.result.username;
                     // _this.noticeAvatar=res.result.avatar;
@@ -867,11 +920,6 @@
                     // if(_this.isMobile){
                     //     $(".chatVisitorPage").css("height","calc(100% - 155px)");
                     // }
-                    //展示表情
-                    var faces = placeFace();
-                    $.each(faceTitles, function (index, item) {
-                        _this.face.push({ "name": item, "path": faces[item] });
-                    });
                     // $(".visitorFaceBtn").click(function(e){
                     //     var status=$('.faceBox').css("display");
                     //     if(status=="block"){
@@ -980,10 +1028,28 @@
                 }
 
             },
-            //表情点击事件
-            faceIconClick: function (index) {
-                this.showFaceIcon = false;
-                this.messageContent += "face" + this.face[index].name;
+            toggleEmojiPicker: function () {
+                this.showFaceIcon = !this.showFaceIcon;
+                this.showIconBtns = false;
+            },
+            selectEmoji: function (emoji) {
+                this.messageContent += emoji;
+                this.recentEmojis = [emoji].concat(this.recentEmojis.filter(function (item) {
+                    return item !== emoji;
+                })).slice(0, 24);
+                try {
+                    window.localStorage.setItem("gofly_recent_emojis", JSON.stringify(this.recentEmojis));
+                } catch (error) {
+                    // 隐私模式或禁用存储时仍可正常插入表情。
+                }
+            },
+            loadRecentEmojis: function () {
+                try {
+                    var stored = JSON.parse(window.localStorage.getItem("gofly_recent_emojis") || "[]");
+                    this.recentEmojis = Array.isArray(stored) ? stored.slice(0, 24) : [];
+                } catch (error) {
+                    this.recentEmojis = [];
+                }
             },
             //上传图片
             uploadImg: function (url) {
@@ -1508,6 +1574,7 @@
             });
         },
         created: function () {
+            this.loadRecentEmojis();
             this.init();
             this.getUserInfo();
             //加载历史记录
@@ -1521,6 +1588,24 @@
             //this.getVersion();
         },
         computed: {
+            visibleEmojis() {
+                if (this.activeEmojiGroup === "recent") {
+                    return this.recentEmojis;
+                }
+                var currentGroup = this.emojiGroups.find(function (group) {
+                    return group.id === this.activeEmojiGroup;
+                }, this);
+                return currentGroup ? currentGroup.emojis : [];
+            },
+            activeEmojiGroupName() {
+                if (this.activeEmojiGroup === "recent") {
+                    return this.emojiTexts.recent;
+                }
+                var currentGroup = this.emojiGroups.find(function (group) {
+                    return group.id === this.activeEmojiGroup;
+                }, this);
+                return currentGroup ? currentGroup.name : this.emojiTexts.fallback;
+            },
             getKefuName() {
                 let name = ""
                 for (let index = 0; index < this.msgList.length; index++) {

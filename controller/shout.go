@@ -64,7 +64,7 @@ func SendNoticeEmail(username, subject, entId, content string) {
 	if smtp == "" || email == "" || password == "" {
 		return
 	}
-	log.Println("发送访客通知邮件:" + smtp + "," + email + "," + password)
+	log.Println("发送访客通知邮件:", smtp, email)
 	err := tools.SendSmtp(smtp, email, password, []string{email}, subject, content)
 	if err != nil {
 		log.Println("发送访客通知邮件失败:")

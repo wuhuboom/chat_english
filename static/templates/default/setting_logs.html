@@ -1,0 +1,272 @@
+{{template "header" }}
+<div id="app" class="systemLogsPage">
+    <template>
+        <main class="systemLogsMain" v-loading="loading">
+            <section class="systemLogsHero">
+                <div>
+                    <span class="systemLogsEyebrow">SYSTEM OBSERVABILITY</span>
+                    <h1>系统日志</h1>
+                    <p>集中查看请求、WebSocket、业务错误和系统异常。每个 HTTP 请求都可以通过请求编号追踪。</p>
+                </div>
+                <div class="systemLogsActions">
+                    <el-switch
+                            v-model="autoRefresh"
+                            active-text="每 10 秒自动刷新">
+                    </el-switch>
+                    <el-button type="primary" icon="el-icon-refresh" @click="loadLogs">立即刷新</el-button>
+                </div>
+            </section>
+
+            <section class="systemLogsMetrics">
+                <article class="systemLogMetric is-total">
+                    <span>当前窗口</span>
+                    <strong><{result.scanned_lines || 0}></strong>
+                    <small>最近扫描日志数</small>
+                </article>
+                <article class="systemLogMetric is-info">
+                    <span>信息</span>
+                    <strong><{countFor('info')}></strong>
+                    <small>正常业务与请求</small>
+                </article>
+                <article class="systemLogMetric is-warning">
+                    <span>警告</span>
+                    <strong><{countFor('warn')}></strong>
+                    <small>客户端错误与异常状态</small>
+                </article>
+                <article class="systemLogMetric is-error">
+                    <span>错误</span>
+                    <strong><{countFor('error')}></strong>
+                    <small>服务错误与崩溃恢复</small>
+                </article>
+            </section>
+
+            <section class="systemLogsPanel">
+                <div class="systemLogsFilters">
+                    <el-select v-model="filters.level" placeholder="全部等级" clearable @change="loadLogs">
+                        <el-option label="全部等级" value=""></el-option>
+                        <el-option label="DEBUG" value="debug"></el-option>
+                        <el-option label="INFO" value="info"></el-option>
+                        <el-option label="WARN" value="warn"></el-option>
+                        <el-option label="ERROR" value="error"></el-option>
+                    </el-select>
+                    <el-input
+                            v-model.trim="filters.keyword"
+                            clearable
+                            prefix-icon="el-icon-search"
+                            placeholder="搜索消息、路径、客服或企业编号"
+                            @keyup.enter.native="loadLogs">
+                    </el-input>
+                    <el-input
+                            v-model.trim="filters.requestId"
+                            clearable
+                            prefix-icon="el-icon-link"
+                            placeholder="请求编号（精确匹配）"
+                            @keyup.enter.native="loadLogs">
+                    </el-input>
+                    <el-select v-model="filters.limit" @change="loadLogs">
+                        <el-option label="最近 50 条" :value="50"></el-option>
+                        <el-option label="最近 100 条" :value="100"></el-option>
+                        <el-option label="最近 200 条" :value="200"></el-option>
+                        <el-option label="最近 500 条" :value="500"></el-option>
+                    </el-select>
+                    <el-button icon="el-icon-search" @click="loadLogs">查询</el-button>
+                    <el-button @click="resetFilters">重置</el-button>
+                </div>
+
+                <div class="systemLogsMeta">
+                    <span><i class="el-icon-document"></i> <{result.file || '日志文件尚未生成'}></span>
+                    <span><{formatBytes(result.file_size)}></span>
+                    <span v-if="result.modified_at">更新于 <{formatTime(result.modified_at)}></span>
+                    <el-tag v-if="result.truncated" size="mini" type="warning">仅扫描最近 8 MB</el-tag>
+                </div>
+
+                <el-table
+                        :data="result.entries"
+                        row-key="row_key"
+                        empty-text="没有符合条件的日志"
+                        class="systemLogsTable">
+                    <el-table-column type="expand">
+                        <template slot-scope="scope">
+                            <div class="systemLogDetail">
+                                <div class="systemLogDetailGrid">
+                                    <span><b>组件</b><{scope.row.component || '-'}></span>
+                                    <span><b>调用位置</b><{scope.row.caller || '-'}></span>
+                                    <span><b>客户端 IP</b><{scope.row.ip || '-'}></span>
+                                    <span><b>响应大小</b><{formatBytes(scope.row.response_bytes)}></span>
+                                    <span><b>客服编号</b><{scope.row.kefu_id || '-'}></span>
+                                    <span><b>企业编号</b><{scope.row.ent_id || '-'}></span>
+                                </div>
+                                <pre><{scope.row.raw}></pre>
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="时间" width="176">
+                        <template slot-scope="scope">
+                            <span class="systemLogTime"><{formatTime(scope.row.time)}></span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="等级" width="88">
+                        <template slot-scope="scope">
+                            <el-tag size="mini" effect="dark" :type="levelType(scope.row.level)">
+                                <{scope.row.level.toUpperCase()}>
+                            </el-tag>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="component" label="组件" width="105"></el-table-column>
+                    <el-table-column label="请求" min-width="170">
+                        <template slot-scope="scope">
+                            <span v-if="scope.row.method" class="systemLogRequest">
+                                <b><{scope.row.method}></b> <{scope.row.path}>
+                            </span>
+                            <span v-else>-</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="message" label="消息" min-width="260" show-overflow-tooltip></el-table-column>
+                    <el-table-column label="状态/耗时" width="118">
+                        <template slot-scope="scope">
+                            <span v-if="scope.row.status" class="systemLogStatus" :class="'is-'+statusTone(scope.row.status)">
+                                <{scope.row.status}>
+                            </span>
+                            <small v-if="scope.row.duration"><{scope.row.duration}></small>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="请求编号" min-width="190">
+                        <template slot-scope="scope">
+                            <button
+                                    v-if="scope.row.request_id"
+                                    type="button"
+                                    class="systemLogRequestId"
+                                    title="点击筛选同一请求"
+                                    @click="filterByRequest(scope.row.request_id)">
+                                <{scope.row.request_id}>
+                            </button>
+                            <span v-else>-</span>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </section>
+        </main>
+    </template>
+</div>
+</body>
+<script>
+    new Vue({
+        el:"#app",
+        delimiters:["<{","}>"],
+        data:function(){
+            return {
+                loading:false,
+                autoRefresh:true,
+                refreshTimer:null,
+                filters:{
+                    level:"",
+                    keyword:"",
+                    requestId:"",
+                    limit:100
+                },
+                result:{
+                    entries:[],
+                    counts:{debug:0,info:0,warn:0,error:0},
+                    file:"",
+                    file_size:0,
+                    modified_at:"",
+                    scanned_lines:0,
+                    truncated:false
+                }
+            };
+        },
+        watch:{
+            autoRefresh:function(enabled){
+                this.configureAutoRefresh(enabled);
+            }
+        },
+        methods:{
+            loadLogs:function(){
+                var _this=this;
+                this.loading=true;
+                $.ajax({
+                    type:"get",
+                    url:"/system/logs",
+                    headers:{token:localStorage.getItem("token")},
+                    data:{
+                        level:this.filters.level,
+                        keyword:this.filters.keyword,
+                        request_id:this.filters.requestId,
+                        limit:this.filters.limit
+                    },
+                    success:function(data){
+                        if(data.code!==200){
+                            _this.$message.error(data.msg || "日志加载失败");
+                            return;
+                        }
+                        var result=data.result || {};
+                        result.entries=(result.entries || []).map(function(entry,index){
+                            entry.row_key=(entry.time || "")+"-"+(entry.request_id || "")+"-"+index;
+                            return entry;
+                        });
+                        _this.result=result;
+                    },
+                    error:function(){
+                        _this.$message.error("无法连接日志服务");
+                    },
+                    complete:function(){
+                        _this.loading=false;
+                    }
+                });
+            },
+            resetFilters:function(){
+                this.filters.level="";
+                this.filters.keyword="";
+                this.filters.requestId="";
+                this.filters.limit=100;
+                this.loadLogs();
+            },
+            filterByRequest:function(requestId){
+                this.filters.requestId=requestId;
+                this.loadLogs();
+            },
+            configureAutoRefresh:function(enabled){
+                if(this.refreshTimer){
+                    clearInterval(this.refreshTimer);
+                    this.refreshTimer=null;
+                }
+                if(enabled){
+                    this.refreshTimer=setInterval(this.loadLogs,10000);
+                }
+            },
+            countFor:function(level){
+                return (this.result.counts && this.result.counts[level]) || 0;
+            },
+            levelType:function(level){
+                return {debug:"info",info:"success",warn:"warning",error:"danger"}[level] || "info";
+            },
+            statusTone:function(status){
+                if(status>=500){return "error";}
+                if(status>=400){return "warning";}
+                return "success";
+            },
+            formatTime:function(value){
+                if(!value){return "-";}
+                var date=new Date(value);
+                if(Number.isNaN(date.getTime())){return value;}
+                return date.toLocaleString("zh-CN",{hour12:false});
+            },
+            formatBytes:function(value){
+                var bytes=Number(value || 0);
+                if(bytes<1024){return bytes+" B";}
+                if(bytes<1024*1024){return (bytes/1024).toFixed(1)+" KB";}
+                if(bytes<1024*1024*1024){return (bytes/1024/1024).toFixed(1)+" MB";}
+                return (bytes/1024/1024/1024).toFixed(2)+" GB";
+            }
+        },
+        created:function(){
+            this.loadLogs();
+            this.configureAutoRefresh(this.autoRefresh);
+        },
+        beforeDestroy:function(){
+            if(this.refreshTimer){
+                clearInterval(this.refreshTimer);
+            }
+        }
+    });
+</script>

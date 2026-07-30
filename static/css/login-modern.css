@@ -1,0 +1,532 @@
+:root {
+    --login-primary: #315eea;
+    --login-primary-dark: #2348c7;
+    --login-navy: #071c3c;
+    --login-text: #172033;
+    --login-muted: #748198;
+    --login-border: #dfe5ef;
+    --login-surface: #ffffff;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body.adminLogin {
+    width: 100%;
+    min-width: 320px;
+    min-height: 100%;
+    margin: 0;
+}
+
+body.adminLogin {
+    display: block;
+    overflow-x: hidden;
+    color: var(--login-text);
+    background: #edf3fb;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+body.adminLogin .loginShell {
+    width: 100%;
+    min-height: 100vh;
+}
+
+body.adminLogin .loginLayout {
+    display: grid;
+    width: 100%;
+    min-height: 100vh;
+    grid-template-columns: minmax(460px, 1.08fr) minmax(460px, 0.92fr);
+}
+
+body.adminLogin .loginBrandPanel {
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+    color: #fff;
+    background:
+        linear-gradient(145deg, rgba(42, 92, 230, 0.2), transparent 42%),
+        linear-gradient(155deg, #071c3c 0%, #0b2855 54%, #123d79 100%);
+}
+
+body.adminLogin .loginBrandPanel::before,
+body.adminLogin .loginBrandPanel::after {
+    position: absolute;
+    content: "";
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+}
+
+body.adminLogin .loginBrandPanel::before {
+    top: -240px;
+    right: -210px;
+    width: 590px;
+    height: 590px;
+}
+
+body.adminLogin .loginBrandPanel::after {
+    right: -85px;
+    bottom: -270px;
+    width: 520px;
+    height: 520px;
+}
+
+body.adminLogin .loginBrandGlow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(4px);
+    pointer-events: none;
+}
+
+body.adminLogin .loginBrandGlowOne {
+    top: 12%;
+    right: 8%;
+    width: 260px;
+    height: 260px;
+    background: rgba(49, 94, 234, 0.22);
+}
+
+body.adminLogin .loginBrandGlowTwo {
+    bottom: 9%;
+    left: -90px;
+    width: 260px;
+    height: 260px;
+    background: rgba(14, 165, 233, 0.14);
+}
+
+body.adminLogin .loginBrandContent {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: min(620px, 100%);
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 52px 62px 42px;
+    flex-direction: column;
+}
+
+body.adminLogin .loginBrandMark,
+body.adminLogin .loginMobileBrand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+body.adminLogin .loginBrandLogoIcon {
+    display: inline-flex;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 12px;
+    color: #fff;
+    background: linear-gradient(145deg, #315eea, #0ea5e9);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+    font-size: 21px;
+}
+
+body.adminLogin .loginBrandMain {
+    margin: auto 0;
+    padding: 60px 0;
+}
+
+body.adminLogin .loginBrandEyebrow,
+body.adminLogin .loginCardEyebrow {
+    color: #7dd3fc;
+    font-size: 11px;
+    font-weight: 750;
+    letter-spacing: 0.16em;
+}
+
+body.adminLogin .loginBrandMain h1 {
+    margin: 19px 0 22px;
+    color: #fff;
+    font-size: clamp(38px, 4vw, 58px);
+    font-weight: 760;
+    line-height: 1.17;
+    letter-spacing: -0.035em;
+}
+
+body.adminLogin .loginBrandMain > p {
+    max-width: 520px;
+    margin: 0;
+    color: rgba(226, 235, 249, 0.74);
+    font-size: 15px;
+    line-height: 1.8;
+}
+
+body.adminLogin .loginFeatureList {
+    display: grid;
+    margin-top: 42px;
+    gap: 15px;
+}
+
+body.adminLogin .loginFeatureItem {
+    display: flex;
+    max-width: 500px;
+    padding: 13px 16px;
+    align-items: center;
+    gap: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.055);
+    backdrop-filter: blur(8px);
+}
+
+body.adminLogin .loginFeatureItem > span {
+    display: flex;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    color: #a5d8ff;
+    background: rgba(125, 211, 252, 0.12);
+    font-size: 18px;
+}
+
+body.adminLogin .loginFeatureItem strong,
+body.adminLogin .loginFeatureItem small {
+    display: block;
+}
+
+body.adminLogin .loginFeatureItem strong {
+    margin-bottom: 4px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 650;
+}
+
+body.adminLogin .loginFeatureItem small {
+    color: rgba(219, 231, 247, 0.62);
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+body.adminLogin .loginBrandFoot {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: rgba(226, 235, 249, 0.62);
+    font-size: 11px;
+}
+
+body.adminLogin .loginStatusDot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #34d399;
+    box-shadow: 0 0 0 5px rgba(52, 211, 153, 0.11);
+}
+
+body.adminLogin .loginFormPanel {
+    display: flex;
+    min-height: 100vh;
+    padding: 48px;
+    align-items: center;
+    justify-content: center;
+    background:
+        radial-gradient(circle at 82% 12%, rgba(49, 94, 234, 0.11), transparent 30%),
+        radial-gradient(circle at 15% 84%, rgba(14, 165, 233, 0.08), transparent 27%),
+        #f4f7fc;
+}
+
+body.adminLogin .loginCard {
+    width: min(430px, 100%);
+    margin: 0;
+    padding: 42px;
+    border: 1px solid rgba(219, 226, 239, 0.95);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 28px 80px rgba(33, 57, 96, 0.14);
+}
+
+body.adminLogin .loginMobileBrand {
+    display: none;
+    margin-bottom: 30px;
+    color: var(--login-text);
+}
+
+body.adminLogin .loginCardHead {
+    margin-bottom: 30px;
+}
+
+body.adminLogin .loginCardEyebrow {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--login-primary);
+}
+
+body.adminLogin .loginTitle {
+    margin: 0;
+    color: var(--login-text);
+    font-size: 28px;
+    font-weight: 760;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+    text-align: left;
+}
+
+body.adminLogin .loginCardHead p {
+    margin: 10px 0 0;
+    color: var(--login-muted);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+body.adminLogin .loginForm .el-form-item {
+    margin-bottom: 20px;
+}
+
+body.adminLogin .loginFieldLabel {
+    display: block;
+    margin: 0 0 8px;
+    color: #3d4a5f;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+body.adminLogin .loginForm .el-input__inner {
+    height: 48px;
+    padding-left: 42px;
+    border: 1px solid var(--login-border);
+    border-radius: 12px;
+    color: var(--login-text);
+    background: #f8fafd;
+    font-size: 13px;
+    transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+
+body.adminLogin .loginForm .el-input__inner:hover {
+    border-color: #c3cede;
+}
+
+body.adminLogin .loginForm .el-input__inner:focus {
+    border-color: #6f8ff0;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(49, 94, 234, 0.1);
+}
+
+body.adminLogin .loginForm .el-input__prefix {
+    left: 14px;
+    display: flex;
+    align-items: center;
+    color: #8d9ab0;
+    font-size: 16px;
+}
+
+body.adminLogin .loginForm .el-input__suffix {
+    display: flex;
+    align-items: center;
+}
+
+body.adminLogin .loginSubmitItem {
+    margin-top: 6px;
+    margin-bottom: 0 !important;
+}
+
+body.adminLogin .loginSubmitButton {
+    width: 100%;
+    height: 48px;
+    border: 0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--login-primary), #3986ee);
+    box-shadow: 0 10px 22px rgba(49, 94, 234, 0.24);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+body.adminLogin .loginSubmitButton:hover,
+body.adminLogin .loginSubmitButton:focus {
+    background: linear-gradient(135deg, var(--login-primary-dark), #2878dc);
+    box-shadow: 0 13px 26px rgba(49, 94, 234, 0.3);
+    transform: translateY(-1px);
+}
+
+body.adminLogin .loginActions {
+    display: flex;
+    margin-top: 22px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    font-size: 11px;
+}
+
+body.adminLogin .loginSecurity {
+    color: #8a96aa;
+}
+
+body.adminLogin .loginSecurity i {
+    margin-right: 3px;
+    color: #20a66a;
+}
+
+body.adminLogin .regBtn,
+body.adminLogin .loginBackButton {
+    color: var(--login-primary);
+    cursor: pointer;
+    font-weight: 650;
+    text-decoration: none;
+}
+
+body.adminLogin .loginBackButton {
+    display: inline-flex;
+    margin: -8px 0 24px;
+    padding: 0;
+    align-items: center;
+    gap: 5px;
+    border: 0;
+    background: transparent;
+    font-size: 12px;
+}
+
+body.adminLogin .loginRegisterForm .el-form-item {
+    margin-bottom: 14px;
+}
+
+body.adminLogin .loginCaptchaItem .el-form-item__content {
+    display: flex;
+    gap: 10px;
+}
+
+body.adminLogin .loginCaptchaItem .el-input {
+    min-width: 0;
+    flex: 1;
+}
+
+body.adminLogin .loginCaptchaItem .el-input__inner {
+    padding-left: 15px;
+}
+
+body.adminLogin .loginCaptchaItem img {
+    width: 112px;
+    height: 48px;
+    flex: 0 0 112px;
+    border: 1px solid var(--login-border);
+    border-radius: 10px;
+    object-fit: cover;
+    cursor: pointer;
+}
+
+body.adminLogin .loginNotice {
+    margin-top: 20px;
+    color: #8793a6;
+    font-size: 11px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+body.adminLogin .loginNotice:empty {
+    display: none;
+}
+
+body.adminLogin .copyright {
+    margin: 22px 0 0;
+    color: #9aa5b6;
+    font-size: 10px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+@media (max-width: 980px) {
+    body.adminLogin .loginLayout {
+        grid-template-columns: 1fr;
+    }
+
+    body.adminLogin .loginBrandPanel {
+        display: none;
+    }
+
+    body.adminLogin .loginFormPanel {
+        min-height: 100vh;
+        padding: 30px 20px;
+    }
+
+    body.adminLogin .loginMobileBrand {
+        display: flex;
+    }
+}
+
+@media (min-width: 981px) and (max-height: 800px) {
+    body.adminLogin .loginBrandContent {
+        padding: 28px 48px 22px;
+    }
+
+    body.adminLogin .loginBrandMain {
+        padding: 24px 0 18px;
+    }
+
+    body.adminLogin .loginBrandMain h1 {
+        margin: 12px 0 14px;
+        font-size: 40px;
+        line-height: 1.13;
+    }
+
+    body.adminLogin .loginBrandMain > p {
+        font-size: 13px;
+        line-height: 1.65;
+    }
+
+    body.adminLogin .loginFeatureList {
+        margin-top: 22px;
+        gap: 9px;
+    }
+
+    body.adminLogin .loginFeatureItem {
+        padding: 9px 12px;
+    }
+
+    body.adminLogin .loginFeatureItem > span {
+        width: 34px;
+        height: 34px;
+        flex-basis: 34px;
+        font-size: 16px;
+    }
+
+    body.adminLogin .loginFormPanel {
+        padding: 28px 40px;
+    }
+}
+
+@media (max-width: 520px) {
+    body.adminLogin .loginFormPanel {
+        padding: 0;
+        align-items: stretch;
+        background: #fff;
+    }
+
+    body.adminLogin .loginCard {
+        width: 100%;
+        min-height: 100vh;
+        padding: 34px 24px 26px;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    body.adminLogin .loginCardHead {
+        margin-bottom: 26px;
+    }
+
+    body.adminLogin .loginTitle {
+        font-size: 25px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.adminLogin *,
+    body.adminLogin *::before,
+    body.adminLogin *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+}

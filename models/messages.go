@@ -109,7 +109,7 @@ func FindLastMessage(visitorIds []string) []Message {
 	for _, mes := range ids {
 		idStr = append(idStr, fmt.Sprintf("%d", mes.ID))
 	}
-	DB.Select("visitor_id,id,content").Where(" id in (? )", idStr).Find(&messages)
+	DB.Select("visitor_id,id,content,created_at").Where(" id in (? )", idStr).Find(&messages)
 	//subQuery := DB.
 	//	Table("message").
 	//	Where(" visitor_id in (? )", visitorIds).
@@ -129,10 +129,19 @@ func FindLastMessageMap(visitorIds []string) map[string]string {
 	return temp
 }
 
+func FindLastMessageDetailsMap(visitorIds []string) map[string]Message {
+	lastMessages := FindLastMessage(visitorIds)
+	temp := make(map[string]Message, len(lastMessages))
+	for _, message := range lastMessages {
+		temp[message.VisitorId] = message
+	}
+	return temp
+}
+
 // 查询最后一条消息
 func FindLastMessageByVisitorId(visitorId string) Message {
 	var m Message
-	DB.Select("content").Where("visitor_id=?", visitorId).Order("id desc").First(&m)
+	DB.Select("content,created_at").Where("visitor_id=?", visitorId).Order("id desc").First(&m)
 	return m
 }
 

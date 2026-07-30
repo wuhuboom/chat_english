@@ -9,16 +9,17 @@ import (
 	"go-fly-muti/common"
 	"go-fly-muti/lib"
 	"go-fly-muti/models"
+	"go-fly-muti/setting"
 	"log"
 	"strconv"
 	"strings"
-	"time"
 )
 
 var IP_SERVER_URL = ""
 var memory = cache.NewMemory()
 
-/**
+/*
+*
 处理分页页码
 */
 func HandlePagePageSize(c *gin.Context) (uint, uint) {
@@ -35,7 +36,7 @@ func HandlePagePageSize(c *gin.Context) (uint, uint) {
 	return page, pagesize
 }
 
-//发送访客微信消息
+// 发送访客微信消息
 func SendWechatVisitorMessage(visitorId, content, entId string) bool {
 	visitorIdArr := strings.Split(visitorId, "|")
 	if len(visitorIdArr) < 3 || visitorIdArr[0] != "wx" {
@@ -44,7 +45,7 @@ func SendWechatVisitorMessage(visitorId, content, entId string) bool {
 	return SendWechatMesage(visitorIdArr[2], content, entId)
 }
 
-//发送客服微信消息
+// 发送客服微信消息
 func SendWechatKefuNotice(kefuName, content, entId string) bool {
 	oauth := models.FindOauthById(kefuName)
 	if oauth.OauthId == "" {
@@ -53,7 +54,7 @@ func SendWechatKefuNotice(kefuName, content, entId string) bool {
 	return SendWechatMesage(oauth.OauthId, content, entId)
 }
 
-//发送新访客提醒模板消息
+// 发送新访客提醒模板消息
 func SendWechatVisitorTemplate(kefuName, visitorName, content, entId string) bool {
 	oauths := models.FindOauthsById(kefuName)
 	if len(oauths) == 0 {
@@ -69,7 +70,7 @@ func SendWechatVisitorTemplate(kefuName, visitorName, content, entId string) boo
 		Color: "",
 	}
 	msgData["keyword2"] = &message.TemplateDataItem{
-		Value: time.Now().Format("2006-01-02 15:04:05"),
+		Value: setting.Now().Format("2006-01-02 15:04:05"),
 		Color: "",
 	}
 	msgData["keyword3"] = &message.TemplateDataItem{
@@ -88,7 +89,7 @@ func SendWechatVisitorTemplate(kefuName, visitorName, content, entId string) boo
 	return true
 }
 
-//发送访客新消息提醒模板消息
+// 发送访客新消息提醒模板消息
 func SendWechatVisitorMessageTemplate(kefuName, visitorName, content, entId string) bool {
 	oauths := models.FindOauthsById(kefuName)
 	if len(oauths) == 0 {
@@ -104,7 +105,7 @@ func SendWechatVisitorMessageTemplate(kefuName, visitorName, content, entId stri
 		Color: "",
 	}
 	msgData["keyword2"] = &message.TemplateDataItem{
-		Value: time.Now().Format("2006-01-02 15:04:05"),
+		Value: setting.Now().Format("2006-01-02 15:04:05"),
 		Color: "",
 	}
 	msgData["keyword3"] = &message.TemplateDataItem{
@@ -127,7 +128,7 @@ func SendWechatVisitorMessageTemplate(kefuName, visitorName, content, entId stri
 	return true
 }
 
-//发送客服回复模板消息
+// 发送客服回复模板消息
 func SendWechatKefuTemplate(visitorId, kefuName, kefuNickname, content, entId string) bool {
 	visitorIdArr := strings.Split(visitorId, "|")
 	if len(visitorIdArr) < 3 || visitorIdArr[0] != "wx" {
@@ -143,7 +144,7 @@ func SendWechatKefuTemplate(visitorId, kefuName, kefuNickname, content, entId st
 		Color: "",
 	}
 	msgData["keyword2"] = &message.TemplateDataItem{
-		Value: time.Now().Format("2006-01-02 15:04:05"),
+		Value: setting.Now().Format("2006-01-02 15:04:05"),
 		Color: "",
 	}
 	msgData["keyword3"] = &message.TemplateDataItem{
@@ -166,7 +167,7 @@ func SendWechatKefuTemplate(visitorId, kefuName, kefuNickname, content, entId st
 	return SendWechatTemplate(wechatConfig, msg)
 }
 
-//发送微信模板消息
+// 发送微信模板消息
 func SendWechatTemplate(wechatConfig *lib.Wechat, msg *message.TemplateMessage) bool {
 
 	if wechatConfig == nil {
@@ -189,7 +190,7 @@ func SendWechatTemplate(wechatConfig *lib.Wechat, msg *message.TemplateMessage) 
 	return true
 }
 
-//发送微信客服消息
+// 发送微信客服消息
 func SendWechatMesage(openId, content, entId string) bool {
 	wechatConfig, _ := lib.NewWechatLib(entId)
 	if wechatConfig == nil || wechatConfig.WechatKefu == "" || wechatConfig.WechatKefu == "off" {
@@ -210,7 +211,7 @@ func SendWechatMesage(openId, content, entId string) bool {
 	return true
 }
 
-//验证访客黑名单
+// 验证访客黑名单
 func CheckVisitorBlack(visitorId string) bool {
 	black := models.FindVisitorBlack("visitor_id = ?", visitorId)
 	if black.Id != 0 {

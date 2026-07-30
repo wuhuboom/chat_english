@@ -11,7 +11,7 @@ type IpAuth struct {
 	ExpireTime string     `json:"expire_time"`
 	Content    string     `json:"content"`
 	NowTime    string     `gorm:"-" json:"now_time"`
-	status     uint       `json:"status"`
+	Status     uint       `json:"status"`
 	CreatedAt  types.Time `json:"created_at"`
 }
 
@@ -19,9 +19,7 @@ func CreateIpAuth(ip, expireTime string) IpAuth {
 	model := IpAuth{
 		IpAddress:  ip,
 		ExpireTime: expireTime,
-		CreatedAt: types.Time{
-			time.Now(),
-		},
+		CreatedAt:  types.Time{Time: time.Now()},
 	}
 	DB.Create(&model)
 	return model

@@ -841,12 +841,15 @@
             //获取自动欢迎语句
             getNotice: function () {
                 let _this = this;
-                var noticed = this.getCache("noticed_" + ENT_ID);
-                if (noticed) {
-                    return;
-                }
-                $.get("/2/notices?visitor_id=" + this.visitor.visitor_id + "&ent_id=" + ENT_ID + "&kefu_name=" + this.visitor.to_id, function (res) {
-                    _this.setCache("noticed_" + ENT_ID, 1);
+                var versionCacheKey = "welcome_version_" + ENT_ID + "_" + this.visitor.visitor_id;
+                var welcomeVersion = this.getCache(versionCacheKey) || "";
+                $.get("/2/notices?visitor_id=" + this.visitor.visitor_id + "&ent_id=" + ENT_ID + "&kefu_name=" + this.visitor.to_id + "&welcome_version=" + encodeURIComponent(welcomeVersion), function (res) {
+                    if (!res || res.code !== 200 || !res.result) {
+                        return;
+                    }
+                    if (res.result.welcome_version) {
+                        _this.setCache(versionCacheKey, res.result.welcome_version);
+                    }
                     //debugger;
                     // _this.noticeName=res.result.username;
                     // _this.noticeAvatar=res.result.avatar;

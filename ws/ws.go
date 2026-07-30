@@ -2,15 +2,18 @@ package ws
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"go-fly-muti/common"
 	"go-fly-muti/models"
 	"go-fly-muti/tools"
 	"log"
 	"net/http"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -22,9 +25,68 @@ type User struct {
 	To_id      string
 	Ent_id     string
 	Role_id    string
+	SessionID  uint64
 	Mux        sync.Mutex
+	stateMux   sync.RWMutex
 	UpdateTime time.Time
 }
+
+type UserState struct {
+	Name       string
+	Id         string
+	Avator     string
+	ToID       string
+	EntID      string
+	RoleID     string
+	SessionID  uint64
+	UpdateTime time.Time
+}
+
+func (u *User) State() UserState {
+	if u == nil {
+		return UserState{}
+	}
+	u.stateMux.RLock()
+	defer u.stateMux.RUnlock()
+	return UserState{
+		Name:       u.Name,
+		Id:         u.Id,
+		Avator:     u.Avator,
+		ToID:       u.To_id,
+		EntID:      u.Ent_id,
+		RoleID:     u.Role_id,
+		SessionID:  u.SessionID,
+		UpdateTime: u.UpdateTime,
+	}
+}
+
+func (u *User) SetTarget(toID string) {
+	if u == nil {
+		return
+	}
+	u.stateMux.Lock()
+	u.To_id = toID
+	u.stateMux.Unlock()
+}
+
+func (u *User) Touch() {
+	if u == nil {
+		return
+	}
+	u.stateMux.Lock()
+	u.UpdateTime = time.Now()
+	u.stateMux.Unlock()
+}
+
+func (u *User) SetUpdateTime(updateTime time.Time) {
+	if u == nil {
+		return
+	}
+	u.stateMux.Lock()
+	u.UpdateTime = updateTime
+	u.stateMux.Unlock()
+}
+
 type Message struct {
 	user        *User
 	context     *gin.Context
@@ -57,13 +119,22 @@ type SimpleMessage struct {
 }
 
 var Room = NewRoom()
-var ClientList = make(map[string]*User)
+var clientList = make(map[string]*User)
 var KefuList = make(map[string][]*User)
 var message = make(chan *Message, 10)
 var upgrader = websocket.Upgrader{}
 var Mux sync.RWMutex
+var clientMux sync.RWMutex
+var websocketSessionSequence atomic.Uint64
 
 const websocketWriteTimeout = 5 * time.Second
+const kefuConnectionStaleAfter = 120 * time.Second
+const websocketPongWait = 75 * time.Second
+const websocketReadLimit = 1024 * 1024
+
+func isKefuConnectionStale(lastSeen, now time.Time) bool {
+	return !lastSeen.IsZero() && now.Sub(lastSeen) > kefuConnectionStaleAfter
+}
 
 func writeUserMessage(user *User, messageType int, content []byte) error {
 	if user == nil || user.Conn == nil {
@@ -75,13 +146,58 @@ func writeUserMessage(user *User, messageType int, content []byte) error {
 	return user.Conn.WriteMessage(messageType, content)
 }
 
+func writeUserControlMessage(user *User, messageType int, content []byte) error {
+	if user == nil || user.Conn == nil {
+		return fmt.Errorf("websocket connection is unavailable")
+	}
+	user.Mux.Lock()
+	defer user.Mux.Unlock()
+	return user.Conn.WriteControl(messageType, content, time.Now().Add(websocketWriteTimeout))
+}
+
+func configureWebSocketHeartbeat(user *User) error {
+	if user == nil || user.Conn == nil {
+		return fmt.Errorf("websocket connection is unavailable")
+	}
+	if user.SessionID == 0 {
+		user.SessionID = websocketSessionSequence.Add(1)
+	}
+	user.Conn.SetReadLimit(websocketReadLimit)
+	if err := user.Conn.SetReadDeadline(time.Now().Add(websocketPongWait)); err != nil {
+		return err
+	}
+	user.Conn.SetPongHandler(func(string) error {
+		user.Touch()
+		return user.Conn.SetReadDeadline(time.Now().Add(websocketPongWait))
+	})
+	return nil
+}
+
+func refreshWebSocketReadDeadline(user *User) error {
+	if user == nil || user.Conn == nil {
+		return fmt.Errorf("websocket connection is unavailable")
+	}
+	user.Touch()
+	return user.Conn.SetReadDeadline(time.Now().Add(websocketPongWait))
+}
+
+func websocketCloseInfo(err error) (int, string) {
+	if err == nil {
+		return 0, ""
+	}
+	var closeError *websocket.CloseError
+	if errors.As(err, &closeError) {
+		return closeError.Code, closeError.Text
+	}
+	return 0, err.Error()
+}
+
 func init() {
 	upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
-		// 解决跨域问题
 		CheckOrigin: func(r *http.Request) bool {
-			return true
+			return common.IsWebSocketOriginAllowed(r.Header.Get("Origin"))
 		},
 	}
 }
@@ -121,6 +237,7 @@ func WsServerBackend() {
 		if !ok {
 			continue
 		}
+		message.user.Touch()
 
 		switch msgType {
 		//心跳
@@ -151,8 +268,47 @@ func WsServerBackend() {
 	}
 }
 func UpdateVisitorUser(visitorId string, toId string) {
-	if guest, ok := ClientList[visitorId]; ok {
-		guest.To_id = toId
+	if guest, ok := VisitorConnection(visitorId); ok {
+		guest.SetTarget(toId)
 	}
+}
 
+func VisitorConnection(visitorID string) (*User, bool) {
+	clientMux.RLock()
+	defer clientMux.RUnlock()
+	user, ok := clientList[visitorID]
+	return user, ok
+}
+
+func VisitorConnectionsSnapshot() map[string]*User {
+	clientMux.RLock()
+	defer clientMux.RUnlock()
+	snapshot := make(map[string]*User, len(clientList))
+	for visitorID, user := range clientList {
+		snapshot[visitorID] = user
+	}
+	return snapshot
+}
+
+func SendMessageToVisitor(user *User, content []byte) error {
+	return writeUserMessage(user, websocket.TextMessage, content)
+}
+
+func storeVisitorConnection(user *User) *User {
+	clientMux.Lock()
+	defer clientMux.Unlock()
+	oldUser := clientList[user.Id]
+	clientList[user.Id] = user
+	return oldUser
+}
+
+func RemoveVisitorConnection(visitorID string, target *User) bool {
+	clientMux.Lock()
+	defer clientMux.Unlock()
+	current, ok := clientList[visitorID]
+	if !ok || current != target {
+		return false
+	}
+	delete(clientList, visitorID)
+	return true
 }

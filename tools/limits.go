@@ -4,6 +4,8 @@ import (
 	"log"
 	"sync"
 	"time"
+
+	"github.com/spf13/viper"
 )
 
 type LimitQueeMap struct {
@@ -11,23 +13,38 @@ type LimitQueeMap struct {
 	LimitQueue map[string][]int64
 }
 
-func (l *LimitQueeMap) readMap(key string) ([]int64, bool) {
-	l.RLock()
-	value, ok := l.LimitQueue[key]
-	l.RUnlock()
-	return value, ok
+func (l *LimitQueeMap) allow(key string, count uint, timeWindow int64, currentTime int64) bool {
+	l.Lock()
+	defer l.Unlock()
+
+	if l.LimitQueue == nil {
+		l.LimitQueue = make(map[string][]int64)
+	}
+
+	queue := l.LimitQueue[key]
+	firstValid := 0
+	for firstValid < len(queue) && currentTime-queue[firstValid] > timeWindow {
+		firstValid++
+	}
+	queue = queue[firstValid:]
+	if uint(len(queue)) >= count {
+		l.LimitQueue[key] = queue
+		return false
+	}
+
+	l.LimitQueue[key] = append(queue, currentTime)
+	return true
 }
 
-func (l *LimitQueeMap) writeMap(key string, value []int64) {
+func (l *LimitQueeMap) reset() {
 	l.Lock()
-	l.LimitQueue[key] = value
+	l.LimitQueue = make(map[string][]int64)
 	l.Unlock()
 }
 
 var LimitQueue = &LimitQueeMap{
 	LimitQueue: make(map[string][]int64),
 }
-var ok bool
 
 func NewLimitQueue() {
 	cleanLimitQueue()
@@ -36,7 +53,7 @@ func cleanLimitQueue() {
 	go func() {
 		for {
 			log.Println("cleanLimitQueue start...")
-			LimitQueue.LimitQueue = nil
+			LimitQueue.reset()
 			now := time.Now()
 			// 计算下一个零点
 			next := now.Add(time.Hour * 24)
@@ -49,29 +66,11 @@ func cleanLimitQueue() {
 
 // LimitFreqSingle 单机时间滑动窗口限流法
 func LimitFreqSingle(queueName string, count uint, timeWindow int64) bool {
-	currTime := time.Now().Unix()
-	if LimitQueue.LimitQueue == nil {
-		LimitQueue.LimitQueue = make(map[string][]int64)
-	}
-	if _, ok = LimitQueue.readMap(queueName); !ok {
-		LimitQueue.writeMap(queueName, make([]int64, 0))
+	if !viper.GetBool("rate_limit.enabled") {
 		return true
 	}
-	q, _ := LimitQueue.readMap(queueName)
-	//队列未满
-	if uint(len(q)) < count {
-		LimitQueue.writeMap(queueName, append(q, currTime))
+	if count == 0 || timeWindow < 0 {
 		return true
 	}
-	//队列满了,取出最早访问的时间
-	earlyTime := q[0]
-	//说明最早期的时间还在时间窗口内,还没过期,所以不允许通过
-	if currTime-earlyTime <= timeWindow {
-		return false
-	} else {
-		//说明最早期的访问应该过期了,去掉最早期的
-		q = q[1:]
-		LimitQueue.writeMap(queueName, append(q, currTime))
-	}
-	return true
+	return LimitQueue.allow(queueName, count, timeWindow, time.Now().Unix())
 }

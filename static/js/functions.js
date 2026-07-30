@@ -19,28 +19,35 @@ function getWsBaseUrl() {
     return url;
 }
 function notify(title, options, callback) {
-    // 先检查浏览器是否支持
     if (!window.Notification) {
         console.log("浏览器不支持notify");
-        return;
+        return Promise.resolve(false);
     }
-    var notification;
-    // 检查用户曾经是否同意接受通知
-    if (Notification.permission === 'granted') {
-        notification = new Notification(title, options); // 显示通知
-        console.log("已经获取浏览器notify权限");
-    } else {
-        Notification.requestPermission();
-        console.log("请求浏览器notify权限");
-    }
-    if (notification && callback) {
-        notification.onclick = function(event) {
-            callback(notification, event);
+
+    function showNotification() {
+        var notification = new Notification(title, options);
+        if (callback) {
+            notification.onclick = function(event) {
+                callback(notification, event);
+            }
         }
         setTimeout(function () {
             notification.close();
-        },3000);
+        },8000);
+        return true;
     }
+
+    if (Notification.permission === 'granted') {
+        return Promise.resolve(showNotification());
+    }
+    if (Notification.permission === 'denied') {
+        return Promise.resolve(false);
+    }
+    return Notification.requestPermission().then(function(permission) {
+        return permission === 'granted' ? showNotification() : false;
+    }).catch(function() {
+        return false;
+    });
 }
 var titleTimer=0;
 var titleNum=0;
@@ -74,6 +81,133 @@ function placeFace() {
         faces[faceTitles[i]]="/static/images/face/"+i+".gif";
     }
     return faces;
+}
+
+/**
+ * H5 聊天使用的现代 Unicode Emoji 集合。
+ * 保留 placeFace() 供历史 face[a] 消息继续渲染，新增消息直接发送 Unicode 字符。
+ */
+function isEnglishLanguage(language) {
+    return String(language || "").toLowerCase().split(/[-_]/)[0] === "en";
+}
+
+function getEmojiPickerTexts(language) {
+    if (isEnglishLanguage(language)) {
+        return {
+            insert: "Insert emoji",
+            categories: "Emoji categories",
+            recent: "Recently used",
+            fallback: "Emoji"
+        };
+    }
+    return {
+        insert: "插入表情",
+        categories: "表情分类",
+        recent: "最近使用",
+        fallback: "表情"
+    };
+}
+
+function getModernEmojiGroups(language) {
+    var english = isEnglishLanguage(language);
+    var groupName = function (chinese, englishText) {
+        return english ? englishText : chinese;
+    };
+    return [
+        {
+            id: "smileys",
+            icon: "😀",
+            name: groupName("表情与情绪", "Smileys & Emotion"),
+            emojis: [
+                "😀","😃","😄","😁","😆","😅","😂","🤣","🥲","😊","😇","🙂",
+                "🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😝",
+                "😜","🤪","🤨","🧐","🤓","😎","🥸","🤩","🥳","🙂‍↕️","😏","😒",
+                "😞","😔","😟","😕","🙁","☹️","😣","😖","😫","😩","🥺","😢",
+                "😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😶‍🌫️","😱","😨",
+                "😰","😥","😓","🤗","🤔","🫣","🤭","🫢","🫡","🤫","🫠","🤥",
+                "😶","🫥","😐","🫤","😑","😬","🙄","😯","😦","😧","😮","😲",
+                "🥱","😴","🤤","😪","😵","😵‍💫","🫨","🤐","🥴","🤢","🤮","🤧",
+                "😷","🤒","🤕","😈","👿","💩","🤡","👻","💀","☠️","👽","🤖"
+            ]
+        },
+        {
+            id: "gestures",
+            icon: "👋",
+            name: groupName("人物与手势", "People & Gestures"),
+            emojis: [
+                "👋","🤚","🖐️","✋","🖖","🫱","🫲","🫳","🫴","👌","🤌","🤏",
+                "✌️","🤞","🫰","🤟","🤘","🤙","👈","👉","👆","👇","☝️","🫵",
+                "👍","👎","✊","👊","🤛","🤜","👏","🙌","🫶","👐","🤲","🤝",
+                "🙏","✍️","💅","🤳","💪","🦾","🧠","👀","👁️","👄","🫦","👶",
+                "🧒","👦","👧","🧑","👨","👩","🧓","👴","👵","🙋","🙆","🙅",
+                "🤷","🤦","🧏","🙇","💁","🧘","🏃","🚶","🧍","🕺","💃","👯"
+            ]
+        },
+        {
+            id: "hearts",
+            icon: "❤️",
+            name: groupName("爱心与符号", "Hearts & Symbols"),
+            emojis: [
+                "❤️","🩷","🧡","💛","💚","💙","🩵","💜","🤎","🖤","🩶","🤍",
+                "💔","❤️‍🔥","❤️‍🩹","❣️","💕","💞","💓","💗","💖","💘","💝","💟",
+                "💋","💯","💢","💥","💫","💦","💨","🕳️","💬","👁️‍🗨️","🗨️","🗯️",
+                "💭","💤","✨","⭐","🌟","🔥","🎉","🎊","✅","❌","⭕","❗",
+                "❓","‼️","⁉️","⚠️","🚫","♻️","🔞","🆗","🆕","🆒","🆘","🆙"
+            ]
+        },
+        {
+            id: "animals",
+            icon: "🐶",
+            name: groupName("动物与自然", "Animals & Nature"),
+            emojis: [
+                "🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐻‍❄️","🐨","🐯","🦁",
+                "🐮","🐷","🐸","🐵","🙈","🙉","🙊","🐔","🐧","🐦","🐤","🦄",
+                "🐝","🦋","🐌","🐞","🐢","🐍","🦎","🦖","🐙","🦑","🦀","🐠",
+                "🐟","🐬","🐳","🦈","🐊","🐅","🐆","🦓","🦍","🦧","🐘","🦒",
+                "🌱","🌿","☘️","🍀","🎍","🪴","🌵","🌴","🌳","🌲","🌺","🌸",
+                "🌼","🌻","🌞","🌝","🌚","🌈","☀️","⛅","🌧️","❄️","☃️","🌊"
+            ]
+        },
+        {
+            id: "food",
+            icon: "🍔",
+            name: groupName("食物与饮品", "Food & Drink"),
+            emojis: [
+                "🍏","🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🫐","🍈","🍒",
+                "🍑","🥭","🍍","🥥","🥝","🍅","🥑","🥦","🌽","🥕","🧄","🍄",
+                "🍞","🥐","🥖","🧀","🥚","🍳","🥞","🧇","🥓","🍗","🍖","🍔",
+                "🍟","🍕","🌭","🥪","🌮","🌯","🥗","🍝","🍜","🍲","🍛","🍣",
+                "🍱","🥟","🍤","🍙","🍚","🍘","🍥","🥠","🍡","🍧","🍨","🍦",
+                "🥧","🧁","🍰","🎂","🍮","🍭","🍬","🍫","🍿","🍩","🍪","☕",
+                "🧋","🥤","🍺","🍻","🥂","🍷","🍸","🍹","🧃","🧊","🥢","🍽️"
+            ]
+        },
+        {
+            id: "activities",
+            icon: "⚽",
+            name: groupName("活动与旅行", "Activities & Travel"),
+            emojis: [
+                "⚽","🏀","🏈","⚾","🥎","🎾","🏐","🏉","🥏","🎱","🏓","🏸",
+                "🏒","🏑","🥍","🏏","⛳","🏹","🎣","🥊","🥋","🎽","🛹","🛼",
+                "🛷","⛸️","🎿","🏂","🏋️","🤸","⛹️","🤺","🏊","🚴","🏆","🥇",
+                "🎮","🕹️","🎲","♟️","🎯","🎳","🎸","🎹","🥁","🎤","🎧","🎬",
+                "🚗","🚕","🚌","🚑","🚒","🚲","✈️","🚀","🛸","🚁","⛵","🚢",
+                "🏠","🏢","🏥","🏦","🏨","🏪","🗼","🗽","🎡","🏖️","🏝️","🌋"
+            ]
+        },
+        {
+            id: "objects",
+            icon: "💡",
+            name: groupName("物品", "Objects"),
+            emojis: [
+                "⌚","📱","💻","⌨️","🖥️","🖨️","🖱️","📷","📸","🎥","📺","📻",
+                "⏰","⌛","🔋","🔌","💡","🔦","🕯️","🧯","💸","💵","💳","💎",
+                "⚖️","🧰","🔧","🔨","🛠️","🧲","🔫","🛡️","🔮","🧿","💊","🩹",
+                "🧼","🪥","🧻","🧹","🧺","🧸","🎁","🎈","✉️","📩","📨","📧",
+                "📌","📍","📎","📝","📁","📅","📊","📈","📉","🔒","🔑","🔔"
+            ]
+        }
+    ];
 }
 function replaceContent (content,baseUrl) {// 转义聊天内容中的特殊字符
     if(typeof baseUrl=="undefined"){
@@ -320,6 +454,55 @@ function dateFormat(fmt, date) {
     };
     return fmt;
 }
+
+/**
+ * 按系统配置时区显示固定日期时间，不使用“几分钟前”等相对时间。
+ * 无时区的数据库时间字符串已经是系统时区，直接规范化即可。
+ */
+function formatSystemDateTime(value) {
+    if (value === null || value === undefined || value === "") {
+        return "";
+    }
+
+    var text = String(value).trim();
+    var plainDateTime = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{1,2}):(\d{1,2})(?:\.\d+)?$/);
+    if (plainDateTime) {
+        return plainDateTime[1] + "-" +
+            plainDateTime[2].padStart(2, "0") + "-" +
+            plainDateTime[3].padStart(2, "0") + " " +
+            plainDateTime[4].padStart(2, "0") + ":" +
+            plainDateTime[5].padStart(2, "0") + ":" +
+            plainDateTime[6].padStart(2, "0");
+    }
+
+    var date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) {
+        return text;
+    }
+
+    var timezoneMeta = document.querySelector('meta[name="system-timezone"]');
+    var timezone = timezoneMeta ? timezoneMeta.getAttribute("content") : "Asia/Shanghai";
+    try {
+        var parts = new Intl.DateTimeFormat("zh-CN", {
+            timeZone: timezone || "Asia/Shanghai",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hourCycle: "h23"
+        }).formatToParts(date);
+        var values = {};
+        parts.forEach(function (part) {
+            values[part.type] = part.value;
+        });
+        return values.year + "-" + values.month + "-" + values.day + " " +
+            values.hour + ":" + values.minute + ":" + values.second;
+    } catch (error) {
+        return dateFormat("Y-m-d H:M:S", date);
+    }
+}
 /**
  * 人性化时间
  * @param {Object} timestamp
@@ -396,15 +579,7 @@ function MyHereDoc(){
 }
 //js获取当前时间
 function getNowDate() {
-    var myDate = new Date;
-    var year = myDate.getFullYear(); //获取当前年
-    var mon = myDate.getMonth() + 1; //获取当前月
-    var date = myDate.getDate(); //获取当前日
-    var hours = myDate.getHours(); //获取当前小时
-    var minutes = myDate.getMinutes(); //获取当前分钟
-    var seconds = myDate.getSeconds(); //获取当前秒
-    var now = year + "-" + mon + "-" + date + " " + hours + ":" + minutes + ":" + seconds;
-    return now;
+    return formatSystemDateTime(new Date());
 }
 //获取当前时间戳
 function getTimestamp() {

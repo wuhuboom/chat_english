@@ -10,6 +10,7 @@
     <script src="/static/element-ui/2.15.1/index.js"></script>
     <script src="/static/jquery/3.6.0/jquery.min.js"></script>
     <link rel="stylesheet" href="/static/css/common.css?v=0.6.1">
+    <link rel="stylesheet" href="/static/css/admin-modern.css?v=1.3.0">
     <script src="/static/js/reconnecting-websocket.min.js"></script>
     <script src="/static/js/functions.js"></script>
     <script src="/static/js/chat-lang.js?v=1.0.1"></script>
@@ -26,6 +27,64 @@
         <audio id="chatMessageAudio">
             <source id="chatMessageAudioSource" src="/static/images/alert2.ogg" type="audio/mpeg" />
         </audio>
+        <el-dialog
+                title="开启浏览器通知"
+                :visible.sync="notificationGuideVisible"
+                width="560px"
+                custom-class="notificationGuideDialog"
+                :close-on-click-modal="false">
+            <div class="notificationGuideStatus" :class="'is-'+notificationPermission">
+                <div class="notificationGuideStatusIcon">
+                    <i :class="notificationPermission==='granted' ? 'el-icon-success' : 'el-icon-bell'"></i>
+                </div>
+                <div>
+                    <strong><{notificationPermissionTitle}></strong>
+                    <p><{notificationPermissionDescription}></p>
+                </div>
+            </div>
+
+            <div class="notificationGuideBrowser">
+                <span>我的浏览器</span>
+                <el-select v-model="notificationGuideBrowser" size="small">
+                    <el-option
+                            v-for="browserItem in notificationGuideBrowsers"
+                            :key="browserItem.value"
+                            :label="browserItem.label"
+                            :value="browserItem.value">
+                    </el-option>
+                </el-select>
+            </div>
+
+            <ol class="notificationGuideSteps">
+                <li v-for="(step,index) in activeNotificationGuide.steps" :key="index">
+                    <span class="notificationGuideStepNumber"><{index+1}></span>
+                    <span><{step}></span>
+                </li>
+            </ol>
+
+            <div class="notificationGuideTip">
+                <i class="el-icon-info"></i>
+                <span><{activeNotificationGuide.tip}></span>
+            </div>
+
+            <span slot="footer" class="dialog-footer notificationGuideFooter">
+                <el-button @click="notificationGuideVisible=false">稍后处理</el-button>
+                <el-button
+                        v-if="notificationPermission==='default'"
+                        type="primary"
+                        icon="el-icon-bell"
+                        @click="requestNotificationPermission">
+                    一键请求通知权限
+                </el-button>
+                <el-button
+                        v-else-if="notificationPermission!=='unsupported'"
+                        type="primary"
+                        icon="el-icon-refresh"
+                        @click="checkNotificationPermissionAfterSetting">
+                    我已设置，重新检测
+                </el-button>
+            </span>
+        </el-dialog>
     </template>
 </div>
 </body>
@@ -51,14 +110,206 @@
             adminAvator:"",
             server:getWsBaseUrl()+"/ws_kefu?token="+localStorage.getItem("token"),
             haveNewMessage:"",
+            notificationPermission:window.Notification ? Notification.permission : "unsupported",
+            notificationGuideVisible:false,
+            notificationGuideBrowser:"",
+            notificationGuideBrowsers:[
+                {
+                    value:"chrome",
+                    label:"Google Chrome",
+                    steps:[
+                        "点击地址栏左侧的“网站信息 / 调整”图标。",
+                        "找到“通知”，将权限改为“允许”；如果没有显示通知项，请进入“网站设置”。",
+                        "回到客服后台并刷新页面，然后点击下方“重新检测”。"
+                    ],
+                    tip:"如果通知仍未出现，请检查电脑系统设置中的“通知”，确认 Chrome 通知也处于开启状态。"
+                },
+                {
+                    value:"edge",
+                    label:"Microsoft Edge",
+                    steps:[
+                        "点击地址栏左侧的锁形或“网站信息”图标。",
+                        "打开“此网站的权限”，把“通知”改为“允许”。",
+                        "回到客服后台刷新页面，再点击“重新检测”。"
+                    ],
+                    tip:"也可以在 Edge 设置 → Cookie 和网站权限 → 通知中找到当前网站并设为允许。"
+                },
+                {
+                    value:"firefox",
+                    label:"Mozilla Firefox",
+                    steps:[
+                        "点击地址栏左侧的锁形图标，打开“连接安全”面板。",
+                        "进入“更多信息 / 权限”，在“发送通知”旁取消默认设置并选择“允许”。",
+                        "刷新客服后台，再点击“重新检测”。"
+                    ],
+                    tip:"如果网站在阻止列表中，请前往 Firefox 设置 → 隐私与安全 → 权限 → 通知进行移除。"
+                },
+                {
+                    value:"safari",
+                    label:"Safari（Mac）",
+                    steps:[
+                        "打开 Safari 菜单 → 设置 → 网站 → 通知。",
+                        "找到当前客服网站，将权限改为“允许”。",
+                        "打开 Mac 系统设置 → 通知 → Safari，并确认“允许通知”已开启。",
+                        "返回客服后台刷新页面，再点击“重新检测”。"
+                    ],
+                    tip:"Safari 只有在网站主动请求过通知权限后，网站才可能出现在通知列表中。"
+                },
+                {
+                    value:"android",
+                    label:"Android 手机浏览器",
+                    steps:[
+                        "点击浏览器右上角菜单 → 设置 → 网站设置。",
+                        "进入“通知”，找到当前客服网站并选择“允许”。",
+                        "同时检查手机系统设置 → 应用 → 当前浏览器 → 通知，确保系统通知已开启。",
+                        "返回客服后台重新打开页面。"
+                    ],
+                    tip:"不同 Android 品牌的菜单名称略有差异，可以在系统设置中搜索“通知”。"
+                },
+                {
+                    value:"ios",
+                    label:"iPhone / iPad",
+                    steps:[
+                        "使用 Safari 打开客服后台，点击分享按钮并选择“添加到主屏幕”。",
+                        "从主屏幕打开刚添加的客服后台，再点击“一键请求通知权限”。",
+                        "授权后前往系统设置 → 通知，确认该网页应用允许通知。"
+                    ],
+                    tip:"iPhone/iPad 的网页推送需要较新的 iOS，并且通常必须先把网站添加到主屏幕。"
+                }
+            ],
+            socket:null,
+            socketState:"connecting",
+            lastSocketSignalAt:0,
+            socketHealthNow:Date.now(),
+            socketHealthTimer:null,
+            socketPingTimer:null,
             alertSounding:false,
             alertSoundingTimer:null,
             configs:[],
 
         },
+        computed:{
+            socketHealthLabel(){
+                if(this.onlineType!=="success"){
+                    return "手动离线";
+                }
+                return {
+                    connected:"在线 · 已连接",
+                    reconnecting:"网络重连中",
+                    stale:"连接无响应",
+                    connecting:"正在连接"
+                }[this.socketState] || "连接未知";
+            },
+            socketHealthClass(){
+                return {
+                    "is-offline":this.onlineType!=="success",
+                    "is-reconnecting":this.onlineType==="success" && (this.socketState==="connecting" || this.socketState==="reconnecting"),
+                    "is-stale":this.onlineType==="success" && this.socketState==="stale"
+                };
+            },
+            socketHealthTooltip(){
+                if(!this.lastSocketSignalAt){
+                    return "尚未收到服务器心跳，点击立即重连";
+                }
+                var seconds=Math.max(0,Math.floor((this.socketHealthNow-this.lastSocketSignalAt)/1000));
+                return "最后服务器心跳："+seconds+" 秒前；点击立即重连";
+            },
+            activeNotificationGuide(){
+                var current=this.notificationGuideBrowsers.find(function(browserItem){
+                    return browserItem.value===this.notificationGuideBrowser;
+                },this);
+                return current || this.notificationGuideBrowsers[0];
+            },
+            notificationPermissionTitle(){
+                return {
+                    granted:"桌面通知已开启",
+                    denied:"通知权限已被浏览器阻止",
+                    default:"还差一步：允许浏览器通知",
+                    unsupported:"当前浏览器不支持网页通知"
+                }[this.notificationPermission] || "检查浏览器通知权限";
+            },
+            notificationPermissionDescription(){
+                return {
+                    granted:"客户发来新消息时，即使客服后台不在当前窗口，也可以收到系统通知。",
+                    denied:"浏览器不会再次自动弹出授权框，请按照下面的步骤手动改为允许。",
+                    default:"点击“一键请求通知权限”，并在浏览器弹出的询问中选择允许。",
+                    unsupported:"请改用最新版 Chrome、Edge、Firefox 或 Safari，并确保通过 HTTPS 访问。"
+                }[this.notificationPermission] || "";
+            }
+        },
         methods: {
             openIframeUrl(url){
                 this.iframeUrl=url;
+                if(url==="/chat_main"){
+                    this.haveNewMessage="";
+                    clearFlashTitle();
+                }
+            },
+            detectNotificationGuideBrowser(){
+                var ua=navigator.userAgent || "";
+                if(/iPhone|iPad|iPod/i.test(ua)){
+                    return "ios";
+                }
+                if(/Android/i.test(ua)){
+                    return "android";
+                }
+                if(/Edg\//i.test(ua)){
+                    return "edge";
+                }
+                if(/Firefox\//i.test(ua)){
+                    return "firefox";
+                }
+                if(/Safari\//i.test(ua) && !/Chrome|Chromium|Edg\//i.test(ua)){
+                    return "safari";
+                }
+                return "chrome";
+            },
+            refreshNotificationPermission(){
+                this.notificationPermission=window.Notification ? Notification.permission : "unsupported";
+            },
+            openNotificationGuide(){
+                this.refreshNotificationPermission();
+                this.notificationGuideBrowser=this.detectNotificationGuideBrowser();
+                this.notificationGuideVisible=true;
+            },
+            requestNotificationPermission(){
+                let _this=this;
+                if(!window.Notification){
+                    this.notificationPermission="unsupported";
+                    this.notificationGuideVisible=true;
+                    return;
+                }
+                if(Notification.permission==="granted"){
+                    this.notificationPermission="granted";
+                    this.$message.success("桌面通知已开启");
+                    this.notificationGuideVisible=false;
+                    return;
+                }
+                if(Notification.permission==="denied"){
+                    this.notificationPermission="denied";
+                    this.notificationGuideVisible=true;
+                    return;
+                }
+                Notification.requestPermission().then(function(permission){
+                    _this.notificationPermission=permission;
+                    if(permission==="granted"){
+                        _this.$message.success("桌面通知已开启，客户消息会在系统通知区提醒");
+                        notify("客服通知已开启",{body:"后续客户消息将在这里提醒"});
+                        _this.notificationGuideVisible=false;
+                    }else{
+                        _this.notificationGuideVisible=true;
+                        _this.$message.warning("通知尚未开启，请按照教程检查网站权限");
+                    }
+                });
+            },
+            checkNotificationPermissionAfterSetting(){
+                this.refreshNotificationPermission();
+                if(this.notificationPermission==="granted"){
+                    this.notificationGuideVisible=false;
+                    this.$message.success("检测成功，桌面通知已经开启");
+                    return;
+                }
+                this.$message.warning("仍未检测到通知权限，请完成教程步骤后刷新页面");
             },
             //退出
             logout(){
@@ -85,14 +336,55 @@
                 let socket = new ReconnectingWebSocket(this.server);//创建Socket实例
                 this.socket = socket
                 this.socket.onmessage = this.OnMessage;
+                this.socket.onopen = this.OnSocketOpen;
+                this.socket.onconnecting = this.OnSocketConnecting;
+                this.socket.onclose = this.OnSocketClose;
+                this.socket.onerror = this.OnSocketError;
+            },
+            OnSocketOpen(){
+                this.socketState="connected";
+                this.lastSocketSignalAt=Date.now();
+            },
+            OnSocketConnecting(){
+                this.socketState=this.lastSocketSignalAt ? "reconnecting" : "connecting";
+            },
+            OnSocketClose(){
+                this.socketState="reconnecting";
+            },
+            OnSocketError(){
+                this.socketState="reconnecting";
+            },
+            reconnectSocket(){
+                if(this.socket && typeof this.socket.refresh==="function"){
+                    this.socketState="reconnecting";
+                    this.socket.refresh();
+                }
+            },
+            checkSocketHealth(){
+                this.socketHealthNow=Date.now();
+                if(this.onlineType!=="success" || this.socketState!=="connected" || !this.lastSocketSignalAt){
+                    return;
+                }
+                if(this.socketHealthNow-this.lastSocketSignalAt>70000){
+                    this.socketState="stale";
+                    this.reconnectSocket();
+                }
+            },
+            sendSocketPing(){
+                if(this.socket && this.socket.readyState===WebSocket.OPEN){
+                    this.socket.send(JSON.stringify({type:"ping",data:""}));
+                }
             },
             OnMessage(e) {
                 var _this=this;
+                _this.socketState="connected";
+                _this.lastSocketSignalAt=Date.now();
                 var redata = JSON.parse(e.data);
                 var msg = redata.data;
                 switch (redata.type){
                     case "notice":
                         _this.haveNewMessage="new";
+                        flashTitle();
                         notify(msg.username, {
                             body: msg.username+" come",
                             icon: msg.avator
@@ -112,6 +404,7 @@
                                 return;
                             }
                             _this.haveNewMessage="new";
+                            flashTitle();
                             notify(msg.name, {
                                 body: msg.content,
                                 icon: msg.avator
@@ -215,15 +508,28 @@
             },
         },
         created: function () {
+            this.notificationGuideBrowser=this.detectNotificationGuideBrowser();
+            window.addEventListener("focus",this.refreshNotificationPermission);
             this.kefuInfo();
             this.initConn();
             this.getConfigs();
+            this.socketHealthTimer=setInterval(this.checkSocketHealth,10000);
+            this.socketPingTimer=setInterval(this.sendSocketPing,25000);
             $(function(){
                 $("body").on("click",".menuLeftItem",function(){
                     $(".menuLeftItem").removeClass("active");
                     $(this).addClass("active");
                 });
             })
+        },
+        beforeDestroy:function(){
+            window.removeEventListener("focus",this.refreshNotificationPermission);
+            if(this.socketHealthTimer){
+                clearInterval(this.socketHealthTimer);
+            }
+            if(this.socketPingTimer){
+                clearInterval(this.socketPingTimer);
+            }
         }
     })
 </script>

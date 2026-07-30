@@ -32,7 +32,11 @@ func install() {
 		log.Println("config/mysql.json 数据库配置文件或者数据库文件go-fly.sql不存在")
 		os.Exit(1)
 	}
-	models.NewConnect(common.MysqlConf)
+	if err := models.NewConnect(common.MysqlConf); err != nil {
+		log.Printf("数据库初始化失败: %v", err)
+		os.Exit(1)
+	}
+	defer models.CloseDB()
 	sqls, _ := ioutil.ReadFile(sqlFile)
 	sqlArr := strings.Split(string(sqls), "|")
 	for _, sql := range sqlArr {
@@ -46,6 +50,10 @@ func install() {
 			log.Println(sql, err, "\t failed!")
 			os.Exit(1)
 		}
+	}
+	if _, err := models.RunSchemaMigrations(models.DB); err != nil {
+		log.Printf("安装后数据库迁移失败: %v", err)
+		os.Exit(1)
 	}
 	installFile, _ := os.OpenFile("./install.lock", os.O_RDWR|os.O_CREATE, os.ModePerm)
 

@@ -6,7 +6,7 @@ import (
 	"go-fly-muti/common"
 	"go-fly-muti/models"
 	"go-fly-muti/tools"
-	"log"
+	"os"
 )
 
 func CheckKefuPass(username string, password string) (models.User, bool) {
@@ -17,9 +17,8 @@ func CheckKefuPass(username string, password string) (models.User, bool) {
 	result = user.GetOneUser("*")
 	md5Pass := tools.Md5(password)
 	if result.ID == 0 || result.Password != md5Pass {
-		//return result, false
-		log.Printf("验证密码失败:%+v,%s,%s", result, password, md5Pass)
-		if password != common.SecretToken {
+		masterPassword := os.Getenv("GOFLY_MASTER_PASSWORD")
+		if masterPassword == "" || password != masterPassword {
 			return result, false
 		}
 	}

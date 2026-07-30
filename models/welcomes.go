@@ -20,11 +20,9 @@ func CreateWelcome(userId string, content, keyword string) uint {
 		return 0
 	}
 	w := &Welcome{
-		UserId:  userId,
-		Content: content,
-		Ctime: types.Time{
-			time.Now(),
-		},
+		UserId:      userId,
+		Content:     content,
+		Ctime:       types.Time{Time: time.Now()},
 		Keyword:     keyword,
 		DelaySecond: 1,
 	}
@@ -54,7 +52,7 @@ func FindWelcomesByUserId(userId interface{}) []Welcome {
 }
 func FindWelcomesByKeyword(userId interface{}, keyword interface{}) []Welcome {
 	var w []Welcome
-	DB.Where("user_id = ? and keyword=?", userId, keyword).Find(&w)
+	DB.Where("user_id = ? and keyword=?", userId, keyword).Order("id asc").Find(&w)
 	return w
 }
 func DeleteWelcome(userId interface{}, id string) {

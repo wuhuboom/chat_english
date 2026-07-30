@@ -14,51 +14,56 @@
                     <h2 class="textDark">数据总览</h2>
                     <el-row :gutter="10">
                         <el-col :span="8">
-                            <el-card class="box-card">
+                            <el-card class="box-card settingMetricCard">
                                 <div slot="header" class="clearfix">
                                     <span>今日访客数</span>
                                 </div>
                                 <div class="text item">
-                                    <p class="sumNum" v-html="statistics.toady_visitors"></p>
+                                    <p class="sumNum"><{statistics.toady_visitors || 0}></p>
                                 </div>
                                 <div class="text item">
-                                    <p>总访客数: <span  v-html="statistics.visitors"></span></p>
+                                    <p class="metricMeta">总访客数：<{statistics.visitors || 0}></p>
                                 </div>
                             </el-card>
                         </el-col>
                         <el-col :span="8">
-                            <el-card class="box-card">
+                            <el-card class="box-card settingMetricCard metricGreen">
                                 <div slot="header" class="clearfix">
                                     <span>今日消息数</span>
                                 </div>
                                 <div class="text item">
-                                    <p class="sumNum" v-html="statistics.today_messages"></p>
+                                    <p class="sumNum"><{statistics.today_messages || 0}></p>
                                 </div>
                                 <div class="text item">
-                                    <p>总消息数: <span  v-html="statistics.message"></span></p>
+                                    <p class="metricMeta">总消息数：<{statistics.message || 0}></p>
                                 </div>
                             </el-card>
                         </el-col>
                         <el-col :span="8">
-                            <el-card class="box-card">
+                            <el-card class="box-card settingMetricCard metricPurple">
                                 <div slot="header" class="clearfix">
                                     <span>当前访客在线数量</span>
                                 </div>
                                 <div class="text item">
-                                    <p class="sumNum" v-html="statistics.visitor_session"></p>
+                                    <p class="sumNum"><{statistics.visitor_session || 0}></p>
                                 </div>
                                 <div class="text item">
-                                    <p>当前客服会话: <span  v-html="statistics.kefu_session"></span></p>
+                                    <p class="metricMeta">当前客服会话：<{statistics.kefu_session || 0}></p>
                                 </div>
                             </el-card>
                         </el-col>
                     </el-row>
+                    <el-card class="settingChartCard">
+                        <div slot="header" class="clearfix">
+                            <span>访客趋势</span>
+                        </div>
+                        <div id="main" class="settingChart"></div>
+                    </el-card>
             </div>
         </div>
     </template>
 </div>
 </body>
 <script src="/static/jquery/3.6.0/jquery.min.js"></script>
+<script src="/static/js/echarts.min.js?v=1.0.0"></script>
 {{template "setting_bottom" .}}
-
-

@@ -3,6 +3,7 @@ package types
 import (
 	"database/sql/driver"
 	"fmt"
+	"go-fly-muti/setting"
 	"time"
 )
 
@@ -11,7 +12,7 @@ type Time struct {
 }
 
 func (t Time) MarshalJSON() ([]byte, error) {
-	localTime := t.Format("2006-01-02 15:04:05")
+	localTime := setting.Format(t.Time)
 	return []byte(fmt.Sprintf(`"%s"`, localTime)), nil
 }
 func (t Time) Value() (driver.Value, error) {

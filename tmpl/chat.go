@@ -11,12 +11,13 @@ import (
 	"go-fly-muti/common"
 	"go-fly-muti/lib"
 	"go-fly-muti/models"
+	"go-fly-muti/setting"
 	"net/http"
 )
 
 var memory = cache.NewMemory()
 
-//聊天室界面
+// 聊天室界面
 func PageChatRoom(c *gin.Context) {
 	c.HTML(http.StatusOK, "chat_room.html", gin.H{})
 }
@@ -73,10 +74,10 @@ func PageChat(c *gin.Context) {
 		title = entInfo.Nickname
 	}
 
-	FontVersion := viper.GetString("app.FontVersion")
-	if FontVersion == "" {
-		FontVersion = "chat_page.html"
-	}
+	FontVersion := setting.ResolveH5ChatTemplate(
+		models.FindConfig(setting.H5ChatTemplateConfigKey),
+		viper.GetString("app.FontVersion"),
+	)
 	c.HTML(http.StatusOK, FontVersion, gin.H{
 		"KEFU_ID":        kefuId,
 		"Lang":           lang.(string),
@@ -95,6 +96,7 @@ func PageChat(c *gin.Context) {
 		"SystemNotice":   SystemNotice,
 		"Title":          title,
 		"ShowKefuName":   ShowKefuName,
+		"SystemTimezone": setting.CurrentTimezone(),
 	})
 }
 

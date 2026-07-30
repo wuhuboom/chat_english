@@ -9,11 +9,14 @@ import (
 )
 
 func InitApiRouter(engine *gin.Engine) {
+	engine.GET("/healthz", controller.GetHealth)
+	engine.GET("/readyz", controller.GetReadiness)
+
 	//用户身份接口
 	ucv1 := engine.Group("/uc/v1", middleware.Ipblack, middleware.SetLanguage)
 	{
 		//刷新token
-		ucv1.POST("/refreshgit remote -vToken", controllerV2.PostRefreshTokenV1)
+		ucv1.POST("/refreshToken", controllerV2.PostRefreshTokenV1)
 		//刷新token
 		ucv1.POST("/loginCheck", controller.LoginCheckPass)
 		//访客登录
@@ -95,6 +98,8 @@ func InitApiRouter(engine *gin.Engine) {
 		kefuGroup.POST("/messages_read", controller.PostMessagesKefuRead)
 		kefuGroup.GET("/visitorExt", controller.GetVisitorExt)
 		kefuGroup.GET("/onlineVisitors", controller.GetKefusVisitorOnlines)
+		kefuGroup.GET("/conversation", controller.GetConversation)
+		kefuGroup.POST("/conversation", controller.UpdateConversation)
 		//统计信息
 		kefuGroup.GET("/statistics", controller.GetStatistics)
 		//图表统计信息
@@ -137,6 +142,9 @@ func InitApiRouter(engine *gin.Engine) {
 		kefuGroup.POST("/updateNotice", controller.PostNoticeSave)
 		//配置企业
 		kefuGroup.POST("/entConfigs", middleware.RbacAuth, controller.PostEntConfigs)
+		kefuGroup.POST("/slaSettings", middleware.RbacAuth, controller.PostConversationSLASettings)
+		kefuGroup.POST("/routingSettings", middleware.RbacAuth, controller.PostRoutingSettings)
+		kefuGroup.GET("/conversation/events", controller.GetConversationEvents)
 		//子账号列表
 		kefuGroup.GET("/kefuList", middleware.RbacAuth, controller.GetKefuListOwn)
 		//编辑账号
@@ -269,6 +277,7 @@ func InitApiRouter(engine *gin.Engine) {
 	systemGroup.Use(middleware.JwtApiMiddleware, middleware.AdminAuth)
 	{
 		systemGroup.GET("/stop", controller.GetStop)
+		systemGroup.GET("/logs", controller.GetSystemLogs)
 		//systemGroup.POST("/saveNews", controller.PostNews)
 		//	systemGroup.GET("/delNews", controller.DelNews)
 	}

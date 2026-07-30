@@ -2,6 +2,7 @@ package tmpl
 
 import (
 	"go-fly-muti/models"
+	"go-fly-muti/setting"
 	"go-fly-muti/tools"
 	"html/template"
 	"net/http"
@@ -57,7 +58,13 @@ func PageMain(c *gin.Context) {
 
 // 客服界面
 func PageChatMain(c *gin.Context) {
-	c.HTML(http.StatusOK, "chat_main.html", nil)
+	timezone := models.FindConfig("SystemTimezone")
+	if timezone == "" {
+		timezone = setting.CurrentTimezone()
+	}
+	c.HTML(http.StatusOK, "chat_main.html", gin.H{
+		"SystemTimezone": timezone,
+	})
 }
 
 // 安装界面

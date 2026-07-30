@@ -86,11 +86,9 @@ func UcRegister(form RegisterForm) gin.H {
 		Nickname:  form.Nickname,
 		Pid:       1,
 		UpdatedAt: time.Now(),
-		ExpiredAt: types.Time{
-			expired,
-		},
-		RecNum: 0,
-		Status: 0,
+		ExpiredAt: types.Time{Time: expired},
+		RecNum:    0,
+		Status:    0,
 	}
 	userId := user.AddUser()
 	if userId == 0 {

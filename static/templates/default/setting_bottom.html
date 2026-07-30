@@ -73,6 +73,59 @@
             },
             roleList:[],
             configList:[],
+            systemTimezone:"Asia/Shanghai",
+            h5ChatTemplate:(document.getElementById("h5TemplateInitialValue") || {dataset:{template:"chat_page.html"}}).dataset.template || "chat_page.html",
+            h5ChatTemplateOptions:[
+                {label:"现代标准版（推荐）",value:"chat_page.html",description:"当前重点维护版本，适配手机和桌面，包含新版 Emoji、现代消息气泡与响应式布局。"},
+                {label:"经典界面 1",value:"chat_page1.html",description:"保留早期经典布局，适用于仍在使用旧版页面结构的站点。"},
+                {label:"经典界面 3",value:"chat_page3.html",description:"第三套经典访客界面，保留原有交互和布局。"},
+                {label:"经典界面 3-1",value:"chat_page3-1.html",description:"经典界面 3 的变体版本。"},
+                {label:"经典界面 4",value:"chat_page4.html",description:"第四套经典访客界面。"},
+                {label:"经典界面 5",value:"chat_page5.html",description:"第五套经典访客界面。"},
+            ],
+            slaForm:{
+                warningMinutes:5,
+                overdueMinutes:15,
+            },
+            routingForm:{
+                autoReassign:true,
+                offlineGraceSeconds:15,
+            },
+            timezoneOptions:[
+                {label:"UTC — 协调世界时",value:"UTC"},
+                {label:"中国大陆 — Asia/Shanghai (UTC+8)",value:"Asia/Shanghai"},
+                {label:"中国香港 — Asia/Hong_Kong",value:"Asia/Hong_Kong"},
+                {label:"中国台湾 — Asia/Taipei",value:"Asia/Taipei"},
+                {label:"日本东京 — Asia/Tokyo",value:"Asia/Tokyo"},
+                {label:"韩国首尔 — Asia/Seoul",value:"Asia/Seoul"},
+                {label:"新加坡 — Asia/Singapore",value:"Asia/Singapore"},
+                {label:"泰国曼谷 — Asia/Bangkok",value:"Asia/Bangkok"},
+                {label:"印度尼西亚雅加达 — Asia/Jakarta",value:"Asia/Jakarta"},
+                {label:"印度 — Asia/Kolkata",value:"Asia/Kolkata"},
+                {label:"阿联酋迪拜 — Asia/Dubai",value:"Asia/Dubai"},
+                {label:"沙特利雅得 — Asia/Riyadh",value:"Asia/Riyadh"},
+                {label:"以色列 — Asia/Jerusalem",value:"Asia/Jerusalem"},
+                {label:"英国伦敦 — Europe/London",value:"Europe/London"},
+                {label:"法国巴黎 — Europe/Paris",value:"Europe/Paris"},
+                {label:"德国柏林 — Europe/Berlin",value:"Europe/Berlin"},
+                {label:"俄罗斯莫斯科 — Europe/Moscow",value:"Europe/Moscow"},
+                {label:"埃及开罗 — Africa/Cairo",value:"Africa/Cairo"},
+                {label:"南非约翰内斯堡 — Africa/Johannesburg",value:"Africa/Johannesburg"},
+                {label:"美国纽约 — America/New_York",value:"America/New_York"},
+                {label:"美国芝加哥 — America/Chicago",value:"America/Chicago"},
+                {label:"美国丹佛 — America/Denver",value:"America/Denver"},
+                {label:"美国洛杉矶 — America/Los_Angeles",value:"America/Los_Angeles"},
+                {label:"加拿大多伦多 — America/Toronto",value:"America/Toronto"},
+                {label:"加拿大温哥华 — America/Vancouver",value:"America/Vancouver"},
+                {label:"墨西哥城 — America/Mexico_City",value:"America/Mexico_City"},
+                {label:"巴西圣保罗 — America/Sao_Paulo",value:"America/Sao_Paulo"},
+                {label:"阿根廷布宜诺斯艾利斯 — America/Argentina/Buenos_Aires",value:"America/Argentina/Buenos_Aires"},
+                {label:"澳大利亚悉尼 — Australia/Sydney",value:"Australia/Sydney"},
+                {label:"澳大利亚墨尔本 — Australia/Melbourne",value:"Australia/Melbourne"},
+                {label:"澳大利亚珀斯 — Australia/Perth",value:"Australia/Perth"},
+                {label:"新西兰奥克兰 — Pacific/Auckland",value:"Pacific/Auckland"},
+                {label:"美国夏威夷 — Pacific/Honolulu",value:"Pacific/Honolulu"},
+            ],
             entConfigList:[
                 {conf_name: "微信公众号(AppId)", conf_key: "WechatAppId", conf_value: ""},
                 {conf_name: "微信公众号(AppSecret)", conf_key: "WechatAppSecret", conf_value: ""},
@@ -210,6 +263,20 @@
             visitorUrl:"",
         },
 
+        computed: {
+            regularConfigList:function(){
+                return this.configList.filter(function(config){
+                    return config.conf_key!="SystemTimezone" && config.conf_key!="H5ChatTemplate";
+                });
+            },
+            selectedH5TemplateDescription:function(){
+                var selected=this.h5ChatTemplateOptions.find(function(template){
+                    return template.value===this.h5ChatTemplate;
+                },this);
+                return selected ? selected.description : "请选择一个可用的H5访客界面。";
+            },
+        },
+
         methods: {
             //提交表单
             setAccount(formName){
@@ -334,10 +401,11 @@
 
                         // 基于准备好的dom，初始化echarts实例
                         $(function () {
-                            var myChart = echarts.init($('#main')[0],null, {
-                                width: 1000,
-                                height: 500
-                            });
+                            var chartDom = $('#main')[0];
+                            if (!chartDom || typeof echarts === "undefined") {
+                                return;
+                            }
+                            var myChart = echarts.getInstanceByDom(chartDom) || echarts.init(chartDom);
                             // 指定图表的配置项和数据
                             var option = {
                                 title: {
@@ -362,6 +430,9 @@
                             };
                             // 使用刚指定的配置项和数据显示图表。
                             myChart.setOption(option);
+                            window.addEventListener("resize", function () {
+                                myChart.resize();
+                            });
                         });
                     });
                 }
@@ -377,6 +448,14 @@
                 if(ACTION=="setting_config"){
                     this.sendAjax("/configs","get",{},function(result){
                         _this.configList=result;
+                        for(var i=0;i<result.length;i++){
+                            if(result[i].conf_key=="SystemTimezone"){
+                                _this.systemTimezone=result[i].conf_value || "Asia/Shanghai";
+                            }
+                            if(result[i].conf_key=="H5ChatTemplate"){
+                                _this.h5ChatTemplate=result[i].conf_value || _this.h5ChatTemplate;
+                            }
+                        }
                     });
                 }
                 if(ACTION=="setting_configs"){
@@ -387,11 +466,23 @@
                         }
                         console.log(temp);
                         for(i in _this.entConfigList){
-                            var value="";
+                            var value=_this.entConfigList[i].conf_value;
                             if(temp[_this.entConfigList[i].conf_key]){
                                 value=temp[_this.entConfigList[i].conf_key].conf_value;
                             }
                             _this.entConfigList[i].conf_value=value;
+                        }
+                        if(temp.ConversationSLAWarningMinutes){
+                            _this.slaForm.warningMinutes=parseInt(temp.ConversationSLAWarningMinutes.conf_value,10) || 5;
+                        }
+                        if(temp.ConversationSLAOverdueMinutes){
+                            _this.slaForm.overdueMinutes=parseInt(temp.ConversationSLAOverdueMinutes.conf_value,10) || 15;
+                        }
+                        if(temp.AutoReassignOnOffline){
+                            _this.routingForm.autoReassign=temp.AutoReassignOnOffline.conf_value!=="false";
+                        }
+                        if(temp.AgentOfflineGraceSeconds){
+                            _this.routingForm.offlineGraceSeconds=parseInt(temp.AgentOfflineGraceSeconds.conf_value,10) || 15;
                         }
                     });
                 }
@@ -479,11 +570,23 @@
                     _this.kefuList.pagesize=result.pagesize;
                 });
             },
+            normalizeVisitorRows(rows){
+                return (rows || []).map(function(item){
+                    var row=Object.assign({},item);
+                    row.updated_at=formatSystemDateTime(row.updated_at);
+                    row.last_message=String(row.last_message || "")
+                        .replace(/<br\s*\/?>/gi," ")
+                        .replace(/<[^>]+>/g,"")
+                        .replace(/\s+/g," ")
+                        .trim();
+                    return row;
+                });
+            },
             visitorListAllPage(page){
                 var _this=this;
                 var parames={orderBy:"created_at",pagesize:15,visitorName:this.visitorSearch.name,visitorTag:this.visitorSearch.tag};
                 this.sendAjax("/kefu/visitorList?page="+page,"get",parames,function(result){
-                    _this.visitorListAll.list=result.list;
+                    _this.visitorListAll.list=_this.normalizeVisitorRows(result.list);
                     _this.visitorListAll.count=result.count;
                     _this.visitorListAll.page=result.page;
                     _this.visitorListAll.pagesize=result.pagesize;
@@ -725,6 +828,88 @@
                     });
                 });
             },
+            saveSystemTimezone(){
+                let _this=this;
+                this.fullscreenLoading=true;
+                this.sendAjax("/config","POST",{
+                    key:"SystemTimezone",
+                    value:this.systemTimezone
+                },function(){
+                    _this.fullscreenLoading=false;
+                    _this.$message({
+                        message:"系统时区已更新为 "+_this.systemTimezone,
+                        type:"success"
+                    });
+                    _this.sendAjax("/configs","get",{},function(result){
+                        _this.configList=result;
+                    });
+                });
+            },
+            saveH5ChatTemplate(){
+                let _this=this;
+                this.fullscreenLoading=true;
+                this.sendAjax("/config","POST",{
+                    key:"H5ChatTemplate",
+                    value:this.h5ChatTemplate
+                },function(){
+                    _this.fullscreenLoading=false;
+                    _this.$message({
+                        message:"H5访客界面已更新，刷新访客页面后生效",
+                        type:"success"
+                    });
+                    _this.sendAjax("/configs","get",{},function(result){
+                        _this.configList=result;
+                    });
+                });
+            },
+            previewH5ChatTemplate(){
+                if(!this.visitorUrl){
+                    this.$message({
+                        message:"访客预览地址正在加载，请稍后重试",
+                        type:"warning"
+                    });
+                    return;
+                }
+                window.open(this.visitorUrl+"&lang="+LANG,"_blank");
+            },
+            saveConversationSLASettings(){
+                if(this.slaForm.warningMinutes>=this.slaForm.overdueMinutes){
+                    this.$message({
+                        message:"超时时间必须大于预警时间",
+                        type:"error"
+                    });
+                    return;
+                }
+                let _this=this;
+                this.sendAjax("/kefu/slaSettings","POST",{
+                    warning_minutes:this.slaForm.warningMinutes,
+                    overdue_minutes:this.slaForm.overdueMinutes
+                },function(result){
+                    _this.$message({
+                        message:"SLA 设置已保存，客服工作台刷新后生效",
+                        type:"success"
+                    });
+                });
+            },
+            saveRoutingSettings(){
+                if(this.routingForm.offlineGraceSeconds<3 || this.routingForm.offlineGraceSeconds>300){
+                    this.$message({
+                        message:"离线宽限时间必须在 3 到 300 秒之间",
+                        type:"error"
+                    });
+                    return;
+                }
+                let _this=this;
+                this.sendAjax("/kefu/routingSettings","POST",{
+                    auto_reassign:this.routingForm.autoReassign,
+                    offline_grace_seconds:this.routingForm.offlineGraceSeconds
+                },function(){
+                    _this.$message({
+                        message:"客服离线保护设置已保存",
+                        type:"success"
+                    });
+                });
+            },
             //设置配置项
             setEntConfigItem(name,key,value){
                 let _this=this;
@@ -844,17 +1029,21 @@
             checkAuth(){
                 let _this=this;
                 $.ajax({
-                    type:"post",
-                    url:"/check_auth",
+                    type:"get",
+                    url:"/kefu/kefuinfo",
                     headers:{
                         "token":localStorage.getItem("token")
                     },
                     success: function(data) {
                         if (data.code != 200) {
-                            window.location.href="/login";
+                            _this.$message({
+                                message: data.msg || "身份信息加载失败，请刷新重试",
+                                type: 'error'
+                            });
+                            return;
                         } else {
                             _this.adminAvator=data.result.avator;
-                            _this.adminRole=data.result.nick_name+"-"+data.result.role_name;
+                            _this.adminRole=data.result.nickname+"-"+(data.result.role_name || "");
                         }
                     }
                 });
@@ -936,7 +1125,7 @@
                 _this.visitorListAll.page=1;
                 var parames={pagesize:15,visitorName:this.visitorSearch.name,visitorTag:this.visitorSearch.tag};
                 this.sendAjax("/kefu/visitorList?page="+_this.visitorListAll.page,"get",parames,function(result){
-                    _this.visitorListAll.list=result.list;
+                    _this.visitorListAll.list=_this.normalizeVisitorRows(result.list);
                     _this.visitorListAll.count=result.count;
                     _this.visitorListAll.page=result.page;
                     _this.visitorListAll.pagesize=result.pagesize;

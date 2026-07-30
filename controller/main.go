@@ -8,13 +8,13 @@ import (
 	"github.com/tidwall/gjson"
 	"go-fly-muti/common"
 	"go-fly-muti/models"
+	"go-fly-muti/setting"
 	"go-fly-muti/tools"
 	"go-fly-muti/ws"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
-	"time"
 )
 
 func PostInstall(c *gin.Context) {
@@ -115,7 +115,7 @@ func GetStatistics(c *gin.Context) {
 	//kefuId, _ := c.Get("kefu_id")
 	entId, _ := c.Get("ent_id")
 	//今日访客数
-	todayStart := time.Now().Format("2006-01-02")
+	todayStart := setting.Now().Format("2006-01-02")
 	todayEnd := fmt.Sprintf("%s 23:59:59", todayStart)
 	toadyVisitors := models.CountVisitors("to_id= ? and updated_at>= ? and updated_at<= ?", kefuName.(string), todayStart, todayEnd)
 	visitors := models.CountVisitorsByKefuId(kefuName.(string))
@@ -123,8 +123,8 @@ func GetStatistics(c *gin.Context) {
 	message := models.CountMessage("kefu_id=?", kefuName)
 	todayMessages := models.CountMessage("kefu_id= ? and created_at>= ? and created_at<= ?", kefuName.(string), todayStart, todayEnd)
 	visitorSession := 0
-	for _, c := range ws.ClientList {
-		if c.Ent_id == fmt.Sprintf("%v", entId) {
+	for _, visitor := range ws.VisitorConnectionsSnapshot() {
+		if visitor.State().EntID == fmt.Sprintf("%v", entId) {
 			visitorSession++
 		}
 	}

@@ -11,6 +11,7 @@
     <script src="/static/jquery/2.2.4/jquery.min.js"></script>
     <script src="/static/jquery.qrcode/1.0/jquery.qrcode.min.js"></script>
     <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="/static/css/admin-modern.css?v=1.2.1">
     <script src="/static/js/functions.js"></script>
     <script src="/static/js/chat-lang.js?v=1.0.1"></script>
 </head>
@@ -23,7 +24,15 @@
 <body class="text-center">
 <div id="app">
     <template>
-        <div class="guideHeader">Hello，<{nickname}></div>
+        <div class="guideHeader">
+            <div class="guideHeaderContent">
+                <div>
+                    <span class="guideEyebrow">CUSTOMER SERVICE WORKSPACE</span>
+                    <h1 class="guideGreeting">你好，<{nickname || '客服'}></h1>
+                </div>
+                <div class="guideDate">欢迎回来，今天也要保持在线</div>
+            </div>
+        </div>
         <div class="guideBg margin20" style="display: none">
             <{noticeContent}>
         </div>
@@ -31,6 +40,7 @@
 
             <div class="left">
                 <ul>
+                    <h2 class="guideCardTitle">工作区信息</h2>
 
                     <dl>
                         <dt>业务版本</dt>
@@ -56,7 +66,7 @@
                     </dl>
 
                 </ul>
-                <div>
+                <div class="guideQr">
                     <p>访客测试扫下面码</p>
                     <img :src="visitorQrcode"/>
                 </div>
@@ -94,50 +104,50 @@
             </div>
         </div>
 
-            <el-row :gutter="10" style="margin:15px">
+            <el-row :gutter="14" class="metricsRow">
                 <el-col :span="8">
-                    <el-card class="box-card">
+                    <el-card class="metricCard">
                         <div slot="header" class="clearfix">
                             <span>今日访客数</span>
                         </div>
                         <div class="text item">
-                            <p class="sumNum" v-html="statistics.toady_visitors"></p>
+                            <p class="sumNum"><{statistics.toady_visitors || 0}></p>
                         </div>
                         <div class="text item">
-                            <p>总访客数: <span  v-html="statistics.visitors"></span></p>
+                            <p class="metricMeta">总访客数：<{statistics.visitors || 0}></p>
                         </div>
                     </el-card>
                 </el-col>
                 <el-col :span="8">
-                    <el-card class="box-card">
+                    <el-card class="metricCard metricGreen">
                         <div slot="header" class="clearfix">
                             <span>今日消息数</span>
                         </div>
                         <div class="text item">
-                            <p class="sumNum" v-html="statistics.today_messages"></p>
+                            <p class="sumNum"><{statistics.today_messages || 0}></p>
                         </div>
                         <div class="text item">
-                            <p>总消息数: <span  v-html="statistics.message"></span></p>
+                            <p class="metricMeta">总消息数：<{statistics.message || 0}></p>
                         </div>
                     </el-card>
                 </el-col>
                 <el-col :span="8">
-                    <el-card class="box-card">
+                    <el-card class="metricCard metricPurple">
                         <div slot="header" class="clearfix">
                             <span>当前访客在线数量</span>
                         </div>
                         <div class="text item">
-                            <p class="sumNum" v-html="statistics.visitor_session"></p>
+                            <p class="sumNum"><{statistics.visitor_session || 0}></p>
                         </div>
                         <div class="text item">
-                            <p>当前客服会话: <span  v-html="statistics.kefu_session"></span></p>
+                            <p class="metricMeta">当前客服会话：<{statistics.kefu_session || 0}></p>
                         </div>
                     </el-card>
                 </el-col>
             </el-row>
 
 
-        <div class="guideStatistics" id="visitorNums" style="height:500px;"></div>
+        <div class="guideStatistics" id="visitorNums"></div>
     </template>
 </div>
 </body>
@@ -196,29 +206,61 @@
 
                     // 基于准备好的dom，初始化echarts实例
                     $(function () {
-                        var myChart = echarts.init($('#visitorNums')[0],null, {
-                            width: 1200,
-                            height: 500
-                        });
+                        var chartDom = document.getElementById('visitorNums');
+                        if (!chartDom) {
+                            return;
+                        }
+                        var myChart = echarts.getInstanceByDom(chartDom) || echarts.init(chartDom);
                         // 指定图表的配置项和数据
                         var option = {
                             title: {
-                                text: '每日新增访客数量统计图'
+                                text: '每日新增访客',
+                                textStyle: {
+                                    color: '#172033',
+                                    fontSize: 16,
+                                    fontWeight: 600
+                                }
                             },
-                            tooltip: {},
+                            color: ['#2563eb', '#06b6d4'],
+                            tooltip: {
+                                trigger: 'axis',
+                                backgroundColor: 'rgba(15, 35, 65, .92)',
+                                borderWidth: 0,
+                                textStyle: {color: '#fff'}
+                            },
                             legend: {
-                                data: ['数量']
+                                data: ['数量'],
+                                right: 8,
+                                textStyle: {color: '#718096'}
+                            },
+                            grid: {
+                                left: 42,
+                                right: 24,
+                                top: 64,
+                                bottom: 30,
+                                containLabel: true
                             },
                             xAxis: {
-                                data: days
+                                data: days,
+                                axisLine: {lineStyle: {color: '#d8e0ec'}},
+                                axisTick: {show: false},
+                                axisLabel: {color: '#718096'}
                             },
-                            yAxis: {},
+                            yAxis: {
+                                splitLine: {lineStyle: {color: '#edf1f7'}},
+                                axisLine: {show: false},
+                                axisTick: {show: false},
+                                axisLabel: {color: '#718096'}
+                            },
                             series: [
                                 {
                                     name: '数量',
                                     type: 'bar',
                                     data: nums,
-                                    barCategoryGap: '40%',
+                                    barWidth: 18,
+                                    itemStyle: {
+                                        borderRadius: [7, 7, 0, 0]
+                                    }
                                 },
                                 {
                                     name: '数量',
@@ -230,6 +272,9 @@
                         };
                         // 使用刚指定的配置项和数据显示图表。
                         myChart.setOption(option);
+                        window.addEventListener('resize', function () {
+                            myChart.resize();
+                        }, {passive: true});
                     });
                 });
             },

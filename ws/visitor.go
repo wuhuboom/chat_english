@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/websocket"
 	"go-fly-muti/common"
 	"go-fly-muti/models"
+	"go-fly-muti/setting"
 	"log"
 	"time"
 )
@@ -42,11 +43,23 @@ func NewVisitorServer(c *gin.Context) {
 		Id:         vistorInfo.VisitorId,
 		To_id:      toId,
 		Ent_id:     vistorInfo.EntId,
-		UpdateTime: time.Now(),
+		UpdateTime: setting.Now(),
+	}
+	if err := configureWebSocketHeartbeat(user); err != nil {
+		log.Printf("websocket setup failed role=visitor id=%q error=%q", user.Id, err)
+		_ = conn.Close()
+		return
 	}
 
-	AddVisitorToList(user)
-	VisitorOnline(toId, vistorInfo)
+	if AddVisitorToList(user) {
+		VisitorOnline(toId, vistorInfo)
+	} else {
+		notifyVisitorOnline(toId, vistorInfo)
+	}
+	log.Printf(
+		"websocket connected role=visitor id=%q session=%d kefu=%q remote=%q",
+		user.Id, user.SessionID, user.State().ToID, c.ClientIP(),
+	)
 	//判断是否有room_id,代表聊天室
 	roomId := c.Query("room_id")
 	if roomId != "" {
@@ -57,22 +70,25 @@ func NewVisitorServer(c *gin.Context) {
 		var receive []byte
 		messageType, receive, err := conn.ReadMessage()
 		if err != nil {
-			log.Println("ws/visitor.go conn.ReadMessage:", err, receive, messageType)
-			conn.Close()
-			//if visitor, ok := ClientList[vistorInfo.VisitorId]; ok {
-			//	VisitorOffline(visitor.To_id, visitor.Id, visitor.Name)
-			//	//time.Sleep(time.Duration(common.WsBreakTimeout) * time.Second)
-			//	delete(ClientList, visitor.Id)
-			//}
-			for _, visitor := range ClientList {
-				if visitor.Conn == conn {
-					//conn.Close()
-					delete(ClientList, visitor.Id)
-					VisitorOffline(visitor.To_id, visitor.Id, visitor.Name)
-					return
-				}
+			code, reason := websocketCloseInfo(err)
+			_ = conn.Close()
+			if RemoveVisitorConnection(user.Id, user) {
+				state := user.State()
+				log.Printf(
+					"websocket disconnected role=visitor id=%q session=%d kefu=%q code=%d reason=%q",
+					state.Id, state.SessionID, state.ToID, code, reason,
+				)
+				VisitorOffline(state.ToID, state.Id, state.Name)
+			} else {
+				log.Printf(
+					"websocket replaced role=visitor id=%q session=%d code=%d reason=%q",
+					user.Id, user.SessionID, code, reason,
+				)
 			}
 			return
+		}
+		if err := refreshWebSocketReadDeadline(user); err != nil {
+			log.Printf("websocket deadline refresh failed role=visitor id=%q session=%d error=%q", user.Id, user.SessionID, err)
 		}
 
 		message <- &Message{
@@ -83,35 +99,62 @@ func NewVisitorServer(c *gin.Context) {
 		}
 	}
 }
-func AddVisitorToList(user *User) {
-	//用户id对应的连接
-	oldUser, ok := ClientList[user.Id]
-	if oldUser != nil || ok {
-		VisitorOffline(oldUser.To_id, oldUser.Id, oldUser.Name)
+
+// AddVisitorToList returns true only when this is a newly-online visitor.
+// Replacing a stale connection must not decrement and increment rec_num in
+// competing goroutines, otherwise an active visitor can be counted offline.
+func AddVisitorToList(user *User) bool {
+	oldUser := storeVisitorConnection(user)
+	if oldUser != nil {
+		oldState := oldUser.State()
+		user.SetUpdateTime(oldState.UpdateTime)
 		closemsg := TypeMessage{
 			Type: "close",
 			Data: user.Id,
 		}
 		closeStr, _ := json.Marshal(closemsg)
 		if err := writeUserMessage(oldUser, websocket.TextMessage, closeStr); err != nil {
-			oldUser.Conn.Close()
-			user.UpdateTime = oldUser.UpdateTime
-			delete(ClientList, user.Id)
+			if oldUser.Conn != nil {
+				_ = oldUser.Conn.Close()
+			}
 		}
+		return false
 	}
-	ClientList[user.Id] = user
+	return true
 }
 func AddVisitorToRoom(roomId, visitorId string) {
-	//用户id对应的连接
-	user, ok := ClientList[visitorId]
+	user, ok := VisitorConnection(visitorId)
 	if user != nil && ok {
-		members, _ := Room.GetMembers(roomId)
-		members = append(members, user)
-		Room.SetMembers(roomId, members)
+		Room.addMember(roomId, user)
 	}
 }
 func VisitorOnline(kefuId string, visitor models.Visitor) {
 	go models.UpdateUserRecNum(kefuId, 1)
+	notifyVisitorOnline(kefuId, visitor)
+}
+
+// ActiveVisitorCountsByKefu returns current websocket visitor counts for one
+// enterprise. It is used for routing instead of the eventually-consistent
+// rec_num database field, which may be reset when an agent reconnects.
+func ActiveVisitorCountsByKefu(entId string) map[string]int {
+	return activeVisitorCountsByKefu(entId, VisitorConnectionsSnapshot())
+}
+
+func activeVisitorCountsByKefu(entId string, visitors map[string]*User) map[string]int {
+	counts := make(map[string]int)
+	for _, visitor := range visitors {
+		if visitor == nil {
+			continue
+		}
+		state := visitor.State()
+		if state.EntID == entId && state.ToID != "" {
+			counts[state.ToID]++
+		}
+	}
+	return counts
+}
+
+func notifyVisitorOnline(kefuId string, visitor models.Visitor) {
 	lastMessage := models.FindLastMessageByVisitorId(visitor.VisitorId)
 	unreadMap := models.FindUnreadMessageNumByVisitorIds([]string{visitor.VisitorId}, "visitor")
 	var unreadNum uint32
@@ -126,6 +169,25 @@ func VisitorOnline(kefuId string, visitor models.Visitor) {
 	userInfo["avator"] = visitor.Avator
 	userInfo["last_message"] = lastMessage.Content
 	userInfo["unread_num"] = fmt.Sprintf("%d", unreadNum)
+	conversation := models.FindConversation(visitor.EntId, visitor.VisitorId)
+	if conversation.ID != 0 {
+		userInfo["service_status"] = conversation.Status
+		userInfo["priority"] = conversation.Priority
+		if conversation.WaitingSince != nil {
+			userInfo["waiting_since"] = setting.Format(*conversation.WaitingSince)
+			waitingSeconds := int64(setting.Now().Sub(*conversation.WaitingSince).Seconds())
+			if waitingSeconds > 0 {
+				userInfo["waiting_seconds"] = fmt.Sprintf("%d", waitingSeconds)
+			}
+		}
+	} else {
+		userInfo["priority"] = models.ConversationPriorityNormal
+		if unreadNum > 0 {
+			userInfo["service_status"] = models.ConversationStatusOpen
+		} else {
+			userInfo["service_status"] = models.ConversationStatusPending
+		}
+	}
 	if userInfo["last_message"] == "" {
 		userInfo["last_message"] = "新访客"
 	}
@@ -156,7 +218,7 @@ func VisitorNotice(visitorId string, notice string) {
 		Data: notice,
 	}
 	str, _ := json.Marshal(msg)
-	visitor, ok := ClientList[visitorId]
+	visitor, ok := VisitorConnection(visitorId)
 	if !ok || visitor == nil || visitor.Conn == nil {
 		return
 	}
@@ -164,7 +226,7 @@ func VisitorNotice(visitorId string, notice string) {
 }
 func VisitorCustomMessage(visitorId string, notice TypeMessage) {
 	str, _ := json.Marshal(notice)
-	visitor, ok := ClientList[visitorId]
+	visitor, ok := VisitorConnection(visitorId)
 	if !ok || visitor == nil || visitor.Conn == nil {
 		return
 	}
@@ -176,7 +238,7 @@ func VisitorTransfer(visitorId string, kefuId string) {
 		Data: kefuId,
 	}
 	str, _ := json.Marshal(msg)
-	visitor, ok := ClientList[visitorId]
+	visitor, ok := VisitorConnection(visitorId)
 	if !ok || visitor == nil || visitor.Conn == nil {
 		return
 	}
@@ -189,14 +251,14 @@ func VisitorMessage(visitorId, content string, kefuInfo models.User) {
 			Name:    kefuInfo.Nickname,
 			Avator:  kefuInfo.Avator,
 			Id:      kefuInfo.Name,
-			Time:    time.Now().Format("2006-01-02 15:04:05"),
+			Time:    setting.Now().Format("2006-01-02 15:04:05"),
 			ToId:    visitorId,
 			Content: content,
 			IsKefu:  "no",
 		},
 	}
 	str, _ := json.Marshal(msg)
-	visitor, ok := ClientList[visitorId]
+	visitor, ok := VisitorConnection(visitorId)
 	if !ok || visitor == nil || visitor.Conn == nil {
 		return
 	}
@@ -223,25 +285,27 @@ func CleanVisitorExpire() {
 	go func() {
 		log.Println("cleanVisitorExpire start...")
 		for {
-			for _, user := range ClientList {
-				diff := time.Now().Sub(user.UpdateTime).Seconds()
+			for _, user := range VisitorConnectionsSnapshot() {
+				state := user.State()
+				diff := time.Since(state.UpdateTime).Seconds()
 				if diff >= common.VisitorExpire {
-					entConfig := models.FindEntConfig(user.Ent_id, "CloseVisitorMessage")
+					entConfig := models.FindEntConfig(state.EntID, "CloseVisitorMessage")
 					if entConfig.ConfValue != "" {
-						kefu := models.FindUserByUid(user.Ent_id)
-						VisitorMessage(user.Id, entConfig.ConfValue, kefu)
+						kefu := models.FindUserByUid(state.EntID)
+						VisitorMessage(state.Id, entConfig.ConfValue, kefu)
 					}
 					msg := TypeMessage{
 						Type: "auto_close",
-						Data: user.Id,
+						Data: state.Id,
 					}
 					str, _ := json.Marshal(msg)
 					if err := writeUserMessage(user, websocket.TextMessage, str); err != nil {
-						user.Conn.Close()
-						delete(ClientList, user.Id)
-						VisitorOffline(user.To_id, user.Id, user.Name)
+						_ = user.Conn.Close()
+						if RemoveVisitorConnection(state.Id, user) {
+							VisitorOffline(state.ToID, state.Id, state.Name)
+						}
 					}
-					log.Println(user.Name + ":cleanVisitorExpire finshed")
+					log.Println(state.Name + ":cleanVisitorExpire finished")
 				}
 			}
 			t := time.NewTimer(time.Second * 5)

@@ -1,7 +1,9 @@
 .idea
+.gocache/
 install.lock
 .product
 gofly.sock
+/main
 
 config.yaml
 config/mysql.json

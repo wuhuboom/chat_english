@@ -4,37 +4,19 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"go-fly-muti/tools"
-	"io/ioutil"
-	"os/exec"
-	"runtime"
-	"strings"
+	"path/filepath"
 )
 
 var stopCmd = &cobra.Command{
 	Use:   "stop",
 	Short: "停止客服http服务",
 	Run: func(cmd *cobra.Command, args []string) {
-
-		pids, err := ioutil.ReadFile("gofly.sock")
-		rootPath=tools.GetRootPath()
-		if err != nil {
-			fmt.Sprintf(err.Error())
+		rootPath = tools.GetRootPath()
+		pidPath := filepath.Join(rootPath, pidFileName)
+		if err := stopProcesses(pidPath); err != nil {
+			fmt.Println("停止服务失败:", err)
 			return
 		}
-		pidSlice := strings.Split(string(pids), ",")
-		var command *exec.Cmd
-		for _, pid := range pidSlice {
-			fmt.Println(pid)
-			if runtime.GOOS == "windows" {
-				command = exec.Command("taskkill.exe", "/f", "/pid", pid)
-			} else {
-				command = exec.Command("kill", pid)
-			}
-			err := command.Start()
-			if err != nil {
-				fmt.Println(err.Error())
-				return
-			}
-		}
+		fmt.Println("GOFLY 服务已停止")
 	},
 }

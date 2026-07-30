@@ -75,6 +75,17 @@ var app=new Vue({
         visitorPageSize:10,
         visitorName:"",
         visitorTag:"",
+        queueSearch:"",
+        queueFilter:"all",
+        queueSort:"priority",
+        conversation:{
+            status:"pending",
+            priority:"normal",
+            waiting_since:"",
+            waiting_seconds:0,
+        },
+        conversationEvents:[],
+        conversationEventsLoading:false,
         face:[],
         transKefuDialog:false,
         otherKefus:[],
@@ -100,6 +111,11 @@ var app=new Vue({
         loadMoreDisable:false,
         alertSounding:false,
         alertSoundingTimer:null,
+        socketState:"connecting",
+        lastSocketSignalAt:0,
+        socketHealthNow:Date.now(),
+        socketHealthTimer:null,
+        slaAlertedVisitors:{},
         newMessageComing:false,
         dynamicTags: [],
         inputVisible: false,
@@ -107,7 +123,163 @@ var app=new Vue({
         allTags:[],
         editor:null,
     },
+    computed: {
+        socketStateLabel() {
+            return {
+                connected:"消息通道正常",
+                reconnecting:"消息通道重连中",
+                stale:"消息通道无响应",
+                connecting:"消息通道连接中"
+            }[this.socketState] || "消息通道未知";
+        },
+        socketStateTooltip() {
+            if(!this.lastSocketSignalAt){
+                return "尚未收到服务器心跳，点击立即重连";
+            }
+            const seconds=Math.max(0,Math.floor((this.socketHealthNow-this.lastSocketSignalAt)/1000));
+            return "最后心跳 "+seconds+" 秒前，点击可立即重连";
+        },
+        filteredOnlineUsers() {
+            return this.filterConversationList(this.users);
+        },
+        filteredVisitors() {
+            return this.filterConversationList(this.visitors);
+        },
+        slaWarningSeconds() {
+            const minutes = parseInt(this.getConfig("ConversationSLAWarningMinutes"), 10);
+            return (Number.isFinite(minutes) && minutes > 0 ? minutes : 5) * 60;
+        },
+        slaOverdueSeconds() {
+            const minutes = parseInt(this.getConfig("ConversationSLAOverdueMinutes"), 10);
+            const fallback = 15;
+            return (Number.isFinite(minutes) && minutes > 0 ? minutes : fallback) * 60;
+        },
+        queueMetrics() {
+            return this.users.reduce((summary, item) => {
+                if(item.service_status==="open"){
+                    summary.open++;
+                }
+                if(this.isOverdue(item)){
+                    summary.overdue++;
+                }
+                summary.unread+=Number(item.unread_num || 0);
+                return summary;
+            }, {open:0, overdue:0, unread:0});
+        },
+    },
     methods: {
+        filterConversationList(list) {
+            const query = this.queueSearch.trim().toLowerCase();
+            const filter = this.queueFilter;
+            const priorityRank = {urgent: 3, high: 2, normal: 1};
+            const filtered = list.filter((item) => {
+                const matchesSearch = !query ||
+                    String(item.username || "").toLowerCase().indexOf(query) !== -1 ||
+                    String(item.visitor_id || "").toLowerCase().indexOf(query) !== -1 ||
+                    String(item.last_message || "").toLowerCase().indexOf(query) !== -1;
+                if (!matchesSearch) {
+                    return false;
+                }
+                if (filter === "unread") {
+                    return Number(item.unread_num || 0) > 0;
+                }
+                if (filter === "overdue") {
+                    return this.isOverdue(item);
+                }
+                return filter === "all" || item.service_status === filter;
+            });
+            return filtered.slice().sort((left, right) => {
+                const latestDiff = this.conversationTimestamp(right) - this.conversationTimestamp(left);
+                if (this.queueSort === "waiting") {
+                    return Number(right.waiting_seconds || 0) - Number(left.waiting_seconds || 0);
+                }
+                if (this.queueSort === "latest") {
+                    return latestDiff;
+                }
+                const overdueDiff = Number(this.isOverdue(right)) - Number(this.isOverdue(left));
+                if (overdueDiff !== 0) {
+                    return overdueDiff;
+                }
+                const openDiff = Number(right.service_status === "open") - Number(left.service_status === "open");
+                if (openDiff !== 0) {
+                    return openDiff;
+                }
+                const priorityDiff = (priorityRank[right.priority] || 1) - (priorityRank[left.priority] || 1);
+                if (priorityDiff !== 0) {
+                    return priorityDiff;
+                }
+                const unreadDiff = Number(Number(right.unread_num || 0) > 0) -
+                    Number(Number(left.unread_num || 0) > 0);
+                if (unreadDiff !== 0) {
+                    return unreadDiff;
+                }
+                if (latestDiff !== 0) {
+                    return latestDiff;
+                }
+                return Number(right.waiting_seconds || 0) - Number(left.waiting_seconds || 0);
+            });
+        },
+        conversationTimestamp(item) {
+            const rawValue=item.updated_at || item.waiting_since || "";
+            if(!rawValue){
+                return 0;
+            }
+            const normalizedValue=String(rawValue).indexOf("T")===-1 ?
+                String(rawValue).replace(" ", "T") :
+                String(rawValue);
+            const timestamp=new Date(normalizedValue).getTime();
+            return Number.isFinite(timestamp) ? timestamp : 0;
+        },
+        serviceStatusLabel(status) {
+            return {
+                open: "待回复",
+                pending: "等客户",
+                resolved: "已解决",
+            }[status] || "待处理";
+        },
+        priorityLabel(priority) {
+            return priority === "urgent" ? "紧急" : "高";
+        },
+        waitingLabel(item) {
+            const seconds = Math.max(0, Number(item.waiting_seconds || 0));
+            if (seconds < 60) {
+                return "等待 " + seconds + "秒";
+            }
+            if (seconds < 3600) {
+                return "等待 " + Math.floor(seconds / 60) + "分";
+            }
+            return "等待 " + Math.floor(seconds / 3600) + "时" + Math.floor(seconds % 3600 / 60) + "分";
+        },
+        waitingClass(seconds) {
+            seconds = Number(seconds || 0);
+            if (seconds >= this.slaOverdueSeconds) {
+                return "waiting-overdue";
+            }
+            if (seconds >= this.slaWarningSeconds) {
+                return "waiting-warning";
+            }
+            return "";
+        },
+        isOverdue(item) {
+            return item.service_status==="open" &&
+                Number(item.waiting_seconds || 0)>=this.slaOverdueSeconds;
+        },
+        refreshWaitingTimes() {
+            [this.users, this.visitors].forEach((list) => {
+                list.forEach((item) => {
+                    if (item.service_status === "open") {
+                        const previousSeconds=Number(item.waiting_seconds || 0);
+                        item.waiting_seconds=previousSeconds+30;
+                        if(previousSeconds<this.slaOverdueSeconds &&
+                            item.waiting_seconds>=this.slaOverdueSeconds &&
+                            !this.slaAlertedVisitors[item.visitor_id]){
+                            this.$set(this.slaAlertedVisitors,item.visitor_id,true);
+                            this.newVisitorForceAlert(item.username+" 会话等待已超时");
+                        }
+                    }
+                });
+            });
+        },
         //跳转
         openUrl(url) {
             window.location.href = url;
@@ -135,6 +307,7 @@ var app=new Vue({
             },25000);
             setInterval(function(){
                 _this.getOnlineVisitors();
+                _this.refreshWaitingTimes();
             },30000);
         },
         //初始化websocket
@@ -143,12 +316,44 @@ var app=new Vue({
             this.socket = socket
             this.socket.onmessage = this.OnMessage;
             this.socket.onopen = this.OnOpen;
+            this.socket.onconnecting = this.OnConnecting;
+            this.socket.onclose = this.OnClose;
+            this.socket.onerror = this.OnSocketError;
         },
         OnOpen() {
+            this.socketState="connected";
+            this.lastSocketSignalAt=Date.now();
             this.sendKefuOnline();
             this.getOnlineVisitors();
         },
+        OnConnecting() {
+            this.socketState=this.lastSocketSignalAt ? "reconnecting" : "connecting";
+        },
+        OnClose() {
+            this.socketState="reconnecting";
+        },
+        OnSocketError() {
+            this.socketState="reconnecting";
+        },
+        reconnectSocket() {
+            if(this.socket && typeof this.socket.refresh==="function"){
+                this.socketState="reconnecting";
+                this.socket.refresh();
+            }
+        },
+        checkSocketHealth() {
+            this.socketHealthNow=Date.now();
+            if(this.socketState!=="connected" || !this.lastSocketSignalAt){
+                return;
+            }
+            if(this.socketHealthNow-this.lastSocketSignalAt>70000){
+                this.socketState="stale";
+                this.reconnectSocket();
+            }
+        },
         OnMessage(e) {
+            this.socketState="connected";
+            this.lastSocketSignalAt=Date.now();
             const redata = JSON.parse(e.data);
             switch (redata.type){
                 case "read":
@@ -157,6 +362,7 @@ var app=new Vue({
                             this.$set(this.msgList[i],'read_status',GOFLY_LANG[LANG]['read']);
                         }
                     }
+                    break;
                 case "inputing":
                     this.handleInputing(redata.data);
                     //this.sendKefuOnline();
@@ -200,6 +406,18 @@ var app=new Vue({
                 content.is_kefu = msg.is_kefu=="yes"? true:false;
                 content.time = msg.time;
                 content.msg_id=msg.msg_id;
+                const serviceStatus = content.is_kefu ? "pending" : "open";
+                if(serviceStatus==="open"){
+                    this.$delete(this.slaAlertedVisitors,msg.id);
+                }
+                this.setVisitorListItem(msg.id, "service_status", serviceStatus);
+                this.setVisitorListItem(msg.id, "waiting_since", content.is_kefu ? "" : msg.time);
+                this.setVisitorListItem(msg.id, "waiting_seconds", 0);
+                if (msg.id === this.currentGuest) {
+                    this.conversation.status = serviceStatus;
+                    this.conversation.waiting_since = content.is_kefu ? "" : msg.time;
+                    this.conversation.waiting_seconds = 0;
+                }
                 if (msg.id == this.currentGuest) {
                     this.msgList.push(content);
                 }
@@ -207,19 +425,24 @@ var app=new Vue({
                 for(let i=0;i<this.users.length;i++){
                     if(this.users[i].visitor_id==msg.id){
                         this.$set(this.users[i],'last_message',msg.content);
-                        if(this.visitor.visitor_id!=msg.id){
-                            this.$set(this.users[i],'hidden_new_message',false);
-                        }
+                        this.$set(this.users[i],'updated_at',getNowDate());
                     }
                 }
                 for(let i=0;i<this.visitors.length;i++){
                     if(this.visitors[i].visitor_id==msg.id){
                         this.$set(this.visitors[i],'last_message',msg.content);
-                        if(msg.id != this.currentGuest){
-                            this.$set(this.visitors[i],'unread_num',++this.visitors[i].unread_num);
-                        }
+                        this.$set(this.visitors[i],'updated_at',getNowDate());
                     }
                 }
+                if(!content.is_kefu){
+                    if(msg.id === this.currentGuest){
+                        this.setVisitorUnread(msg.id, 0);
+                    }else{
+                        this.incrementVisitorUnread(msg.id);
+                    }
+                }
+                this.moveVisitorToTop(this.users, msg.id);
+                this.moveVisitorToTop(this.visitors, msg.id);
 
                 this.scrollBottom();
                 if(content.is_kefu){
@@ -237,6 +460,42 @@ var app=new Vue({
                 _this.chatInputing="";
                 _this.newMessageComing=true;
             }
+        },
+        // 新消息到达时将对应会话移到顶部，避免客服错过后进入的消息。
+        moveVisitorToTop(list, visitorId) {
+            const visitorIndex = list.findIndex(function (item) {
+                return item.visitor_id == visitorId;
+            });
+            if (visitorIndex <= 0) {
+                return;
+            }
+            const visitor = list.splice(visitorIndex, 1)[0];
+            list.unshift(visitor);
+        },
+        setVisitorUnread(visitorId, unreadNum) {
+            const normalizedUnread=Math.max(0, Number(unreadNum || 0));
+            [this.users, this.visitors].forEach((list) => {
+                list.forEach((item) => {
+                    if(item.visitor_id!=visitorId){
+                        return;
+                    }
+                    this.$set(item, "unread_num", normalizedUnread);
+                    if(list===this.users){
+                        this.$set(item, "hidden_new_message", normalizedUnread===0);
+                    }
+                });
+            });
+        },
+        incrementVisitorUnread(visitorId) {
+            let currentUnread=0;
+            [this.users, this.visitors].forEach((list) => {
+                list.forEach((item) => {
+                    if(item.visitor_id==visitorId){
+                        currentUnread=Math.max(currentUnread, Number(item.unread_num || 0));
+                    }
+                });
+            });
+            this.setVisitorUnread(visitorId, currentUnread+1);
         },
         //接手客户
         talkTo(guestId,name) {
@@ -258,6 +517,8 @@ var app=new Vue({
             this.resetVisitorAction();
             this.getVisitorExt(1);
             this.getVisitorAttr(guestId);
+            this.getConversation(guestId);
+            this.getConversationEvents(guestId);
             //获取当前客户消息
             //this.getMesssagesByVisitorId(guestId);
             this.currentPage=1;
@@ -318,9 +579,16 @@ var app=new Vue({
                             message: data.msg,
                             type: 'error'
                         });
+                        if(data.code===409){
+                            _this.getOnlineVisitors();
+                            _this.currentGuest="";
+                            _this.visitor.visitor_id="";
+                        }
+                        return;
                     }
                     _this.messageContent = "";
                     _this.sendSound();
+                    _this.applyConversationState({status:"pending", waiting_since:null});
                 }
             });
             this.scrollBottom();
@@ -332,10 +600,15 @@ var app=new Vue({
             newUser.last_message=retData.last_message;
             newUser.status=1;
             newUser.username=retData.username;
-            newUser.hidden_new_message=true;
             newUser.visitor_id=retData.uid;
             newUser.avator=retData.avator;
             newUser.updated_at=getNowDate();
+            newUser.unread_num=Number(retData.unread_num || 0);
+            newUser.hidden_new_message=newUser.unread_num===0;
+            newUser.service_status=retData.service_status || "pending";
+            newUser.priority=retData.priority || "normal";
+            newUser.waiting_since=retData.waiting_since || "";
+            newUser.waiting_seconds=Number(retData.waiting_seconds || 0);
             for(let i=0;i<this.users.length;i++){
                 if(this.users[i].visitor_id==newUser.visitor_id){
                     flag=true;
@@ -359,8 +632,7 @@ var app=new Vue({
                 }
             }
             if(!newUserflag){
-                newUser.unread_num=0;
-                this.visitors.unshift(newUser);
+                this.visitors.unshift(Object.assign({}, newUser));
             }
             if(this.visitor.visitor_id==newUser.visitor_id){
                 this.getVistorInfo(newUser.visitor_id)
@@ -390,7 +662,10 @@ var app=new Vue({
             this.usersMap=[];
             for(let i=0;i<retData.length;i++){
                 this.usersMap[retData[i].uid]=retData[i].username;
-                retData[i].last_message="新访客";
+                retData[i].visitor_id=retData[i].visitor_id || retData[i].uid;
+                retData[i].last_message=retData[i].last_message || "新访客";
+                retData[i].unread_num=Number(retData[i].unread_num || 0);
+                retData[i].hidden_new_message=retData[i].unread_num===0;
             }
             if(this.users.length==0){
                 this.users = retData;
@@ -522,7 +797,11 @@ var app=new Vue({
                     if(data.code==200 && data.result!=null){
                         _this.users=data.result;
                         for(var i=0;i<_this.users.length;i++){
-                            _this.$set(_this.users[i],'hidden_new_message',true);
+                            _this.$set(
+                                _this.users[i],
+                                'hidden_new_message',
+                                Number(_this.users[i].unread_num || 0) === 0
+                            );
                         }
                     }
                     if(data.code!=200){
@@ -655,9 +934,100 @@ var app=new Vue({
                             message: data.msg,
                             type: 'error'
                         });
+                    }else{
+                        _this.applyConversationState({status:"resolved", waiting_since:null});
+                        _this.getConversationEvents(visitorId);
+                        _this.$message({message:"会话已解决", type:"success"});
                     }
                 }
             });
+        },
+        getConversation(visitorId){
+            let _this=this;
+            this.sendAjax("/kefu/conversation","get",{visitor_id:visitorId},function(result){
+                if(_this.currentGuest==visitorId){
+                    _this.applyConversationState(result);
+                }
+            });
+        },
+        getConversationEvents(visitorId){
+            if(!visitorId){
+                this.conversationEvents=[];
+                return;
+            }
+            let _this=this;
+            this.conversationEventsLoading=true;
+            this.sendAjax("/kefu/conversation/events","get",{visitor_id:visitorId},function(result){
+                if(_this.currentGuest===visitorId){
+                    _this.conversationEvents=Array.isArray(result) ? result : [];
+                }
+                _this.conversationEventsLoading=false;
+            });
+        },
+        conversationEventLabel(event){
+            return {
+                assigned:"首次分配",
+                rerouted:"重新分配",
+                manual_transfer:"手动转接",
+                auto_failover:"离线自动接管",
+                status_changed:"状态变更",
+                priority_changed:"优先级变更",
+                resolved:"会话已解决"
+            }[event.event_type] || "会话事件";
+        },
+        conversationEventType(event){
+            return {
+                assigned:"primary",
+                rerouted:"warning",
+                manual_transfer:"primary",
+                auto_failover:"danger",
+                status_changed:"success",
+                priority_changed:"warning",
+                resolved:"success"
+            }[event.event_type] || "info";
+        },
+        updateConversation(status, priority){
+            if(!this.currentGuest){
+                return;
+            }
+            let _this=this;
+            this.sendAjax("/kefu/conversation","post",{
+                visitor_id:this.currentGuest,
+                status:status,
+                priority:priority
+            },function(result){
+                _this.applyConversationState(result);
+                _this.getConversationEvents(_this.currentGuest);
+                _this.$message({message:"会话状态已更新", type:"success"});
+            });
+        },
+        applyConversationState(result){
+            if(!result){
+                return;
+            }
+            if(result.status){
+                this.conversation.status=result.status;
+                this.setVisitorListItem(this.currentGuest,"service_status",result.status);
+                if(result.status!=="open"){
+                    this.$delete(this.slaAlertedVisitors,this.currentGuest);
+                }
+            }
+            if(result.priority){
+                this.conversation.priority=result.priority;
+                this.setVisitorListItem(this.currentGuest,"priority",result.priority);
+            }
+            this.conversation.waiting_since=result.waiting_since || "";
+            if(result.status==="open" && result.waiting_since){
+                const waitingSince = new Date(result.waiting_since).getTime();
+                const waitingSeconds = Number.isNaN(waitingSince) ? 0 : Math.max(0, Math.floor((Date.now()-waitingSince)/1000));
+                this.conversation.waiting_seconds=waitingSeconds;
+                this.setVisitorListItem(this.currentGuest,"waiting_seconds",waitingSeconds);
+                this.setVisitorListItem(this.currentGuest,"waiting_since",result.waiting_since);
+            }else if(result.waiting_since===null || result.status!=="open"){
+                this.conversation.waiting_seconds=0;
+                this.setVisitorListItem(this.currentGuest,"waiting_seconds",0);
+                this.setVisitorListItem(this.currentGuest,"waiting_since","");
+            }
         },
         //处理tab切换
         handleTabClick(tab, event){
@@ -671,6 +1041,9 @@ var app=new Vue({
             if(tab.name=="visitorMove"){
                 this.resetVisitorAction();
                 this.getVisitorExt(1);
+            }
+            if(tab.name=="conversationEvents"){
+                this.getConversationEvents(this.currentGuest);
             }
             if(tab.name=="blackList"){
                 this.getVisitorBlacks(1);
@@ -986,7 +1359,7 @@ var app=new Vue({
             });
         },
         getConfig(key){
-            for(index in this.configs){
+            for(let index in this.configs){
                 if(key==this.configs[index].conf_key){
                     return this.configs[index].conf_value;
                 }
@@ -1361,12 +1734,7 @@ var app=new Vue({
         },
         //格式化时间
         formatTime:function(fmt,time) {
-            var timeStamp = Math.round(new Date(time).getTime()/1000);
-            var nowTime=Math.round(new Date().getTime()/1000);
-            if((nowTime-timeStamp)<=3600*24*30*6){
-                return beautifyTime(timeStamp,LANG);
-            }
-            return dateFormat(fmt,new Date(time));
+            return formatSystemDateTime(time);
         },
         //标签相关
         getTags(visitor_id){
@@ -1473,8 +1841,14 @@ var app=new Vue({
         this.getConfigs();
         this.selectText();
         this.getAllTags();
+        this.socketHealthTimer=setInterval(this.checkSocketHealth,10000);
         //this.initPeerjs();
         //心跳
         this.ping();
+    },
+    beforeDestroy:function(){
+        if(this.socketHealthTimer){
+            clearInterval(this.socketHealthTimer);
+        }
     }
 })

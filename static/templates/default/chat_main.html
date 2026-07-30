@@ -3,16 +3,18 @@
     <meta charset="utf-8">
     <meta name="description" content="">
     <meta name="author" content="GOFLY">
+    <meta name="system-timezone" content="{{.SystemTimezone}}">
     <title>GO语言开源客服系统-GOFLY111</title>
     <link rel="stylesheet" href="/static/element-ui/2.15.1/theme-chalk/index.min.css">
     <script src="/static/vue/2.6.11/vue.min.js"></script>
     <script src="/static/element-ui/2.15.1/index.js"></script>
     <script src="/static/jquery/3.6.0/jquery.min.js"></script>
-    <script src="/static/js/functions.js"></script>
+    <script src="/static/js/functions.js?v=1.0.1"></script>
     <script src="/static/js/reconnecting-websocket.min.js"></script>
     <link rel="stylesheet" href="/static/css/icono.min.css" />
     <link rel="stylesheet" href="/static/css/front.css"/>
     <link rel="stylesheet" href="/static/css/common.css?v=1.0.1"/>
+    <link rel="stylesheet" href="/static/css/admin-modern.css?v=1.2.1"/>
 
     <style>
         .el-row{width:100%}
@@ -57,21 +59,70 @@
 
                     <el-tabs v-model="leftTabActive" @tab-click="handleTabClick">
                         <el-tab-pane :label="flyLang.chatVisitor" name="first"  class="kefuVisitorList">
-                            <div class="noVisitor" v-show="users.length==0">
-                                <div><i class="el-icon-chat-dot-square"></i></div>
-                                GOFLY NO NEWS
+                            <div class="conversationQueueTools">
+                                <button type="button"
+                                        class="chatSocketHealth"
+                                        :class="'is-'+socketState"
+                                        :title="socketStateTooltip"
+                                        @click="reconnectSocket">
+                                    <span></span>
+                                    <{socketStateLabel}>
+                                </button>
+                                <el-input v-model="queueSearch" clearable prefix-icon="el-icon-search" placeholder="搜索访客"></el-input>
+                                <div class="conversationQueueFilters">
+                                    <el-select v-model="queueFilter" aria-label="会话筛选">
+                                        <el-option label="全部会话" value="all"></el-option>
+                                        <el-option label="待客服回复" value="open"></el-option>
+                                        <el-option label="已超时" value="overdue"></el-option>
+                                        <el-option label="等待客户" value="pending"></el-option>
+                                        <el-option label="已解决" value="resolved"></el-option>
+                                        <el-option label="仅未读" value="unread"></el-option>
+                                    </el-select>
+                                    <el-select v-model="queueSort" aria-label="会话排序">
+                                        <el-option label="优先处理" value="priority"></el-option>
+                                        <el-option label="最新消息" value="latest"></el-option>
+                                        <el-option label="等待最久" value="waiting"></el-option>
+                                    </el-select>
+                                </div>
+                                <div class="conversationQueueSummary">
+                                    <button type="button" @click="queueFilter='open'">
+                                        <strong><{queueMetrics.open}></strong>
+                                        <span>待回复</span>
+                                    </button>
+                                    <button type="button" class="is-overdue" @click="queueFilter='overdue'">
+                                        <strong><{queueMetrics.overdue}></strong>
+                                        <span>已超时</span>
+                                    </button>
+                                    <button type="button" @click="queueFilter='unread'">
+                                        <strong><{queueMetrics.unread}></strong>
+                                        <span>未读</span>
+                                    </button>
+                                </div>
                             </div>
-                            <el-row  v-for="item in users" :key="item.visitor_id">
+                            <div class="noVisitor" v-show="filteredOnlineUsers.length==0">
+                                <div><i class="el-icon-chat-dot-square"></i></div>
+                                <strong>暂无匹配会话</strong>
+                                <small>新访客进入或调整筛选条件后会显示在这里</small>
+                            </div>
+                            <el-row v-for="item in filteredOnlineUsers" :key="item.visitor_id">
                                 <div :title="item.last_message" style="cursor:pointer" class="onlineUsers hasLastMsg" v-bind:class="{'cur': item.visitor_id==currentGuest }" v-on:click="talkTo(item.visitor_id,item.username)">
-                                    <el-col :span="4">
-                                        <el-badge value="new" :hidden="item.hidden_new_message" class="item">
+                                    <div class="visitorAvatarCell">
+                                        <el-badge :value="item.unread_num || 'new'" :hidden="item.hidden_new_message" class="item">
                                             <el-avatar :size="40" :src="item.avator"></el-avatar>
                                         </el-badge>
-                                    </el-col>
-                                    <el-col :span="16">
-                                        <div style="height:20px;overflow: hidden"><{item.username}></div>
-                                        <div class="lastNewMsg"><{item.last_message}></div>
-                                    </el-col>
+                                    </div>
+                                    <div class="visitorSummaryCell">
+                                        <div class="visitorCardTitle">
+                                            <span class="visitorCardName"><{item.username}></span>
+                                            <span v-if="item.priority!='normal'" class="priorityBadge" :class="'priority-'+item.priority"><{priorityLabel(item.priority)}></span>
+                                            <span class="serviceStatusBadge" :class="'status-'+item.service_status"><{serviceStatusLabel(item.service_status)}></span>
+                                        </div>
+                                        <div class="visitorPreviewRow">
+                                            <div class="lastNewMsg"><{item.last_message}></div>
+                                            <div v-if="item.service_status=='open'" class="visitorWaiting" :class="waitingClass(item.waiting_seconds)" :title="item.waiting_since"><{waitingLabel(item)}></div>
+                                            <div v-else class="visitorTime"><{formatTime("Y-m-d H:M:S",item.updated_at)}></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </el-row>
                         </el-tab-pane>
@@ -89,21 +140,41 @@
                                     <el-button slot="append" icon="el-icon-search" @click="getVisitorPage(1)"></el-button>
                                 </el-input>
                             </div>
-                            <el-row  v-for="item in visitors" :key="item.id" class="">
+                            <div class="conversationQueueFilters conversationQueueFiltersAll">
+                                <el-select v-model="queueFilter" aria-label="会话筛选">
+                                    <el-option label="全部会话" value="all"></el-option>
+                                    <el-option label="待客服回复" value="open"></el-option>
+                                    <el-option label="已超时" value="overdue"></el-option>
+                                    <el-option label="等待客户" value="pending"></el-option>
+                                    <el-option label="已解决" value="resolved"></el-option>
+                                    <el-option label="仅未读" value="unread"></el-option>
+                                </el-select>
+                                <el-select v-model="queueSort" aria-label="会话排序">
+                                    <el-option label="优先处理" value="priority"></el-option>
+                                    <el-option label="最新消息" value="latest"></el-option>
+                                    <el-option label="等待最久" value="waiting"></el-option>
+                                </el-select>
+                            </div>
+                            <el-row v-for="item in filteredVisitors" :key="item.id" class="">
                                 <div style="cursor:pointer" class="onlineUsers" v-bind:class="{'cur': item.visitor_id==currentGuest }" v-on:click="talkTo(item.visitor_id,item.username)">
-                                    <el-col :span="3">
+                                    <div class="visitorAvatarCell">
                                         <el-badge :value="item.unread_num" :hidden="!item.unread_num" class="item">
                                             <el-avatar :size="40" :src="item.avator"></el-avatar>
                                         </el-badge>
-                                    </el-col>
-                                    <el-col :span="15">
-                                        <div style="height:20px;overflow: hidden"><{item.username}></div>
-                                        <div class="lastNewMsg" v-if="item.last_message"><{item.last_message}></div>
-                                        <div class="lastNewMsg" v-else>NO NEWS</div>
-                                    </el-col>
-                                    <el-col :span="6" class="visitorTime">
-                                        <{formatTime("Y-m-d H:M:S",item.updated_at)}>
-                                    </el-col>
+                                    </div>
+                                    <div class="visitorSummaryCell">
+                                        <div class="visitorCardTitle">
+                                            <span class="visitorCardName"><{item.username}></span>
+                                            <span v-if="item.priority!='normal'" class="priorityBadge" :class="'priority-'+item.priority"><{priorityLabel(item.priority)}></span>
+                                            <span class="serviceStatusBadge" :class="'status-'+item.service_status"><{serviceStatusLabel(item.service_status)}></span>
+                                        </div>
+                                        <div class="visitorPreviewRow">
+                                            <div class="lastNewMsg" v-if="item.last_message"><{item.last_message}></div>
+                                            <div class="lastNewMsg" v-else>NO NEWS</div>
+                                            <div v-if="item.service_status=='open'" class="visitorWaiting" :class="waitingClass(item.waiting_seconds)" :title="item.waiting_since"><{waitingLabel(item)}></div>
+                                            <div v-else class="visitorTime"><{formatTime("Y-m-d H:M:S",item.updated_at)}></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </el-row>
                             <el-pagination
@@ -123,19 +194,30 @@
             <el-col :span="18" v-show="visitor.visitor_id==''">
                 <div class="kefuNoVisitor">
                     <div class="kefuNoVisitorIcno"><i style="color:rgb(198 219 255);" class="el-icon-chat-dot-round"></i></div>
-                    GOFLY LIVE CHAT
+                    <strong>等待新的会话</strong>
+                    <small>从左侧选择访客，或等待系统推送新消息</small>
                 </div>
             </el-col>
             <el-col :span="12" v-show="visitor.visitor_id!=''">
                 <div class="kefuMainBg chatBgContext" @click="resizeChatBox">
-                    <el-alert
-                            style="background: #fff;"
-                            :closable="false"
-                            :type="chatTitleType"
-                            show-icon
-                            :title="chatTitle"
-                    >
-                    </el-alert>
+                    <div class="conversationHeader">
+                        <div class="conversationHeaderIdentity">
+                            <span class="conversationHeaderEyebrow">当前会话</span>
+                            <strong><{chatTitle}></strong>
+                        </div>
+                        <div class="conversationHeaderActions">
+                            <el-select size="small" v-model="conversation.priority" @change="updateConversation('', conversation.priority)" aria-label="会话优先级">
+                                <el-option label="普通优先级" value="normal"></el-option>
+                                <el-option label="高优先级" value="high"></el-option>
+                                <el-option label="紧急" value="urgent"></el-option>
+                            </el-select>
+                            <el-select size="small" v-model="conversation.status" @change="updateConversation(conversation.status, '')" aria-label="会话状态">
+                                <el-option label="待客服回复" value="open"></el-option>
+                                <el-option label="等待客户" value="pending"></el-option>
+                                <el-option label="已解决" value="resolved"></el-option>
+                            </el-select>
+                        </div>
+                    </div>
 
 
                     <div class="chatBox">
@@ -162,18 +244,28 @@
                                 </div>
                             </el-tooltip>
                         </div>
-                        <el-row :gutter="2" v-for="v in msgList" v-bind:class="{'chatBoxMe': v.is_kefu==true}">
+                        <div class="chatMessageRow"
+                             v-for="v in msgList"
+                             :key="v.msg_id || (v.time + '-' + v.content)"
+                             v-bind:class="{'chatBoxMe': v.is_kefu==true}">
                             <div class="chatTime"><{formatTime("Y-m-d H:M:S",v.time)}></div>
-                            <el-col :span="3"><el-avatar shape="square" :size="48" :src="v.avator"></el-avatar></el-col>
-                            <el-col :span="21">
-                                <div class="chatUser"><{v.name}></div>
-                                <div class="chatContent" v-html="v.content.replace(/\n/g, '<br/>')"></div>
-                                <div class="chatReadStatus" v-show="v.is_kefu==true"><{v.read_status}></div>
-                                <div class="chatDeleteBtn">
-                                    <el-button v-show="v.is_kefu==true"  v-on:click="deleteMessage(v.msg_id)" size="mini" type="danger" icon="el-icon-delete" circle></el-button>
+                            <div class="chatMessageLine">
+                                <el-avatar class="chatMessageAvatar" shape="square" :size="42" :src="v.avator"></el-avatar>
+                                <div class="chatMessagePayload">
+                                    <div class="chatUser"><{v.name}></div>
+                                    <div class="chatContent" v-html="v.content.replace(/\n/g, '<br/>')"></div>
+                                    <div class="chatMessageMeta" v-show="v.is_kefu==true">
+                                        <span class="chatReadStatus"><{v.read_status}></span>
+                                        <el-button class="chatDeleteBtn"
+                                                   v-on:click="deleteMessage(v.msg_id)"
+                                                   size="mini"
+                                                   type="danger"
+                                                   icon="el-icon-delete"
+                                                   circle></el-button>
+                                    </div>
                                 </div>
-                            </el-col>
-                        </el-row>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="kefuFuncBox">
@@ -267,7 +359,7 @@
                                         <i class="el-icon-time"></i>
                                         <{flyLang.firstTime}>
                                     </div>
-                                    <div class="profileRight"><{visitor.created_at}></div>
+                                    <div class="profileRight"><{formatTime("Y-m-d H:M:S",visitor.created_at)}></div>
                                     <div class="clear"></div>
                                 </div>
                                 <div class="profileItem">
@@ -275,7 +367,7 @@
                                         <i class="el-icon-time"></i>
                                         <{flyLang.lastTime}>
                                     </div>
-                                    <div class="profileRight"><{visitor.updated_at}></div>
+                                    <div class="profileRight"><{formatTime("Y-m-d H:M:S",visitor.updated_at)}></div>
                                     <div class="clear"></div>
                                 </div>
                                 <el-tooltip :content="visitor.refer" placement="left">
@@ -456,6 +548,29 @@
                                     :total="visitorAction.count">
                             </el-pagination>
                         </el-tab-pane>
+                        <el-tab-pane label="处理记录" name="conversationEvents">
+                            <div class="conversationEventPanel" v-loading="conversationEventsLoading">
+                                <div class="conversationEventHeader">
+                                    <span>最近 100 条处理轨迹</span>
+                                    <el-button type="text" icon="el-icon-refresh" @click="getConversationEvents(currentGuest)">刷新</el-button>
+                                </div>
+                                <el-empty v-if="conversationEvents.length===0" description="暂无处理记录"></el-empty>
+                                <el-timeline v-else>
+                                    <el-timeline-item
+                                            v-for="event in conversationEvents"
+                                            :key="event.id"
+                                            :type="conversationEventType(event)"
+                                            :timestamp="formatTime('Y-m-d H:M:S',event.created_at)">
+                                        <strong><{conversationEventLabel(event)}></strong>
+                                        <p><{event.detail}></p>
+                                        <small v-if="['assigned','rerouted','manual_transfer','auto_failover'].indexOf(event.event_type)!==-1 && (event.from_kefu_id || event.to_kefu_id)">
+                                            <{event.from_kefu_id || '未分配'}> → <{event.to_kefu_id || '未分配'}>
+                                        </small>
+                                        <small v-if="event.actor_kefu_id">操作方：<{event.actor_kefu_id}></small>
+                                    </el-timeline-item>
+                                </el-timeline>
+                            </div>
+                        </el-tab-pane>
                         <el-tab-pane label="禁用访客" name="blackList">
                             <div class="visitorCard visitorMove" style="padding: 10px">
 
@@ -598,7 +713,7 @@
 <script src="/static/js/wangEditor.min.js"></script>
 
 
-<script src="/static/js/chat-main.js?v=1.0.2"></script>
+<script src="/static/js/chat-main.js?v=1.1.0"></script>
 
 
 

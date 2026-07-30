@@ -1,6 +1,6 @@
 {{define "nav"}}
 <div class="mainLeftMenu">
-    <div style="margin: 20px auto;">
+    <div class="operatorCard">
         <el-dropdown   @command="changeOnlineStatus">
             <el-badge :type="onlineType" is-dot class="item">
                 <el-avatar   class="mainLogo"  title="GOFLY客服多商户版" :size="45" :src="adminAvator"></el-avatar>
@@ -10,49 +10,68 @@
                 <el-dropdown-item  command="2">离线</el-dropdown-item>
             </el-dropdown-menu>
         </el-dropdown>
+        <button type="button"
+                class="operatorStatus operatorStatusButton"
+                :class="socketHealthClass"
+                :title="socketHealthTooltip"
+                v-on:click.stop="reconnectSocket">
+            <{socketHealthLabel}>
+        </button>
     </div>
-    <div class="menuLeftItem" v-on:click="openIframeUrl('/mainGuide')">
+    <div class="menuLeftItem active" title="首页" v-on:click="openIframeUrl('/mainGuide')">
         <i class="el-icon-house"></i>
         <span slot="title"><{flyLang.home}></span>
     </div>
 
-    <div class="menuLeftItem" v-on:click="haveNewMessage='';openIframeUrl('/chat_main')">
+    <div class="menuLeftItem" title="对话" v-on:click="haveNewMessage='';openIframeUrl('/chat_main')">
         <el-badge :value="haveNewMessage" class="item">
             <i class="el-icon-chat-dot-round"></i>
         </el-badge>
         <span slot="title"><{flyLang.chat}></span>
     </div>
 
-    <div class="menuLeftItem" v-show="menuAdminShow" v-on:click="openIframeUrl('/setting_visitor_list')">
+    <div class="menuLeftItem notificationMenuItem"
+         :class="{'notification-disabled': notificationPermission!=='granted'}"
+         :title="notificationPermission==='granted' ? '桌面通知已开启' : '查看通知开启教程'"
+         v-on:click="openNotificationGuide">
+        <i class="el-icon-bell"></i>
+        <span slot="title"><{notificationPermission==='granted' ? '通知已开' : '开启通知'}></span>
+    </div>
+
+    <div class="menuLeftItem" title="访客" v-show="menuAdminShow" v-on:click="openIframeUrl('/setting_visitor_list')">
         <i class="el-icon-user"></i>
         <span slot="title">访客</span>
     </div>
-    <div class="menuLeftItem" v-on:click="openIframeUrl('/setting_deploy')">
+    <div class="menuLeftItem" title="对接" v-on:click="openIframeUrl('/setting_deploy')">
         <i class="el-icon-notebook-2"></i>
         <span slot="title">对接</span>
     </div>
-    <div class="menuLeftItem" v-show="superShow"  v-on:click="openIframeUrl('/setting_kefu_list')">
+    <div class="menuLeftItem" title="用户管理" v-show="superShow"  v-on:click="openIframeUrl('/setting_kefu_list')">
         <i class="el-icon-edit-outline"></i>
         <span slot="title"><{flyLang.agentList}></span>
     </div>
 
-    <div class="menuLeftItem" v-show="menuAdminShow"  v-on:click="openIframeUrl('/setting_configs')">
+    <div class="menuLeftItem" title="设置" v-show="menuAdminShow"  v-on:click="openIframeUrl('/setting_configs')">
         <i class="el-icon-setting"></i>
         <span slot="title"><{flyLang.setting}></span>
     </div>
 
+    <div class="menuLeftItem" title="系统日志" v-show="superShow" v-on:click="openIframeUrl('/setting_logs')">
+        <i class="el-icon-document"></i>
+        <span slot="title">日志</span>
+    </div>
 
-    <div class="menuLeftItem" v-on:click="openIframeUrl('/setting_welcome')">
+    <div class="menuLeftItem" title="欢迎语" v-on:click="openIframeUrl('/setting_welcome')">
         <i class="el-icon-timer"></i>
         <span slot="title">欢迎</span>
     </div>
 
-    <div class="menuLeftItem" v-on:click="openIframeUrl('/setting')">
+    <div class="menuLeftItem" title="全部菜单" v-on:click="openIframeUrl('/setting')">
         <i class="el-icon-menu"></i>
         <span slot="title"><{flyLang.menu}></span>
     </div>
 
-    <div  class="menuLeftItem menuLeftItemLogout" v-on:click="logout()">
+    <div  class="menuLeftItem menuLeftItemLogout" title="退出登录" v-on:click="logout()">
         <i class="el-icon-switch-button"></i>
         <span slot="title"><{flyLang.logout}></span>
     </div>

@@ -8,121 +8,161 @@
     <meta name="keywords" content="{{.SystemKeywords}}" />
     <meta name="description" content="{{.SystemDesc}}" />
     <link rel="stylesheet" href="/static/element-ui/2.15.1/theme-chalk/index.min.css">
+    <link rel="stylesheet" href="/static/css/admin-modern.css?v=1.2.1">
     <script src="/static/vue/2.6.11/vue.min.js"></script>
 	<script src="/static/element-ui/2.15.1/index.js"></script>
 	<script src="/static/jquery/3.6.0/jquery.min.js"></script>
-
-    <style>
-        body {
-            background-color: #f5f5f5;
-            margin: 0;
-            padding: 0;
-        }
-        .clear{clear: both;}
-        .signin {
-            width: 350px;
-            padding: 20px;
-            margin:100px auto;
-            background: #fff;
-            -webkit-box-shadow: 0 1px 2px 0 rgba(101,129,156,.08);
-            box-shadow: 0 1px 2px 0 rgba(101,129,156,.08);
-        }
-        .signin h1,.signin h2,.signin .copyright{
-            font-weight: normal;
-            color: #4d627b;
-            text-align: center;
-        }
-        .signin .loginTitle{
-            font-size: 24px;
-            margin: 10px 0px;
-        }
-        .signin .loginDesc{
-            font-size: 14px;
-            margin-bottom: 15px;
-        }
-        .signin .loginDesc .regBtn{
-            float: left;
-        }
-        .signin .loginDesc a{
-            text-decoration: none;
-            cursor: pointer;
-            color: #409EFF;
-        }
-        .signin .copyright{
-            font-size: 12px;
-        }
-        @media (max-width: 768px) {
-            .signin{
-                width: 90%;
-                margin:40px auto;
-                background-color: #f5f5f5;
-                box-shadow:none;
-            }
-        }
-    </style>
-    <link rel="icon" href="/static/images/favicon.ico">
+    <link rel="stylesheet" href="/static/css/login-modern.css?v=1.0.0">
+    <link rel="icon" href="/static/images/logo.png">
 </head>
-<body>
-<div id="app" class="signin">
+<body class="adminLogin">
+<div id="app" class="loginShell">
     <template>
-        <div class="loginHtml" v-show="!showRegHtml">
-            <h1 class="loginTitle">{{.SystemLoginTitle}}</h1>
-            <el-form :model="kefuForm"  :rules="rules" ref="kefuForm">
-                <el-form-item  prop="username">
-                    <el-input v-model="kefuForm.username" placeholder="用户名"></el-input>
-                </el-form-item>
-                <el-form-item  prop="password">
-                    <el-input show-password v-on:keyup.enter.native="kefuLogin('kefuForm')" v-model="kefuForm.password" placeholder="密码"></el-input>
-                </el-form-item>
-                <el-form-item>
-                    <el-button style="width: 100%" :loading="loading" type="primary" @click="kefuLogin('kefuForm')">登录</el-button>
-                </el-form-item>
-            </el-form>
-            <h2 class="loginDesc">
-                {{if .isRegister}}
-                <a  @click="showRegHtml=true" class="regBtn">注册新账户</a>
-                {{end}}
-            </h2>
-            <div class="clear"></div>
+        <div class="loginLayout">
+            <aside class="loginBrandPanel">
+                <div class="loginBrandGlow loginBrandGlowOne"></div>
+                <div class="loginBrandGlow loginBrandGlowTwo"></div>
+                <div class="loginBrandContent">
+                    <div class="loginBrandMark">
+                        <span class="loginBrandLogoIcon"><i class="el-icon-chat-dot-round"></i></span>
+                        <span>{{.SystemTitle}}</span>
+                    </div>
+                    <div class="loginBrandMain">
+                        <div class="loginBrandEyebrow">CUSTOMER SERVICE HUB</div>
+                        <h1>让每一次客户咨询<br>都得到及时回应</h1>
+                        <p>统一管理访客、会话与客服状态，为团队提供稳定、清晰、高效的服务工作台。</p>
+                        <div class="loginFeatureList">
+                            <div class="loginFeatureItem">
+                                <span><i class="el-icon-chat-dot-round"></i></span>
+                                <div>
+                                    <strong>实时会话</strong>
+                                    <small>访客消息即时送达，不错过重要咨询</small>
+                                </div>
+                            </div>
+                            <div class="loginFeatureItem">
+                                <span><i class="el-icon-s-custom"></i></span>
+                                <div>
+                                    <strong>团队协作</strong>
+                                    <small>清晰掌握客服状态与当前接待情况</small>
+                                </div>
+                            </div>
+                            <div class="loginFeatureItem">
+                                <span><i class="el-icon-data-analysis"></i></span>
+                                <div>
+                                    <strong>服务洞察</strong>
+                                    <small>从数据中持续优化客户服务质量</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="loginBrandFoot">
+                        <span class="loginStatusDot"></span>
+                        服务系统运行中
+                    </div>
+                </div>
+            </aside>
+
+            <main class="loginFormPanel">
+                <div class="loginCard">
+                    <div class="loginMobileBrand">
+                        <span class="loginBrandLogoIcon"><i class="el-icon-chat-dot-round"></i></span>
+                        <span>{{.SystemTitle}}</span>
+                    </div>
+
+                    <div class="loginHtml" v-show="!showRegHtml">
+                        <div class="loginCardHead">
+                            <span class="loginCardEyebrow">客服工作台</span>
+                            <h1 class="loginTitle">{{.SystemLoginTitle}}</h1>
+                            <p>欢迎回来，请使用您的客服账号登录。</p>
+                        </div>
+                        <el-form class="loginForm" :model="kefuForm" :rules="rules" ref="kefuForm">
+                            <label class="loginFieldLabel">账号</label>
+                            <el-form-item prop="username">
+                                <el-input v-model="kefuForm.username" autocomplete="username" placeholder="请输入用户名">
+                                    <i slot="prefix" class="el-icon-user"></i>
+                                </el-input>
+                            </el-form-item>
+                            <label class="loginFieldLabel">密码</label>
+                            <el-form-item prop="password">
+                                <el-input type="password" show-password autocomplete="current-password"
+                                    v-on:keyup.enter.native="kefuLogin('kefuForm')" v-model="kefuForm.password"
+                                    placeholder="请输入密码">
+                                    <i slot="prefix" class="el-icon-lock"></i>
+                                </el-input>
+                            </el-form-item>
+                            <el-form-item class="loginSubmitItem">
+                                <el-button class="loginSubmitButton" :loading="loading" type="primary"
+                                    @click="kefuLogin('kefuForm')">
+                                    登录工作台
+                                    <i class="el-icon-right el-icon--right"></i>
+                                </el-button>
+                            </el-form-item>
+                        </el-form>
+                        <div class="loginActions">
+                            <span class="loginSecurity"><i class="el-icon-lock"></i> 安全加密登录</span>
+                            {{if .isRegister}}
+                            <a @click="showRegHtml=true" class="regBtn">创建新账户</a>
+                            {{end}}
+                        </div>
+                    </div>
+
+                    <div class="regHtml" v-show="showRegHtml">
+                        <button type="button" class="loginBackButton" @click="showRegHtml=false">
+                            <i class="el-icon-arrow-left"></i>
+                            返回登录
+                        </button>
+                        <div class="loginCardHead">
+                            <span class="loginCardEyebrow">创建账号</span>
+                            <h1 class="loginTitle">加入客服团队</h1>
+                            <p>填写以下信息，创建您的客服工作台账户。</p>
+                        </div>
+                        <el-form class="loginForm loginRegisterForm" :model="regUserForm" :rules="registerRules"
+                            ref="regUserFormName">
+                            <el-form-item prop="username">
+                                <el-input v-model="regUserForm.username" placeholder="用户名">
+                                    <i slot="prefix" class="el-icon-user"></i>
+                                </el-input>
+                            </el-form-item>
+                            <el-form-item prop="email" style="display:none">
+                                <el-input v-model="regUserForm.email" placeholder="邮箱"></el-input>
+                            </el-form-item>
+                            <el-form-item prop="emailCode" style="display:none">
+                                <el-input v-model="regUserForm.emailCode" placeholder="邮箱验证码"></el-input>
+                            </el-form-item>
+                            <el-form-item prop="nickname">
+                                <el-input v-model="regUserForm.nickname" placeholder="显示名称">
+                                    <i slot="prefix" class="el-icon-postcard"></i>
+                                </el-input>
+                            </el-form-item>
+                            <el-form-item prop="password">
+                                <el-input type="password" show-password v-model="regUserForm.password" placeholder="密码">
+                                    <i slot="prefix" class="el-icon-lock"></i>
+                                </el-input>
+                            </el-form-item>
+                            <el-form-item prop="rePassword">
+                                <el-input type="password" show-password v-model="regUserForm.rePassword"
+                                    placeholder="确认密码">
+                                    <i slot="prefix" class="el-icon-circle-check"></i>
+                                </el-input>
+                            </el-form-item>
+                            <el-form-item prop="captcha" class="loginCaptchaItem">
+                                <el-input v-model="regUserForm.captcha" placeholder="验证码"></el-input>
+                                <img :src="codeSrc" alt="验证码" title="点击刷新"
+                                    @click="codeSrc='/captcha?t='+Math.random()">
+                            </el-form-item>
+                            <el-form-item class="loginSubmitItem">
+                                <el-button class="loginSubmitButton" :loading="loading" type="primary"
+                                    @click="register()">创建账户</el-button>
+                            </el-form-item>
+                        </el-form>
+                    </div>
+
+                    <div class="loginNotice">{{.SystemNotice}}</div>
+                    <p class="copyright">{{.CopyrightTxt}}</p>
+                </div>
+            </main>
         </div>
-        <div class="regHtml" v-show="showRegHtml">
-
-            <h1 class="loginTitle">创建你的账户！</h1>
-            <el-form :model="regUserForm"  :rules="registerRules" ref="regUserFormName">
-                <el-form-item  prop="username">
-                    <el-input v-model="regUserForm.username" placeholder="用户名"></el-input>
-                </el-form-item>
-                <el-form-item  prop="email" style="display:none">
-                    <el-input v-model="regUserForm.email" placeholder="邮箱"></el-input>
-                </el-form-item>
-                <el-form-item  prop="emailCode" style="display:none">
-                    <el-input style="float: left; width: 180px;" v-model="regUserForm.emailCode" placeholder="邮箱验证码"></el-input>
-                    <el-button style="float: right;"  type="primary" @click="">获取验证码</el-button>
-                </el-form-item>
-                <el-form-item  prop="nickname">
-                    <el-input v-model="regUserForm.nickname" placeholder="显示名称"></el-input>
-                </el-form-item>
-                <el-form-item  prop="password">
-                    <el-input show-password v-model="regUserForm.password" placeholder="密码"></el-input>
-                </el-form-item>
-                <el-form-item  prop="rePassword">
-                    <el-input show-password v-model="regUserForm.rePassword" placeholder="确认密码"></el-input>
-                </el-form-item>
-                <el-form-item  prop="captcha">
-                    <el-input style="float: left; width: 150px;" v-model="regUserForm.captcha" placeholder="验证码"></el-input>
-                    <img style="float: right;" :src="codeSrc" @click="codeSrc='/captcha?t='+Math.random()">
-                </el-form-item>
-                <el-form-item>
-                    <el-button style="width: 100%" :loading="loading" type="primary" @click="register()">注册</el-button>
-                </el-form-item>
-            </el-form>
-            <h2 class="loginDesc">已有账号<a  @click="showRegHtml=false">立即登录</a></h2>
-
-        </div>
-        {{.SystemNotice}}
-        <p class="copyright">{{.CopyrightTxt}} </p>
-
-</template>
+    </template>
 </div>
 </body>
 <script>
@@ -149,6 +189,9 @@
             rules: {
                 username: [
                     { required: true, message: '用户名不能为空', trigger: 'blur' },
+                ],
+                password: [
+                    { required: true, message: '密码不能为空', trigger: 'blur' },
                 ],
             },
             registerRules: {

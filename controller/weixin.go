@@ -8,6 +8,7 @@ import (
 	"github.com/silenceper/wechat/v2/officialaccount/basic"
 	"go-fly-muti/lib"
 	"go-fly-muti/models"
+	"go-fly-muti/setting"
 	"go-fly-muti/ws"
 	"log"
 	"net/http"
@@ -38,7 +39,7 @@ func GetCheckWeixinSign(c *gin.Context) {
 	}
 }
 
-//处理微信消息
+// 处理微信消息
 func PostWechatServer(c *gin.Context) {
 	kefuName := c.Param("kefuName")
 	entId := c.Param("entId")
@@ -179,7 +180,7 @@ func sendWeixinToKefu(kefuName, visitorName, avator, entId, visitorId, content s
 			Name:      visitorName,
 			ToId:      kefuName,
 			Content:   content,
-			Time:      time.Now().Format("2006-01-02 15:04:05"),
+			Time:      setting.Now().Format("2006-01-02 15:04:05"),
 			IsKefu:    "no",
 		},
 	}
@@ -188,7 +189,7 @@ func sendWeixinToKefu(kefuName, visitorName, avator, entId, visitorId, content s
 	go SendAppGetuiPush(kefuName, "[信息]"+visitorName, content)
 }
 
-//查询绑定的oauth
+// 查询绑定的oauth
 func GetWechatOauth(c *gin.Context) {
 	visitorId := c.Query("visitor_id")
 	visitorIdArr := strings.Split(visitorId, "|")
@@ -234,7 +235,7 @@ func bindVisitorWechat(snowId, openId string) bool {
 	return true
 }
 
-//展示带参二维码
+// 展示带参二维码
 func GetShowQrCode(c *gin.Context) {
 
 	entId := c.Query("entId")

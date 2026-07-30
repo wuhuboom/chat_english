@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"go-fly-muti/models"
+	"go-fly-muti/setting"
 	"log"
 	"time"
 )
@@ -34,18 +35,41 @@ func NewKefuServer(c *gin.Context) {
 	kefu.Avator = kefuInfo.Avator
 	kefu.Role_id = kefuInfo.RoleId
 	kefu.Ent_id = fmt.Sprintf("%d", kefuInfo.ID)
+	if kefuInfo.Pid != 0 {
+		kefu.Ent_id = fmt.Sprintf("%d", kefuInfo.Pid)
+	}
 	kefu.Conn = conn
+	kefu.UpdateTime = time.Now()
+	if err := configureWebSocketHeartbeat(&kefu); err != nil {
+		log.Printf("websocket setup failed role=kefu id=%q error=%q", kefu.Id, err)
+		_ = conn.Close()
+		return
+	}
 	AddKefuToList(&kefu)
+	log.Printf(
+		"websocket connected role=kefu id=%q session=%d active=%d remote=%q",
+		kefu.Id, kefu.SessionID, len(KefuConnections(kefu.Id)), c.ClientIP(),
+	)
 	go models.UpdateUserRecNumZero(kefuInfo.Name)
 	for {
 		//接受消息
 		var receive []byte
 		messageType, receive, err := conn.ReadMessage()
 		if err != nil {
-			log.Println("ws/user.go ", err)
-			conn.Close()
-			RemoveKefuConnection(kefu.Id, &kefu)
+			code, reason := websocketCloseInfo(err)
+			_ = conn.Close()
+			removedLast := RemoveKefuConnection(kefu.Id, &kefu)
+			log.Printf(
+				"websocket disconnected role=kefu id=%q session=%d code=%d reason=%q active=%d",
+				kefu.Id, kefu.SessionID, code, reason, len(KefuConnections(kefu.Id)),
+			)
+			if removedLast {
+				scheduleKefuFailover(kefu.Id, kefu.Ent_id)
+			}
 			return
+		}
+		if err := refreshWebSocketReadDeadline(&kefu); err != nil {
+			log.Printf("websocket deadline refresh failed role=kefu id=%q session=%d error=%q", kefu.Id, kefu.SessionID, err)
 		}
 
 		message <- &Message{
@@ -62,7 +86,7 @@ func AddKefuToList(kefu *User) {
 	Mux.Unlock()
 }
 
-func RemoveKefuConnection(kefuID string, target *User) {
+func RemoveKefuConnection(kefuID string, target *User) bool {
 	Mux.Lock()
 	defer Mux.Unlock()
 	connections := KefuList[kefuID]
@@ -74,9 +98,10 @@ func RemoveKefuConnection(kefuID string, target *User) {
 	}
 	if len(active) == 0 {
 		delete(KefuList, kefuID)
-		return
+		return len(connections) > 0
 	}
 	KefuList[kefuID] = active
+	return false
 }
 
 func KefuConnections(kefuID string) []*User {
@@ -99,17 +124,19 @@ func KefuListSnapshot() map[string][]*User {
 	return snapshot
 }
 
+func removeBrokenKefuConnection(kefu *User) bool {
+	if kefu == nil {
+		return false
+	}
+	if kefu.Conn != nil {
+		_ = kefu.Conn.Close()
+	}
+	state := kefu.State()
+	return RemoveKefuConnection(state.Id, kefu)
+}
+
 // 给超管发消息
 func SuperAdminMessage(str []byte) {
-	return
-	//给超管发
-	for _, kefuUsers := range KefuList {
-		for _, kefuUser := range kefuUsers {
-			if kefuUser.Role_id == "2" {
-				kefuUser.Conn.WriteMessage(websocket.TextMessage, str)
-			}
-		}
-	}
 }
 
 // 给指定客服发消息
@@ -120,12 +147,15 @@ func OneKefuMessage(toId string, str []byte) {
 		for _, kefu := range mKefuConns {
 			error := writeUserMessage(kefu, websocket.TextMessage, str)
 			if error != nil {
-				//if websocket.IsCloseError(error, websocket.CloseGoingAway) {
-				//	// 连接已关闭，不再进行写入操作
-				//	log.Println("连接已关闭，不再进行写入操作", error, string(str))
-				//	return
-				//}
-				log.Println("send_kefu_message", error, string(str))
+				state := kefu.State()
+				removedLast := removeBrokenKefuConnection(kefu)
+				log.Printf(
+					"websocket write failed role=kefu id=%q session=%d error=%q active=%d",
+					state.Id, state.SessionID, error, len(KefuConnections(state.Id)),
+				)
+				if removedLast {
+					scheduleKefuFailover(state.Id, state.EntID)
+				}
 			}
 		}
 	}
@@ -138,7 +168,7 @@ func KefuMessage(visitorId, content string, kefuInfo models.User) {
 			Name:    kefuInfo.Nickname,
 			Avator:  kefuInfo.Avator,
 			Id:      visitorId,
-			Time:    time.Now().Format("2006-01-02 15:04:05"),
+			Time:    setting.Now().Format("2006-01-02 15:04:05"),
 			ToId:    visitorId,
 			Content: content,
 			IsKefu:  "yes",
@@ -160,6 +190,18 @@ func SendPingToKefuClient() {
 			if kefuConn == nil {
 				continue
 			}
+			state := kefuConn.State()
+			if isKefuConnectionStale(state.UpdateTime, time.Now()) {
+				failed[kefuConn] = struct{}{}
+				if kefuConn.Conn != nil {
+					_ = kefuConn.Conn.Close()
+				}
+				continue
+			}
+			if err := writeUserControlMessage(kefuConn, websocket.PingMessage, nil); err != nil {
+				failed[kefuConn] = struct{}{}
+				continue
+			}
 			if err := writeUserMessage(kefuConn, websocket.TextMessage, str); err != nil {
 				failed[kefuConn] = struct{}{}
 			}
@@ -168,7 +210,10 @@ func SendPingToKefuClient() {
 	for kefuID, connections := range KefuListSnapshot() {
 		for _, connection := range connections {
 			if _, ok := failed[connection]; ok {
-				RemoveKefuConnection(kefuID, connection)
+				state := connection.State()
+				if removeBrokenKefuConnection(connection) {
+					scheduleKefuFailover(kefuID, state.EntID)
+				}
 			}
 		}
 	}

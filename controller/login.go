@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-fly-muti/models"
 	"go-fly-muti/tools"
@@ -37,16 +36,6 @@ func LoginCheckPass(c *gin.Context) {
 		return
 	}
 
-
-
-
-
-
-
-
-	fmt.Println("用户名:"+form.Username)
-	fmt.Println("密码:"+form.Password)
-
 	info, ok := CheckKefuPass(form.Username, form.Password)
 	if !ok {
 		c.JSON(200, gin.H{
@@ -72,7 +61,6 @@ func LoginCheckPass(c *gin.Context) {
 		})
 		return
 	}
-
 
 	token := GenUserToken(info)
 	c.JSON(200, gin.H{

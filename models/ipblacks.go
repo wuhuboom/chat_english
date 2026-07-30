@@ -18,7 +18,7 @@ func CreateIpblack(ip string, kefuId, name string) uint {
 		IP:       ip,
 		KefuId:   kefuId,
 		Name:     name,
-		CreateAt: types.Time{time.Now()},
+		CreateAt: types.Time{Time: time.Now()},
 	}
 	DB.Create(black)
 	return black.ID
