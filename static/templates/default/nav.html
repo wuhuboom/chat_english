@@ -56,6 +56,11 @@
         <span slot="title"><{flyLang.setting}></span>
     </div>
 
+    <div class="menuLeftItem" title="聊天记录清理" v-show="merchantShow" v-on:click="openIframeUrl('/setting_message_cleanup')">
+        <i class="el-icon-delete"></i>
+        <span slot="title">清理</span>
+    </div>
+
     <div class="menuLeftItem" title="系统日志" v-show="superShow" v-on:click="openIframeUrl('/setting_logs')">
         <i class="el-icon-document"></i>
         <span slot="title">日志</span>

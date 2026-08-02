@@ -91,6 +91,13 @@
                 autoReassign:true,
                 offlineGraceSeconds:15,
             },
+            messageCleanupForm:{
+                range:[],
+            },
+            messageCleanupPreviewCount:null,
+            messageCleanupPreviewLoading:false,
+            messageCleanupDeleting:false,
+            messageCleanupTimezone:"",
             timezoneOptions:[
                 {label:"UTC — 协调世界时",value:"UTC"},
                 {label:"中国大陆 — Asia/Shanghai (UTC+8)",value:"Asia/Shanghai"},
@@ -486,6 +493,10 @@
                         }
                     });
                 }
+                if(ACTION=="setting_message_cleanup"){
+                    this.initializeMessageCleanupRange();
+                    this.previewMessageCleanup();
+                }
                 if(ACTION=="setting_news"){
                     this.getNews();
                 }
@@ -508,6 +519,109 @@
                     this.getArticle();
                 }
 
+            },
+            formatMessageCleanupDate(date){
+                function pad(value){
+                    return String(value).padStart(2,"0");
+                }
+                return date.getFullYear()+"-"+pad(date.getMonth()+1)+"-"+pad(date.getDate())+" "+
+                    pad(date.getHours())+":"+pad(date.getMinutes())+":"+pad(date.getSeconds());
+            },
+            initializeMessageCleanupRange(){
+                var end=new Date();
+                var start=new Date(end.getTime()-30*24*60*60*1000);
+                this.messageCleanupForm.range=[
+                    this.formatMessageCleanupDate(start),
+                    this.formatMessageCleanupDate(end)
+                ];
+                this.messageCleanupPreviewCount=null;
+            },
+            resetMessageCleanupPreview(){
+                this.messageCleanupPreviewCount=null;
+            },
+            validateMessageCleanupRange(){
+                if(!this.messageCleanupForm.range || this.messageCleanupForm.range.length!==2){
+                    this.$message.warning("请选择完整的开始时间和结束时间");
+                    return false;
+                }
+                return true;
+            },
+            previewMessageCleanup(){
+                if(!this.validateMessageCleanupRange()){
+                    return;
+                }
+                var _this=this;
+                this.messageCleanupPreviewLoading=true;
+                $.ajax({
+                    type:"get",
+                    url:"/kefu/messages/cleanup-preview",
+                    data:{
+                        start_time:this.messageCleanupForm.range[0],
+                        end_time:this.messageCleanupForm.range[1]
+                    },
+                    headers:{"token":localStorage.getItem("token")},
+                    complete:function(){
+                        _this.messageCleanupPreviewLoading=false;
+                    },
+                    error:function(){
+                        _this.$message.error("无法连接聊天记录统计服务");
+                    },
+                    success:function(data){
+                        if(data.code!==200){
+                            _this.$message.error(data.msg || "统计聊天记录失败");
+                            return;
+                        }
+                        _this.messageCleanupPreviewCount=Number(data.result.count || 0);
+                        _this.messageCleanupTimezone=data.result.timezone || "";
+                    }
+                });
+            },
+            deleteMessagesByTimeRange(){
+                if(!this.validateMessageCleanupRange() || this.messageCleanupPreviewCount===null || this.messageCleanupPreviewCount===0){
+                    return;
+                }
+                var _this=this;
+                var count=this.messageCleanupPreviewCount;
+                this.$confirm(
+                    "将永久删除当前商户在所选时间内的 "+count+" 条聊天消息。该操作无法撤销，是否继续？",
+                    "高风险操作",
+                    {confirmButtonText:"继续验证",cancelButtonText:"取消",type:"warning"}
+                ).then(function(){
+                    return _this.$prompt("请输入“确认清理”完成二次确认", "最终确认", {
+                        confirmButtonText:"永久清理",
+                        cancelButtonText:"取消",
+                        inputPattern:/^确认清理$/,
+                        inputErrorMessage:"请输入：确认清理",
+                        type:"warning"
+                    });
+                }).then(function(){
+                    _this.messageCleanupDeleting=true;
+                    $.ajax({
+                        type:"post",
+                        url:"/kefu/messages/cleanup",
+                        data:{
+                            start_time:_this.messageCleanupForm.range[0],
+                            end_time:_this.messageCleanupForm.range[1],
+                            confirmation:"CLEAR_CHAT_MESSAGES"
+                        },
+                        headers:{"token":localStorage.getItem("token")},
+                        complete:function(){
+                            _this.messageCleanupDeleting=false;
+                        },
+                        error:function(){
+                            _this.$message.error("无法连接聊天记录清理服务");
+                        },
+                        success:function(data){
+                            if(data.code!==200){
+                                _this.$message.error(data.msg || "清理聊天记录失败");
+                                return;
+                            }
+                            var deleted=Number(data.result.deleted_count || 0);
+                            _this.messageCleanupPreviewCount=0;
+                            _this.$message.success("已永久清理 "+deleted+" 条聊天消息");
+                        }
+                    });
+                }).catch(function(){});
             },
             kefuMessagesPage(page){
                 var _this=this;

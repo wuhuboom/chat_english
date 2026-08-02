@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go-fly-muti/models"
 	"go-fly-muti/types"
+	"strconv"
 	"strings"
 )
 
@@ -76,4 +77,42 @@ func AdminAuth(c *gin.Context) {
 		return
 	}
 
+}
+
+// MerchantAuth permits only ordinary merchant accounts. Agent accounts must
+// not be able to delete enterprise-wide data, and the super administrator has
+// a separate system scope rather than impersonating a merchant.
+func MerchantAuth(c *gin.Context) {
+	roleValue, exists := c.Get("role_id")
+	roleID, valid := normalizeRoleID(roleValue)
+	if !exists || !valid || roleID != types.Constant.EntRoleId {
+		c.JSON(200, gin.H{
+			"code": 403,
+			"msg":  "仅普通商户管理员可以执行聊天记录清理",
+		})
+		c.Abort()
+		return
+	}
+}
+
+func normalizeRoleID(value interface{}) (uint, bool) {
+	switch roleID := value.(type) {
+	case float64:
+		if roleID < 0 || roleID != float64(uint(roleID)) {
+			return 0, false
+		}
+		return uint(roleID), true
+	case uint:
+		return roleID, true
+	case int:
+		if roleID < 0 {
+			return 0, false
+		}
+		return uint(roleID), true
+	case string:
+		parsed, err := strconv.ParseUint(strings.TrimSpace(roleID), 10, 64)
+		return uint(parsed), err == nil
+	default:
+		return 0, false
+	}
 }

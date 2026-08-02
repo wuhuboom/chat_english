@@ -27,6 +27,7 @@
             <el-menu-item index="3-4"  v-on:click="openUrl('/setting_deploy')">客服接入</el-menu-item>
             <el-menu-item index="3-5"  v-on:click="openUrl('/setting_configs')"><{flyLang.config}></el-menu-item>
             <el-menu-item index="3-6"  v-on:click="openUrl('/setting_articles')">关键词回复</el-menu-item>
+            <el-menu-item index="3-7" v-show="menuStoreShow" v-on:click="openUrl('/setting_message_cleanup')">聊天记录清理</el-menu-item>
         </el-menu-item-group>
     </el-submenu>
     <el-submenu index="2" v-show="menuAdminShow">

@@ -169,6 +169,9 @@ func InitApiRouter(engine *gin.Engine) {
 		kefuGroup.DELETE("/ipblack", controller.DelIpblack)
 		//删除访客聊天记录
 		kefuGroup.GET("/delVisitorMessage", controller.DeleteVisitorMessage)
+		//普通商户按时间范围预览和清理聊天记录
+		kefuGroup.GET("/messages/cleanup-preview", middleware.MerchantAuth, controller.GetMessageCleanupPreview)
+		kefuGroup.POST("/messages/cleanup", middleware.MerchantAuth, controller.DeleteMessagesByTimeRange)
 		//添加访客黑名单
 		kefuGroup.POST("/visitorBlack", controller.PostVisitorBlack)
 		//访客黑名单

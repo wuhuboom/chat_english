@@ -144,6 +144,15 @@ func PageSystemLogs(c *gin.Context) {
 	})
 }
 
+// PageMessageCleanup renders the ordinary merchant chat retention tool. The
+// data APIs enforce the merchant role and tenant boundary.
+func PageMessageCleanup(c *gin.Context) {
+	c.HTML(http.StatusOK, "setting_message_cleanup.html", gin.H{
+		"tab_index": "3-7",
+		"action":    "setting_message_cleanup",
+	})
+}
+
 // 配置项编辑首页
 func PageSettingIndexPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "setting_pageindex.html", gin.H{

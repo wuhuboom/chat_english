@@ -1,0 +1,92 @@
+{{template "header" }}
+<div id="app" style="width:100%">
+    <template>
+        <el-main class="mainMain messageCleanupPage">
+            <div class="messageCleanupHero">
+                <div>
+                    <span class="messageCleanupEyebrow">DATA RETENTION</span>
+                    <h1>聊天记录清理</h1>
+                    <p>按系统时区选择时间范围，永久清理当前商户在该范围内的所有聊天消息。</p>
+                </div>
+                <div class="messageCleanupShield">
+                    <i class="el-icon-lock"></i>
+                    <span>仅当前商户</span>
+                </div>
+            </div>
+
+            <el-alert
+                    title="此操作不可恢复"
+                    description="只删除聊天消息，不删除访客、客服账号、标签、配置和上传文件。建议先备份数据库，并先点击“预览影响”。"
+                    type="warning"
+                    show-icon
+                    :closable="false">
+            </el-alert>
+
+            <el-card shadow="never" class="messageCleanupCard">
+                <div slot="header" class="messageCleanupCardHeader">
+                    <div>
+                        <strong>选择清理范围</strong>
+                        <small>开始和结束时间均包含在清理范围内</small>
+                    </div>
+                    <el-tag type="info" effect="plain"><{messageCleanupTimezone || '读取系统时区中'}></el-tag>
+                </div>
+
+                <el-form label-position="top">
+                    <el-form-item label="聊天消息时间范围">
+                        <el-date-picker
+                                v-model="messageCleanupForm.range"
+                                type="datetimerange"
+                                range-separator="至"
+                                start-placeholder="开始时间"
+                                end-placeholder="结束时间"
+                                value-format="yyyy-MM-dd HH:mm:ss"
+                                format="yyyy-MM-dd HH:mm:ss"
+                                :clearable="false"
+                                @change="resetMessageCleanupPreview">
+                        </el-date-picker>
+                    </el-form-item>
+                </el-form>
+
+                <div class="messageCleanupPreview" :class="{'has-result': messageCleanupPreviewCount !== null}">
+                    <div class="messageCleanupPreviewIcon">
+                        <i class="el-icon-chat-line-square"></i>
+                    </div>
+                    <div>
+                        <span>预计删除消息</span>
+                        <strong v-if="messageCleanupPreviewCount !== null"><{messageCleanupPreviewCount}></strong>
+                        <strong v-else>—</strong>
+                        <small>条</small>
+                    </div>
+                    <p v-if="messageCleanupPreviewCount === null">尚未统计，请先预览影响。</p>
+                    <p v-else-if="messageCleanupPreviewCount === 0">该时间范围内没有可清理的聊天消息。</p>
+                    <p v-else>请确认时间和数量，清理后无法恢复。</p>
+                </div>
+
+                <div class="messageCleanupActions">
+                    <el-button
+                            icon="el-icon-view"
+                            :loading="messageCleanupPreviewLoading"
+                            @click="previewMessageCleanup">
+                        预览影响
+                    </el-button>
+                    <el-button
+                            type="danger"
+                            icon="el-icon-delete"
+                            :loading="messageCleanupDeleting"
+                            :disabled="messageCleanupPreviewCount === null || messageCleanupPreviewCount === 0"
+                            @click="deleteMessagesByTimeRange">
+                        永久清理
+                    </el-button>
+                </div>
+            </el-card>
+
+            <div class="messageCleanupNotes">
+                <div><i class="el-icon-s-data"></i><span><strong>租户隔离</strong>接口固定使用登录商户 ID，不能指定或清理其他商户。</span></div>
+                <div><i class="el-icon-time"></i><span><strong>系统时区</strong>时间按后台“系统时区”设置解释，而不是数据库服务器时区。</span></div>
+                <div><i class="el-icon-document"></i><span><strong>审计日志</strong>操作人、时间范围和实际删除数量会写入结构化日志。</span></div>
+            </div>
+        </el-main>
+    </template>
+</div>
+</body>
+{{template "setting_bottom" .}}

@@ -105,6 +105,7 @@
             kefuId:"",
             entId:"",
             menuAdminShow:false,
+            merchantShow:false,
             superShow:false,
             onlineType:"success",
             adminAvator:"",
@@ -433,6 +434,9 @@
                             var result=data.result;
                             if(result.role_id<=2){
                                 _this.menuAdminShow=true;
+                            }
+                            if(result.role_id==2){
+                                _this.merchantShow=true;
                             }
                             if(result.role_id==1){
                                 _this.superShow=true;

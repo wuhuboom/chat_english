@@ -112,6 +112,9 @@ func RunSchemaMigrations(db *gorm.DB) (MigrationReport, error) {
 			return report, fmt.Errorf("auto migrate table %s: %w", model.name, err)
 		}
 	}
+	if err := ensureMessageCleanupIndex(db); err != nil {
+		return report, err
+	}
 
 	report.ModelCount = len(models)
 	report.Duration = time.Since(startedAt)
@@ -133,6 +136,18 @@ func RunSchemaMigrations(db *gorm.DB) (MigrationReport, error) {
 		zap.Duration("duration", report.Duration),
 	)
 	return report, nil
+}
+
+func ensureMessageCleanupIndex(db *gorm.DB) error {
+	const indexName = "idx_message_ent_created"
+	scope := db.NewScope(&Message{})
+	if scope.Dialect().HasIndex(scope.TableName(), indexName) {
+		return nil
+	}
+	if err := db.Model(&Message{}).AddIndex(indexName, "ent_id", "created_at").Error; err != nil {
+		return fmt.Errorf("create message cleanup index: %w", err)
+	}
+	return nil
 }
 
 func migrationModelNames() []string {
