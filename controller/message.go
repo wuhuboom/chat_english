@@ -303,12 +303,12 @@ func UploadImg(c *gin.Context) {
 	} else {
 
 		fileExt := strings.ToLower(path.Ext(f.Filename))
-		if fileExt != ".png" && fileExt != ".jpg" && fileExt != ".gif" && fileExt != ".jpeg" {
+		if fileExt != ".png" && fileExt != ".jpg" && fileExt != ".gif" && fileExt != ".jpeg" && fileExt != ".webp" {
 			c.JSON(200, gin.H{
 				"code": 400,
-				"msg":  "上传失败!只允许png,jpg,gif,jpeg文件",
+				"msg":  "上传失败!只允许png,jpg,gif,jpeg,webp文件",
 			})
-			zap.L().Debug("err: 271 ->上传失败!只允许png,jpg,gif,jpeg文件")
+			zap.L().Debug("err: 271 ->上传失败!只允许png,jpg,gif,jpeg,webp文件")
 			return
 		}
 

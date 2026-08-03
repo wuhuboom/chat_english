@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="system-timezone" content="{{.SystemTimezone}}">
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0;" name="viewport" />
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover" name="viewport" />
     <meta name="keywords" content="{{.SystemKeywords}}" />
     <meta name="description" content="{{.SystemDesc}}" />
     <title>{{.Title}}</title>
@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="/static/css/icono.min.css" />
     <link rel="icon" href="/static/images/favicon.ico">
     <link rel="stylesheet" href="/static/css/chart-page.css?v=0.0.1" />
-    <link rel="stylesheet" href="/static/css/visitor-modern.css?v=1.1.0" />
+    <link rel="stylesheet" href="/static/css/visitor-modern.css?v=1.1.1" />
     <style>
         .el-message-box {
             width: auto;
@@ -170,8 +170,11 @@
                     <div class="iconBtns visitorIconBox" v-show="showIconBtns">
                         <div style="display: none" :title="flyLang.emotions"
                             class="icono-smile visitorIconBtns visitorFaceBtn"></div>
-                        <div :title="flyLang.photo" class="icono-image visitorIconBtns visitorImageBtn" id="uploadImg"
-                            v-on:click="uploadImg('/uploadimg')"></div>
+                        <div :title="flyLang.photo" :aria-label="flyLang.photo" role="button" tabindex="0"
+                            class="icono-image visitorIconBtns visitorImageBtn" id="uploadImg"
+                            v-bind:class="{'is-uploading': imageUploading}"
+                            v-on:click="uploadImg('/uploadimg')"
+                            v-on:keyup.enter="uploadImg('/uploadimg')"></div>
                         <div :title="flyLang.file" class="icono-folder visitorIconBtns visitorFolderBtn" id="uploadFile"
                             v-on:click="uploadFile('/uploadfile')"></div>
                         <!--                    <div :title="flyLang.recoder" class="icono-microphone visitorIconBtns visitorHistoryBtn"  v-on:click="audioDialog=true"></div>-->
@@ -179,6 +182,13 @@
                         <!--                    <div style="display:none;" class="audioIcon visitorIconBtns visitorAudioIcon"  @click="callPeer" ></div>-->
                         <!--                    <div class="icono-support visitorIconBtns" @click="flagsDialog='true'"> </div>-->
                         <div class="clear"></div>
+                    </div>
+                    <input ref="imageInput" class="visitorHiddenFileInput" type="file" tabindex="-1" aria-hidden="true"
+                        accept="image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp"
+                        v-on:change="handleImageSelected">
+                    <div class="visitorUploadStatus" v-if="imageUploading" role="status" aria-live="polite">
+                        <i class="el-icon-loading"></i>
+                        <span><{uploadCopy.uploading}> <{imageUploadProgress}>%</span>
                     </div>
                     <div class="faceBox visitorFaceBox modernEmojiPicker" v-show="showFaceIcon"
                         v-on:click.stop>
@@ -212,8 +222,8 @@
                         </div>
                     </div>
                     <div class="visitorEditor">
-                        <el-input class="visitorEditorArea" @focus="scrollBottom;showIconBtns=false"
-                            @blur="scrollBottom;showIconBtns=false" v-model="messageContent"
+                        <el-input class="visitorEditorArea" @focus="textareaFocus;showIconBtns=false"
+                            @blur="textareaBlur;showIconBtns=false" v-model="messageContent"
                             @keyup.native="inputNextText" v-on:keyup.enter.native="chatToUser"
                             :placeholder="flyLang.textarea">
                         </el-input>
@@ -343,6 +353,8 @@
             flyLang: GOFLY_LANG[LANG],
             lang: LANG,
             textareaFocused: false,
+            imageUploading: false,
+            imageUploadProgress: 0,
             replys: [],
             noticeName: "",
             noticeAvatar: "",
@@ -797,25 +809,24 @@
             },
             //软键盘问题
             textareaFocus: function () {
-                // if(/Android|webOS|iPhone|iPad|BlackBerry/i.test(navigator.userAgent)) {
-                //     //$(".chatContext").css("margin-bottom","0");
-                //     //$(".chatBoxSend").css("position","static");
-                //     this.textareaFocused=true;
-                // }
+                this.textareaFocused = true;
+                this.syncVisualViewport();
                 this.scrollBottom();
             },
             textareaBlur: function () {
-                // if(this.textareaFocused&&/Android|webOS|iPhone|iPad|BlackBerry/i.test(navigator.userAgent)) {
-                //     var chatBoxSendObj=$(".chatBoxSend");
-                //     var chatContextObj=$(".chatContext");
-                //     if(this.textareaFocused&&chatBoxSendObj.css("position")!="fixed"){
-                //         //chatContextObj.css("margin-bottom","105px");
-                //         //chatBoxSendObj.css("position","fixed");
-                //         this.textareaFocused=false;
-                //     }
-                //
-                // }
+                this.textareaFocused = false;
+                this.syncVisualViewport();
                 this.scrollBottom();
+            },
+            syncVisualViewport: function () {
+                var viewport = window.visualViewport;
+                var viewportHeight = viewport ? viewport.height : window.innerHeight;
+                var viewportOffsetTop = viewport ? viewport.offsetTop : 0;
+                document.documentElement.style.setProperty('--visitor-viewport-height', Math.round(viewportHeight) + 'px');
+                document.documentElement.style.setProperty('--visitor-viewport-offset-top', Math.round(viewportOffsetTop) + 'px');
+                if (this.textareaFocused) {
+                    this.scrollBottom();
+                }
             },
             sendReply: function (title) {
                 var _this = this;
@@ -938,17 +949,6 @@
                         }
                     });
 
-                    var windheight = $(window).height();
-                    $(window).resize(function () {
-                        var docheight = $(window).height();  /*唤起键盘时当前窗口高度*/
-                        //_this.scrollBottom();
-                        $('body').scrollTop(99999999);
-                        // if(docheight < windheight){            /*当唤起键盘高度小于未唤起键盘高度时执行*/
-                        //     $(".chatBoxSend").css("position","static");
-                        // }else{
-                        //     $(".chatBoxSend").css("position","fixed");
-                        // }
-                    });
                 });
             },
             //心跳
@@ -1053,36 +1053,66 @@
             },
             //上传图片
             uploadImg: function (url) {
-                let _this = this;
-                $('#uploadImg').after('<input type="file" accept="image/gif,image/jpeg,image/jpg,image/png" id="uploadImgFile" name="file" style="display:none" >');
-                $("#uploadImgFile").click();
-                $("#uploadImgFile").change(function (e) {
-                    var formData = new FormData();
-                    var file = $("#uploadImgFile")[0].files[0];
-                    formData.append("imgfile", file); //传给后台的file的key值是可以自己定义的
-                    filter(file) && $.ajax({
-                        url: url || '',
-                        type: "post",
-                        data: formData,
-                        contentType: false,
-                        processData: false,
-                        dataType: 'JSON',
-                        mimeType: "multipart/form-data",
-                        success: function (res) {
-                            if (res.code != 200) {
-                                _this.$message({
-                                    message: res.msg,
-                                    type: 'error'
-                                });
-                            } else {
-                                _this.messageContent += 'img[/' + res.result.path + ']';
-                                _this.chatToUser();
-                            }
-                        },
-                        error: function (data) {
-                            console.log(data);
+                if (this.imageUploading) {
+                    return;
+                }
+                this._imageUploadUrl = url || '/uploadimg';
+                this.$refs.imageInput.value = '';
+                this.$refs.imageInput.click();
+            },
+            handleImageSelected: function (event) {
+                var _this = this;
+                var file = event.target.files && event.target.files[0];
+                if (!file) {
+                    return;
+                }
+                if (!filter(file)) {
+                    this.$message({message: this.uploadCopy.invalid, type: 'error'});
+                    event.target.value = '';
+                    return;
+                }
+
+                var formData = new FormData();
+                formData.append('imgfile', file);
+                this.imageUploading = true;
+                this.imageUploadProgress = 0;
+                this.showIconBtns = false;
+                $.ajax({
+                    url: this._imageUploadUrl || '/uploadimg',
+                    type: 'post',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    dataType: 'JSON',
+                    mimeType: 'multipart/form-data',
+                    xhr: function () {
+                        var request = $.ajaxSettings.xhr();
+                        if (request.upload) {
+                            request.upload.addEventListener('progress', function (progressEvent) {
+                                if (progressEvent.lengthComputable) {
+                                    _this.imageUploadProgress = Math.round(progressEvent.loaded * 100 / progressEvent.total);
+                                }
+                            });
                         }
-                    });
+                        return request;
+                    },
+                    success: function (res) {
+                        if (res.code != 200) {
+                            _this.$message({message: res.msg || _this.uploadCopy.failed, type: 'error'});
+                            return;
+                        }
+                        _this.imageUploadProgress = 100;
+                        _this.messageContent += 'img[/' + res.result.path + ']';
+                        _this.chatToUser();
+                    },
+                    error: function () {
+                        _this.$message({message: _this.uploadCopy.failed, type: 'error'});
+                    },
+                    complete: function () {
+                        _this.imageUploading = false;
+                        _this.imageUploadProgress = 0;
+                        event.target.value = '';
+                    }
                 });
             },
             //上传文件
@@ -1560,6 +1590,13 @@
         },
         mounted: function () {
             var _this = this;
+            this.syncVisualViewport();
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', this.syncVisualViewport);
+                window.visualViewport.addEventListener('scroll', this.syncVisualViewport);
+            }
+            window.addEventListener('resize', this.syncVisualViewport);
+            window.addEventListener('orientationchange', this.syncVisualViewport);
             document.addEventListener('paste', this.onPasteUpload);
             document.addEventListener('scroll', this.textareaBlur);
             window.addEventListener('message', function (e) {
@@ -1572,6 +1609,18 @@
                     _this.chatToUser();
                 }
             });
+        },
+        beforeDestroy: function () {
+            if (window.visualViewport) {
+                window.visualViewport.removeEventListener('resize', this.syncVisualViewport);
+                window.visualViewport.removeEventListener('scroll', this.syncVisualViewport);
+            }
+            window.removeEventListener('resize', this.syncVisualViewport);
+            window.removeEventListener('orientationchange', this.syncVisualViewport);
+            document.removeEventListener('paste', this.onPasteUpload);
+            document.removeEventListener('scroll', this.textareaBlur);
+            document.documentElement.style.removeProperty('--visitor-viewport-height');
+            document.documentElement.style.removeProperty('--visitor-viewport-offset-top');
         },
         created: function () {
             this.loadRecentEmojis();
@@ -1588,6 +1637,14 @@
             //this.getVersion();
         },
         computed: {
+            uploadCopy() {
+                var copies = {
+                    cn: {uploading: '图片上传中', invalid: '请选择 JPG、PNG、GIF 或 WebP 图片', failed: '图片上传失败，请重试'},
+                    en: {uploading: 'Uploading image', invalid: 'Choose a JPG, PNG, GIF, or WebP image', failed: 'Image upload failed. Please try again.'},
+                    jp: {uploading: '画像をアップロード中', invalid: 'JPG、PNG、GIF、WebP画像を選択してください', failed: '画像のアップロードに失敗しました'}
+                };
+                return copies[this.lang] || copies.en;
+            },
             visibleEmojis() {
                 if (this.activeEmojiGroup === "recent") {
                     return this.recentEmojis;

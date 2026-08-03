@@ -303,7 +303,7 @@ function bigPic(src,isVisitor){
     }
 }
 function filter (obj){
-    var imgType = ["image/jpeg","image/png","image/jpg","image/gif"];
+    var imgType = ["image/jpeg","image/png","image/jpg","image/gif","image/webp"];
     var filetypes = imgType;
     var isnext = false;
     for (var i = 0; i < filetypes.length; i++) {
