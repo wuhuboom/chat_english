@@ -34,7 +34,7 @@
         <template>
             <!--客服代码-->
             <div class="chatEntTitle" v-show="!isIframe">
-                <button type="button" class="visitorHeaderBack" title="返回" aria-label="返回上一页"
+                <button type="button" class="visitorHeaderBack" :title="flyLang.back" :aria-label="flyLang.back"
                     v-on:click="goBack">
                     <i class="el-icon-arrow-left"></i>
                 </button>
@@ -253,11 +253,11 @@
                     <p class="companyName">
                         <{noticeName}>
                     </p>
-                    <div class="companyRole">在线客服</div>
-                    <div class="companyResponse">通常会在几分钟内回复</div>
+                    <div class="companyRole"><{flyLang.onlineService}></div>
+                    <div class="companyResponse"><{flyLang.replyInMinutes}></div>
                 </div>
                 <div class="quickReplyPanel" v-show="replys.length>0">
-                    <div class="quickReplyHeading">猜你想问</div>
+                    <div class="quickReplyHeading"><{flyLang.suggestedQuestions}></div>
                 </div>
                 <div class="quickReplyGroup" v-for="reply in replys">
                     <a v-on:click="sendReply(item.item_name)" class="chatArticleItem" v-for="item in reply.items">
@@ -282,7 +282,7 @@
                     <{chatTitle}>
                 </span>
                 <span slot="footer" class="dialog-footer">
-                    <el-button @click="focusHandle" type="primary" plain>reconnect</el-button>
+                    <el-button @click="focusHandle" type="primary" plain><{flyLang.reconnect}></el-button>
                 </span>
             </el-dialog>
             <!--//重连按钮-->
@@ -313,7 +313,7 @@
     var LANG = checkLang();
     var SHOW_KEFU_NAME = '{{.ShowKefuName}}'
 </script>
-<script src="/static/js/chat-lang.js?v=0.5.1"></script>
+<script src="/static/js/chat-lang.js?v=0.5.2"></script>
 <script src="/static/js/chat-config.js?v=0.5.1"></script>
 <script>
 
@@ -381,7 +381,7 @@
             loadMoreDisable: false,
             websocketOpenNum: 0,//websocket打开次数
             websocketMaxOpenNum: 10,//websocket最大打开次数
-            talkBtnText: "按住 说话",
+            talkBtnText: GOFLY_LANG[LANG]['holdToTalk'],
             recorderEnd: false,
             isMobile: false,
             isIframe: false,
@@ -1255,7 +1255,7 @@
                 var _this = this;
                 this.loading = this.$loading({
                     lock: true,
-                    text: '正在请求通话',
+                    text: this.flyLang.requestingCall,
                     spinner: 'el-icon-loading',
                     background: 'rgba(0, 0, 0, 0.7)'
                 });
@@ -1280,7 +1280,7 @@
                 }
                 clearTimeout(this.loadingTimer);
                 this.$message({
-                    message: '正在通话...',
+                    message: this.flyLang.inCall,
                     type: 'success'
                 });
                 if (_this.kefuPeerId == "" || _this.localStream == null) {
@@ -1322,7 +1322,7 @@
 
                     for (var key in extra) {
                         if (extra[key] == "") {
-                            extra[key] = "无";
+                            extra[key] = _this.flyLang.emptyValue;
                         }
                         if (key == "visitorProduct") {
                             _this.messageContent = "product[" + JSON.stringify(extra[key]) + "]";
@@ -1385,10 +1385,10 @@
                     _this.recorder.onprogress = function (params) {
                         _this.recoderSecond = parseInt(params.duration);
                     }
-                    this.talkBtnText = "松开 结束";
+                    _this.talkBtnText = _this.flyLang.releaseToStop;
                 }, function (error) {
                     _this.$message({
-                        message: "请允许录音权限,以及浏览器限制非HTTPS下无法使用",
+                        message: _this.flyLang.recordingPermission,
                         type: 'error'
                     });
                     return;
@@ -1402,7 +1402,7 @@
                 var blob = this.recorder.getWAVBlob();
                 this.recorderAudio.src = URL.createObjectURL(blob);
                 this.recorderAudio.controls = true;
-                this.talkBtnText = "按住 说话";
+                this.talkBtnText = this.flyLang.holdToTalk;
                 this.recorderEnd = true;
                 e.preventDefault();
             },
@@ -1417,7 +1417,7 @@
                 var _this = this;
                 this.loading = this.$loading({
                     lock: true,
-                    text: '正在发送',
+                    text: this.flyLang.sending,
                     spinner: 'el-icon-loading',
                     background: 'rgba(0, 0, 0, 0.7)'
                 });
@@ -1553,7 +1553,7 @@
                 }
                 var child = '<div class="wechatTip">';
                 child += '<img style="width:80px; margin:10px;" src="' + GOFLY_CONFIG.WECHAT_QR_URL + '?snow_id=' + this.visitor.visitor_id + '&id_type=visitor">';
-                child += '扫描左侧二维码可直接用微信登录。<br>可防止更换浏览器丢失消息、收不到回复。<br>并可接收回复通知</div>';
+                child += this.flyLang.wechatQrTip + '</div>';
                 $(".chatBox").append(child);
             },
             //格式化时间
@@ -1574,8 +1574,8 @@
                 if (IS_TRY == "false") {
                     return;
                 }
-                this.$alert('当前为GOFLY试用版本，请点击底部链接获取授权', '警告！', {
-                    confirmButtonText: '确定',
+                this.$alert(this.flyLang.trialWarning, this.flyLang.warning, {
+                    confirmButtonText: this.flyLang.confirm,
                 });
             },
             selectLang: function (lang) {
