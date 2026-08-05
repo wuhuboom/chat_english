@@ -4,6 +4,39 @@
         <el-container>
 
             <el-main class="mainMain" style="margin:0px 10px;">
+                <el-card v-show="menuStoreShow" shadow="never" class="h5TemplateSettingsCard" style="margin-bottom: 18px;">
+                    <div slot="header" class="slaSettingsHeader">
+                        <div>
+                            <strong>访客聊天皮肤</strong>
+                            <small>只影响当前商户的 H5 客服页面，不会修改其他商户</small>
+                        </div>
+                        <div>
+                            <el-button @click="previewH5ChatTemplate">预览</el-button>
+                            <el-button type="primary" @click="saveMerchantH5ChatTemplate">保存皮肤</el-button>
+                        </div>
+                    </div>
+                    <el-form label-position="top">
+                        <el-form-item label="当前皮肤">
+                            <el-select
+                                    v-model="h5ChatTemplate"
+                                    placeholder="请选择访客聊天皮肤"
+                                    style="width: 420px; max-width: 100%;">
+                                <el-option
+                                        v-for="template in h5ChatTemplateOptions"
+                                        :key="template.value"
+                                        :label="template.label"
+                                        :value="template.value">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-alert
+                                :closable="false"
+                                type="info"
+                                show-icon
+                                :title="selectedH5TemplateDescription">
+                        </el-alert>
+                    </el-form>
+                </el-card>
                 <el-card shadow="never" class="slaSettingsCard">
                     <div slot="header" class="slaSettingsHeader">
                         <div>

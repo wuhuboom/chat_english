@@ -142,6 +142,8 @@ func InitApiRouter(engine *gin.Engine) {
 		kefuGroup.POST("/updateNotice", controller.PostNoticeSave)
 		//配置企业
 		kefuGroup.POST("/entConfigs", middleware.RbacAuth, controller.PostEntConfigs)
+		kefuGroup.GET("/h5ChatTemplate", middleware.MerchantAuth, controller.GetEntH5ChatTemplate)
+		kefuGroup.POST("/h5ChatTemplate", middleware.MerchantAuth, controller.PostEntH5ChatTemplate)
 		kefuGroup.POST("/slaSettings", middleware.RbacAuth, controller.PostConversationSLASettings)
 		kefuGroup.POST("/routingSettings", middleware.RbacAuth, controller.PostRoutingSettings)
 		kefuGroup.GET("/conversation/events", controller.GetConversationEvents)

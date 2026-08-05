@@ -39,3 +39,12 @@ func ResolveH5ChatTemplate(databaseValue, configFileValue string) string {
 	}
 	return DefaultH5ChatTemplate
 }
+
+// ResolveEntH5ChatTemplate lets an enterprise override the system template
+// while preserving the existing database and config-file fallback chain.
+func ResolveEntH5ChatTemplate(entValue, databaseValue, configFileValue string) string {
+	if template, err := ValidateH5ChatTemplate(entValue); err == nil {
+		return template
+	}
+	return ResolveH5ChatTemplate(databaseValue, configFileValue)
+}

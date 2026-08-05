@@ -76,3 +76,30 @@ func TestResolveH5ChatTemplate(t *testing.T) {
 		})
 	}
 }
+
+func TestResolveEntH5ChatTemplate(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		entValue      string
+		databaseValue string
+		fileValue     string
+		want          string
+	}{
+		{name: "enterprise override wins", entValue: "chat_page4.html", databaseValue: "chat_page5.html", fileValue: "chat_page1.html", want: "chat_page4.html"},
+		{name: "invalid enterprise uses database", entValue: "../bad.html", databaseValue: "chat_page5.html", fileValue: "chat_page1.html", want: "chat_page5.html"},
+		{name: "empty enterprise uses file fallback", fileValue: "chat_page3.html", want: "chat_page3.html"},
+		{name: "all invalid uses modern default", entValue: "bad", databaseValue: "bad", fileValue: "bad", want: DefaultH5ChatTemplate},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			if got := ResolveEntH5ChatTemplate(tt.entValue, tt.databaseValue, tt.fileValue); got != tt.want {
+				t.Fatalf("ResolveEntH5ChatTemplate() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}

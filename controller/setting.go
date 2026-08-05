@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/silenceper/wechat/v2"
 	offConfig "github.com/silenceper/wechat/v2/officialaccount/config"
+	"github.com/spf13/viper"
 	"go-fly-muti/lib"
 	"go-fly-muti/models"
 	"go-fly-muti/setting"
@@ -93,6 +94,41 @@ func PostEntConfigs(c *gin.Context) {
 		"msg":    "ok",
 		"result": "",
 	})
+}
+
+// GetEntH5ChatTemplate returns the effective visitor skin for the signed-in
+// enterprise, including the system fallback when it has no override yet.
+func GetEntH5ChatTemplate(c *gin.Context) {
+	entID, _ := c.Get("ent_id")
+	entConfig := models.FindEntConfig(entID, setting.H5ChatTemplateConfigKey)
+	template := setting.ResolveEntH5ChatTemplate(
+		entConfig.ConfValue,
+		models.FindConfig(setting.H5ChatTemplateConfigKey),
+		viper.GetString("app.FontVersion"),
+	)
+	c.JSON(200, gin.H{
+		"code": 200,
+		"msg":  "ok",
+		"result": gin.H{
+			"template": template,
+			"custom":   entConfig.ID != 0,
+		},
+	})
+}
+
+// PostEntH5ChatTemplate saves an isolated visitor skin for one merchant.
+func PostEntH5ChatTemplate(c *gin.Context) {
+	entID, _ := c.Get("ent_id")
+	template, err := setting.ValidateH5ChatTemplate(c.PostForm("template"))
+	if err != nil {
+		c.JSON(200, gin.H{"code": 400, "msg": err.Error()})
+		return
+	}
+	if err := models.SaveEntConfig(fmt.Sprintf("%v", entID), "H5访客界面", setting.H5ChatTemplateConfigKey, template); err != nil {
+		c.JSON(200, gin.H{"code": 400, "msg": "保存商户皮肤失败: " + err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"code": 200, "msg": "商户访客皮肤已保存", "result": template})
 }
 
 func PostConversationSLASettings(c *gin.Context) {

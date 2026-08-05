@@ -88,7 +88,7 @@ func MerchantAuth(c *gin.Context) {
 	if !exists || !valid || roleID != types.Constant.EntRoleId {
 		c.JSON(200, gin.H{
 			"code": 403,
-			"msg":  "仅普通商户管理员可以执行聊天记录清理",
+			"msg":  "仅普通商户管理员可以执行此操作",
 		})
 		c.Abort()
 		return

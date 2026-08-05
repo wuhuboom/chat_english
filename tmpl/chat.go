@@ -74,7 +74,9 @@ func PageChat(c *gin.Context) {
 		title = entInfo.Nickname
 	}
 
-	FontVersion := setting.ResolveH5ChatTemplate(
+	entTemplate := models.FindEntConfig(entId, setting.H5ChatTemplateConfigKey)
+	FontVersion := setting.ResolveEntH5ChatTemplate(
+		entTemplate.ConfValue,
 		models.FindConfig(setting.H5ChatTemplateConfigKey),
 		viper.GetString("app.FontVersion"),
 	)

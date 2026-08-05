@@ -344,6 +344,9 @@
                 this.sendAjax("/kefu/kefuinfo","get",{},function(result){
                     if(result.role_id==2){
                         _this.menuStoreShow=true;
+                        if(ACTION=="setting_configs"){
+                            _this.loadMerchantH5ChatTemplate();
+                        }
                     }
                     if(result.role_id==1){
                         _this.menuAdminShow=true;
@@ -974,6 +977,25 @@
                     _this.sendAjax("/configs","get",{},function(result){
                         _this.configList=result;
                     });
+                });
+            },
+            saveMerchantH5ChatTemplate(){
+                let _this=this;
+                this.fullscreenLoading=true;
+                this.sendAjax("/kefu/h5ChatTemplate","POST",{
+                    template:this.h5ChatTemplate
+                },function(){
+                    _this.fullscreenLoading=false;
+                    _this.$message({
+                        message:"当前商户的访客皮肤已更新",
+                        type:"success"
+                    });
+                });
+            },
+            loadMerchantH5ChatTemplate(){
+                let _this=this;
+                this.sendAjax("/kefu/h5ChatTemplate","get",{},function(result){
+                    _this.h5ChatTemplate=result.template || "chat_page.html";
                 });
             },
             previewH5ChatTemplate(){

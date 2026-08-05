@@ -68,6 +68,11 @@ func saveEntConfigWithDB(db *gorm.DB, entId, name, key, value string) error {
 	}).Error
 }
 
+// SaveEntConfig creates or updates one enterprise-scoped setting.
+func SaveEntConfig(entId, name, key, value string) error {
+	return saveEntConfigWithDB(DB, entId, name, key, value)
+}
+
 // SaveConversationSLASettings updates both thresholds atomically so the
 // workbench never observes a partially updated SLA policy.
 func SaveConversationSLASettings(entId, warningMinutes, overdueMinutes string) error {
