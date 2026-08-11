@@ -1,6 +1,7 @@
 <html lang="cn">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="renderer" content="webkit">
     <meta name="description" content="">
     <meta name="author" content="GOFLY">
@@ -10,7 +11,7 @@
     <script src="/static/element-ui/2.15.1/index.js"></script>
     <script src="/static/jquery/3.6.0/jquery.min.js"></script>
     <link rel="stylesheet" href="/static/css/common.css?v=0.6.1">
-    <link rel="stylesheet" href="/static/css/admin-modern.css?v=1.3.0">
+    <link rel="stylesheet" href="/static/css/admin-modern.css?v=1.4.0">
     <script src="/static/js/reconnecting-websocket.min.js"></script>
     <script src="/static/js/functions.js"></script>
     <script src="/static/js/chat-lang.js?v=1.0.1"></script>
@@ -98,6 +99,7 @@
         data: {
             window:window,
             iframeUrl:"/mainGuide",
+            activeMenu:"home",
             mailTotal:0,
             adminRole:"",
             flyLang:GOFLY_LANG[LANG],
@@ -239,8 +241,21 @@
             }
         },
         methods: {
-            openIframeUrl(url){
+            openIframeUrl(url,menuKey){
                 this.iframeUrl=url;
+                var menuByUrl={
+                    "/mainGuide":"home",
+                    "/chat_main":"chat",
+                    "/setting_visitor_list":"visitors",
+                    "/setting_deploy":"deploy",
+                    "/setting_kefu_list":"agents",
+                    "/setting_configs":"settings",
+                    "/setting_message_cleanup":"cleanup",
+                    "/setting_logs":"logs",
+                    "/setting_welcome":"welcome",
+                    "/setting":"menu"
+                };
+                this.activeMenu=menuKey || menuByUrl[url] || this.activeMenu;
                 if(url==="/chat_main"){
                     this.haveNewMessage="";
                     clearFlashTitle();

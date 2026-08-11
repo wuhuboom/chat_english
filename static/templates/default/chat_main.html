@@ -1,6 +1,7 @@
 <html lang="cn">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="description" content="">
     <meta name="author" content="GOFLY">
     <meta name="system-timezone" content="{{.SystemTimezone}}">
@@ -14,7 +15,7 @@
     <link rel="stylesheet" href="/static/css/icono.min.css" />
     <link rel="stylesheet" href="/static/css/front.css"/>
     <link rel="stylesheet" href="/static/css/common.css?v=1.0.1"/>
-    <link rel="stylesheet" href="/static/css/admin-modern.css?v=1.2.1"/>
+    <link rel="stylesheet" href="/static/css/admin-modern.css?v=1.4.0"/>
 
     <style>
         .el-row{width:100%}
@@ -53,8 +54,23 @@
 <body style="overflow-y: hidden">
 <div id="app" class="chatMainPage">
     <template>
+        <nav class="mobileChatToolbar" aria-label="手机客服工作区导航">
+            <button type="button" :class="{'is-active':mobilePanel==='list'}" @click="showMobilePanel('list')">
+                <i class="el-icon-chat-dot-square"></i>
+                <span>会话</span>
+                <em v-if="queueMetrics.unread"><{queueMetrics.unread}></em>
+            </button>
+            <button type="button" :disabled="!currentGuest" :class="{'is-active':mobilePanel==='chat'}" @click="showMobilePanel('chat')">
+                <i class="el-icon-chat-line-round"></i>
+                <span>聊天</span>
+            </button>
+            <button type="button" :disabled="!currentGuest" :class="{'is-active':mobilePanel==='profile'}" @click="showMobilePanel('profile')">
+                <i class="el-icon-user"></i>
+                <span>资料</span>
+            </button>
+        </nav>
         <el-row :gutter="2">
-            <el-col :span="6">
+            <el-col :span="6" class="mobileChatPanel mobileChatListPanel" :class="{'is-mobile-active':mobilePanel==='list'}">
                 <div class="chatBg chatLeft">
 
                     <el-tabs v-model="leftTabActive" @tab-click="handleTabClick">
@@ -191,14 +207,14 @@
                     </el-tabs>
                 </div>
             </el-col>
-            <el-col :span="18" v-show="visitor.visitor_id==''">
+            <el-col :span="18" class="desktopChatEmpty" v-show="visitor.visitor_id==''">
                 <div class="kefuNoVisitor">
                     <div class="kefuNoVisitorIcno"><i style="color:rgb(198 219 255);" class="el-icon-chat-dot-round"></i></div>
                     <strong>等待新的会话</strong>
                     <small>从左侧选择访客，或等待系统推送新消息</small>
                 </div>
             </el-col>
-            <el-col :span="12" v-show="visitor.visitor_id!=''">
+            <el-col :span="12" class="mobileChatPanel mobileChatConversationPanel" :class="{'is-mobile-active':mobilePanel==='chat'}" v-show="visitor.visitor_id!=''">
                 <div class="kefuMainBg chatBgContext" @click="resizeChatBox">
                     <div class="conversationHeader">
                         <div class="conversationHeaderIdentity">
@@ -317,7 +333,7 @@
 
                 </div>
             </el-col>
-            <el-col :span="6" v-show="visitor.visitor_id!=''">
+            <el-col :span="6" class="mobileChatPanel mobileChatProfilePanel" :class="{'is-mobile-active':mobilePanel==='profile'}" v-show="visitor.visitor_id!=''">
                 <div   class="chatBg chatRight">
                     <el-tabs v-model="rightTabActive" @tab-click="handleTabClick">
                         <el-tab-pane :label="flyLang.visitorProfile" name="visitorInfo">
@@ -713,7 +729,7 @@
 <script src="/static/js/wangEditor.min.js"></script>
 
 
-<script src="/static/js/chat-main.js?v=1.1.0"></script>
+<script src="/static/js/chat-main.js?v=1.2.0"></script>
 
 
 

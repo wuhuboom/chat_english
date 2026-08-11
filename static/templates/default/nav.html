@@ -18,12 +18,12 @@
             <{socketHealthLabel}>
         </button>
     </div>
-    <div class="menuLeftItem active" title="首页" v-on:click="openIframeUrl('/mainGuide')">
+    <div class="menuLeftItem" :class="{'active':activeMenu==='home'}" title="首页" v-on:click="openIframeUrl('/mainGuide','home')">
         <i class="el-icon-house"></i>
         <span slot="title"><{flyLang.home}></span>
     </div>
 
-    <div class="menuLeftItem" title="对话" v-on:click="haveNewMessage='';openIframeUrl('/chat_main')">
+    <div class="menuLeftItem" :class="{'active':activeMenu==='chat'}" title="对话" v-on:click="haveNewMessage='';openIframeUrl('/chat_main','chat')">
         <el-badge :value="haveNewMessage" class="item">
             <i class="el-icon-chat-dot-round"></i>
         </el-badge>
@@ -38,40 +38,40 @@
         <span slot="title"><{notificationPermission==='granted' ? '通知已开' : '开启通知'}></span>
     </div>
 
-    <div class="menuLeftItem" title="访客" v-show="menuAdminShow" v-on:click="openIframeUrl('/setting_visitor_list')">
+    <div class="menuLeftItem" :class="{'active':activeMenu==='visitors'}" title="访客" v-show="menuAdminShow" v-on:click="openIframeUrl('/setting_visitor_list','visitors')">
         <i class="el-icon-user"></i>
         <span slot="title">访客</span>
     </div>
-    <div class="menuLeftItem" title="对接" v-on:click="openIframeUrl('/setting_deploy')">
+    <div class="menuLeftItem" :class="{'active':activeMenu==='deploy'}" title="对接" v-on:click="openIframeUrl('/setting_deploy','deploy')">
         <i class="el-icon-notebook-2"></i>
         <span slot="title">对接</span>
     </div>
-    <div class="menuLeftItem" title="用户管理" v-show="superShow"  v-on:click="openIframeUrl('/setting_kefu_list')">
+    <div class="menuLeftItem" :class="{'active':activeMenu==='agents'}" title="用户管理" v-show="superShow"  v-on:click="openIframeUrl('/setting_kefu_list','agents')">
         <i class="el-icon-edit-outline"></i>
         <span slot="title"><{flyLang.agentList}></span>
     </div>
 
-    <div class="menuLeftItem" title="设置" v-show="menuAdminShow"  v-on:click="openIframeUrl('/setting_configs')">
+    <div class="menuLeftItem" :class="{'active':activeMenu==='settings'}" title="设置" v-show="menuAdminShow"  v-on:click="openIframeUrl('/setting_configs','settings')">
         <i class="el-icon-setting"></i>
         <span slot="title"><{flyLang.setting}></span>
     </div>
 
-    <div class="menuLeftItem" title="聊天记录清理" v-show="merchantShow" v-on:click="openIframeUrl('/setting_message_cleanup')">
+    <div class="menuLeftItem" :class="{'active':activeMenu==='cleanup'}" title="聊天记录清理" v-show="merchantShow" v-on:click="openIframeUrl('/setting_message_cleanup','cleanup')">
         <i class="el-icon-delete"></i>
         <span slot="title">清理</span>
     </div>
 
-    <div class="menuLeftItem" title="系统日志" v-show="superShow" v-on:click="openIframeUrl('/setting_logs')">
+    <div class="menuLeftItem" :class="{'active':activeMenu==='logs'}" title="系统日志" v-show="superShow" v-on:click="openIframeUrl('/setting_logs','logs')">
         <i class="el-icon-document"></i>
         <span slot="title">日志</span>
     </div>
 
-    <div class="menuLeftItem" title="欢迎语" v-on:click="openIframeUrl('/setting_welcome')">
+    <div class="menuLeftItem" :class="{'active':activeMenu==='welcome'}" title="欢迎语" v-on:click="openIframeUrl('/setting_welcome','welcome')">
         <i class="el-icon-timer"></i>
         <span slot="title">欢迎</span>
     </div>
 
-    <div class="menuLeftItem" title="全部菜单" v-on:click="openIframeUrl('/setting')">
+    <div class="menuLeftItem" :class="{'active':activeMenu==='menu'}" title="全部菜单" v-on:click="openIframeUrl('/setting','menu')">
         <i class="el-icon-menu"></i>
         <span slot="title"><{flyLang.menu}></span>
     </div>

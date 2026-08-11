@@ -1139,7 +1139,12 @@ body.text-center {
 /* Chat workspace */
 .chatMainPage {
     height: 100vh;
+    height: 100dvh;
     background: var(--admin-canvas);
+}
+
+.mobileChatToolbar {
+    display: none;
 }
 
 .chatMainPage > .el-row {
@@ -2343,13 +2348,89 @@ body.adminLogin .el-button {
         max-width: 100%;
     }
 
+    body.text-center {
+        overflow: hidden;
+    }
+
     .mainLeftMenu {
-        width: 72px;
-        padding: 10px 7px;
+        position: fixed;
+        width: 100%;
+        height: calc(70px + env(safe-area-inset-bottom));
+        right: 0;
+        bottom: 0;
+        left: 0;
+        display: flex;
+        padding: 7px 8px calc(7px + env(safe-area-inset-bottom));
+        align-items: center;
+        overflow-x: auto;
+        overflow-y: hidden;
+        gap: 3px;
+        background: rgba(11, 31, 58, 0.97);
+        box-shadow: 0 -10px 30px rgba(11, 31, 58, 0.2);
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .mainLeftMenu::-webkit-scrollbar {
+        display: none;
+    }
+
+    .mainLeftMenu .operatorCard {
+        width: 52px;
+        min-width: 52px;
+        height: 54px;
+        margin: 0 5px 0 0;
+        padding: 0 8px 0 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-right: 1px solid rgba(255, 255, 255, 0.12);
+        border-bottom: 0;
+    }
+
+    .mainLeftMenu .mainLogo {
+        width: 36px !important;
+        height: 36px !important;
+    }
+
+    .mainLeftMenu .menuLeftItem,
+    .mainLeftMenu .menuLeftItemLogout {
+        width: 58px;
+        min-width: 58px;
+        height: 54px;
+        margin: 0;
+        padding-top: 5px;
+        border-radius: 12px;
+        flex: 0 0 58px;
+    }
+
+    .mainLeftMenu .menuLeftItem i,
+    .mainLeftMenu .menuLeftItem .el-badge {
+        font-size: 18px;
+    }
+
+    .mainLeftMenu .menuLeftItem span {
+        display: block;
+        margin-top: 2px;
+        font-size: 10px;
+        white-space: nowrap;
+    }
+
+    .mainLeftMenu .menuLeftItem.active {
+        transform: none;
+        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
     }
 
     .mainRight {
-        width: calc(100% - 72px);
+        width: 100%;
+        height: calc(100vh - 70px - env(safe-area-inset-bottom));
+        height: calc(100dvh - 70px - env(safe-area-inset-bottom));
+        float: none;
+    }
+
+    .mainIframe {
+        width: 100%;
+        height: 100%;
     }
 
     .operatorStatus {
@@ -2377,19 +2458,193 @@ body.adminLogin .el-button {
         margin: 12px;
     }
 
+    .mobileChatToolbar {
+        display: grid;
+        height: 58px;
+        padding: 7px 10px;
+        box-sizing: border-box;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 7px;
+        border-bottom: 1px solid var(--admin-border);
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 5px 18px rgba(15, 35, 65, 0.06);
+    }
+
+    .mobileChatToolbar button {
+        position: relative;
+        min-width: 0;
+        border: 1px solid #e3e9f2;
+        border-radius: 11px;
+        color: #6f7d90;
+        background: #f7f9fc;
+        font: inherit;
+    }
+
+    .mobileChatToolbar button i {
+        margin-right: 4px;
+        font-size: 16px;
+    }
+
+    .mobileChatToolbar button span {
+        font-size: 12px;
+        font-weight: 650;
+    }
+
+    .mobileChatToolbar button em {
+        position: absolute;
+        min-width: 16px;
+        height: 16px;
+        top: -5px;
+        right: -4px;
+        padding: 0 4px;
+        box-sizing: border-box;
+        border-radius: 9px;
+        color: #fff;
+        background: var(--admin-danger);
+        font-size: 9px;
+        font-style: normal;
+        line-height: 16px;
+    }
+
+    .mobileChatToolbar button.is-active {
+        border-color: #b9cbff;
+        color: #fff;
+        background: linear-gradient(135deg, var(--admin-primary), #3b82f6);
+        box-shadow: 0 6px 14px rgba(37, 99, 235, 0.2);
+    }
+
+    .mobileChatToolbar button:disabled {
+        opacity: 0.45;
+    }
+
     .chatMainPage > .el-row {
-        gap: 8px;
+        height: calc(100% - 58px);
+        gap: 0;
         padding: 8px;
+        overflow: hidden;
     }
 
-    .chatMainPage > .el-row > .el-col-6 {
-        flex-basis: 200px;
-        width: 200px;
-        max-width: 200px;
+    .chatMainPage {
+        width: 100vw;
+        max-width: 100vw;
+        overflow: hidden;
     }
 
-    .chatMainPage > .el-row > .el-col-6:last-child {
+    .chatMainPage > .el-row > .mobileChatPanel {
         display: none !important;
+        width: 100%;
+        max-width: none;
+        height: 100%;
+        flex: 1 1 100%;
+    }
+
+    .chatMainPage > .el-row > .mobileChatPanel.is-mobile-active {
+        display: block !important;
+    }
+
+    .chatMainPage > .el-row > .desktopChatEmpty {
+        display: none !important;
+    }
+
+    .mobileChatListPanel .chatLeft,
+    .mobileChatConversationPanel .kefuMainBg,
+    .mobileChatProfilePanel .chatRight {
+        width: 100%;
+        height: 100%;
+        border-radius: 14px;
+    }
+
+    .chatLeft .el-tabs__header,
+    .chatRight .el-tabs__header {
+        padding: 0 12px;
+    }
+
+    .conversationQueueTools {
+        padding: 10px;
+    }
+
+    .conversationQueueSummary button {
+        min-width: 0;
+        padding: 8px 4px;
+    }
+
+    .onlineUsers {
+        min-height: 66px;
+        margin: 4px 7px;
+        padding: 10px;
+    }
+
+    .conversationHeader {
+        height: auto;
+        min-height: 58px;
+        padding: 7px 10px;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .conversationHeaderActions {
+        width: 100%;
+    }
+
+    .conversationHeaderActions .el-select {
+        width: 50%;
+    }
+
+    .kefuMainBg .chatBox {
+        height: calc(100% - 208px);
+        padding: 10px;
+    }
+
+    .kefuFuncBox {
+        min-height: 142px;
+        padding: 7px 9px calc(9px + env(safe-area-inset-bottom));
+    }
+
+    .iconBtnsBox .iconBtns {
+        width: 100%;
+        max-width: 100%;
+        display: flex;
+        overflow-x: auto;
+        overflow-y: hidden;
+        align-items: center;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .iconBtnsBox .iconBtns::-webkit-scrollbar {
+        display: none;
+    }
+
+    .iconBtnsBox .iconBtns > div {
+        flex: 0 0 auto;
+    }
+
+    .iconBtnsBox .kefuSendBtn {
+        position: sticky;
+        right: 0;
+        flex: 0 0 auto;
+    }
+
+    .chatArea .el-textarea__inner {
+        min-height: 58px !important;
+        font-size: 16px;
+    }
+
+    .chatMessageAvatar {
+        width: 34px !important;
+        height: 34px !important;
+        flex-basis: 34px;
+    }
+
+    .chatMessagePayload {
+        flex-basis: calc(100% - 44px);
+    }
+
+    .mobileChatProfilePanel .chatRight .el-tabs__content {
+        height: calc(100% - 52px);
+        padding-bottom: env(safe-area-inset-bottom);
+        box-sizing: border-box;
     }
 
     .kefuNoVisitor .el-icon-chat-dot-round {
@@ -2408,6 +2663,75 @@ body.adminLogin .el-button {
     }
 
     .chatContent {
-        max-width: 88%;
+        max-width: 92%;
+        padding: 9px 11px;
+    }
+
+    body.text-center .mainMain {
+        max-width: 100vw;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    body.text-center .mainMain > .el-form {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    body.text-center .mainMain > .el-form .el-form-item,
+    body.text-center .mainMain > .el-form .el-input,
+    body.text-center .mainMain > .el-form .el-select {
+        width: 100%;
+    }
+
+    body.text-center .mainMain > .el-table {
+        min-width: 720px;
+    }
+
+    body.text-center .el-dialog {
+        width: calc(100vw - 24px) !important;
+        margin-top: 4vh !important;
+    }
+
+    body.text-center .el-dialog__body {
+        max-height: calc(100dvh - 190px);
+        overflow-y: auto;
+        padding: 16px;
+    }
+
+    #app > .guideHeader {
+        height: 42px;
+        margin: 0 !important;
+        padding: 0 14px;
+        box-sizing: border-box;
+        line-height: 42px;
+    }
+
+    #app > .guideHeader + .el-container {
+        height: calc(100% - 42px);
+        flex-direction: column;
+    }
+
+    #app > .guideHeader + .el-container > .el-aside {
+        width: 100% !important;
+        height: 152px !important;
+        margin: 0 !important;
+        flex: 0 0 152px;
+        overflow-y: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--admin-border);
+        box-shadow: 0 7px 18px rgba(15, 35, 65, 0.06);
+    }
+
+    #app > .guideHeader + .el-container > .el-aside .el-submenu__title,
+    #app > .guideHeader + .el-container > .el-aside .el-menu-item {
+        height: 40px;
+        line-height: 40px;
+    }
+
+    #app > .guideHeader + .el-container > .mainSettingIframe {
+        width: 100%;
+        height: calc(100% - 152px);
+        flex: 1 1 auto;
     }
 }

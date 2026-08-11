@@ -122,6 +122,8 @@ var app=new Vue({
         inputValue: '',
         allTags:[],
         editor:null,
+        isMobile:false,
+        mobilePanel:"list",
     },
     computed: {
         socketStateLabel() {
@@ -168,6 +170,26 @@ var app=new Vue({
         },
     },
     methods: {
+        syncMobileLayout() {
+            this.isMobile=window.matchMedia("(max-width: 760px)").matches;
+            if(!this.isMobile){
+                return;
+            }
+            if(!this.currentGuest && this.mobilePanel!=="list"){
+                this.mobilePanel="list";
+            }
+        },
+        showMobilePanel(panel) {
+            if((panel==="chat" || panel==="profile") && !this.currentGuest){
+                return;
+            }
+            this.mobilePanel=panel;
+            this.$nextTick(() => {
+                if(panel==="chat"){
+                    this.scrollBottom();
+                }
+            });
+        },
         filterConversationList(list) {
             const query = this.queueSearch.trim().toLowerCase();
             const filter = this.queueFilter;
@@ -501,6 +523,9 @@ var app=new Vue({
         talkTo(guestId,name) {
             this.currentGuest = guestId;
             this.visitor.visitor_id=guestId;
+            if(this.isMobile){
+                this.mobilePanel="chat";
+            }
             //this.chatTitle=name+"|"+guestId+",正在处理中...";
 
             //发送给客户
@@ -1830,7 +1855,9 @@ var app=new Vue({
         },
     },
     mounted() {
-        document.addEventListener('paste', this.onPasteUpload)
+        document.addEventListener('paste', this.onPasteUpload);
+        this.syncMobileLayout();
+        window.addEventListener('resize', this.syncMobileLayout);
     },
     created: function () {
         //jquery
@@ -1847,6 +1874,8 @@ var app=new Vue({
         this.ping();
     },
     beforeDestroy:function(){
+        document.removeEventListener('paste', this.onPasteUpload);
+        window.removeEventListener('resize', this.syncMobileLayout);
         if(this.socketHealthTimer){
             clearInterval(this.socketHealthTimer);
         }
