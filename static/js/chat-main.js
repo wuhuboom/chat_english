@@ -1264,8 +1264,10 @@ var app=new Vue({
                             type: 'error'
                         });
                     }else{
+						_this.getIpblacks();
+						_this.rightTabActive="ipBlackList";
                         _this.$message({
-                            message: data.msg,
+                            message: data.msg+"；如为误操作，可立即点击该IP解除",
                             type: 'success'
                         });
                     }

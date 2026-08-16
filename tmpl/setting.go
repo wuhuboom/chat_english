@@ -111,7 +111,7 @@ func PageRoleList(c *gin.Context) {
 // 角色列表
 func PageIpblack(c *gin.Context) {
 	c.HTML(http.StatusOK, "setting_ipblack.html", gin.H{
-		"tab_index": "4-5",
+		"tab_index": "1-6",
 		"action":    "setting_ipblack",
 	})
 }

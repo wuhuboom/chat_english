@@ -1,11 +1,37 @@
 package controller
 
 import (
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"go-fly-muti/common"
 	"go-fly-muti/models"
-	"strconv"
 )
+
+var createIpblack = models.CreateIpblack
+var deleteIpblackByIp = models.DeleteIpblackByIp
+var deleteIpblackByIpAndEntId = models.DeleteIpblackByIpAndEntId
+var findIpsByEntId = models.FindIpsByEntId
+var findAllIps = models.FindIps
+
+func isSuperAdmin(c *gin.Context) bool {
+	roleId, exists := c.Get("role_id")
+	if !exists {
+		return false
+	}
+	switch value := roleId.(type) {
+	case float64:
+		return value == 1
+	case int:
+		return value == 1
+	case uint:
+		return value == 1
+	case string:
+		return value == "1"
+	default:
+		return false
+	}
+}
 
 func PostIpblack(c *gin.Context) {
 	ip := c.PostForm("ip")
@@ -17,11 +43,25 @@ func PostIpblack(c *gin.Context) {
 		})
 		return
 	}
-	kefuId, _ := c.Get("kefu_name")
-	models.CreateIpblack(ip, kefuId.(string), name)
+	kefuId := c.GetString("kefu_name")
+	entId := c.GetString("ent_id")
+	if kefuId == "" || entId == "" {
+		c.JSON(200, gin.H{
+			"code": 403,
+			"msg":  "无法确认当前商户身份",
+		})
+		return
+	}
+	if _, err := createIpblack(ip, kefuId, entId, name); err != nil {
+		c.JSON(200, gin.H{
+			"code": 500,
+			"msg":  "添加IP黑名单失败",
+		})
+		return
+	}
 	c.JSON(200, gin.H{
 		"code": 200,
-		"msg":  "添加IP黑名单成功!",
+		"msg":  "已加入IP黑名单，可在右侧或设置中的IP黑名单解除",
 	})
 }
 func DelIpblack(c *gin.Context) {
@@ -33,10 +73,30 @@ func DelIpblack(c *gin.Context) {
 		})
 		return
 	}
-	models.DeleteIpblackByIp(ip)
+	var err error
+	if isSuperAdmin(c) {
+		err = deleteIpblackByIp(ip)
+	} else {
+		entId := c.GetString("ent_id")
+		if entId == "" {
+			c.JSON(200, gin.H{
+				"code": 403,
+				"msg":  "无法确认当前商户身份",
+			})
+			return
+		}
+		err = deleteIpblackByIpAndEntId(ip, entId)
+	}
+	if err != nil {
+		c.JSON(200, gin.H{
+			"code": 500,
+			"msg":  "解除IP黑名单失败",
+		})
+		return
+	}
 	c.JSON(200, gin.H{
 		"code": 200,
-		"msg":  "删除黑名单成功!",
+		"msg":  "IP已从黑名单解除",
 	})
 }
 func GetIpblacks(c *gin.Context) {
@@ -45,7 +105,7 @@ func GetIpblacks(c *gin.Context) {
 		page = 1
 	}
 	count := models.CountIps(nil, nil)
-	list := models.FindIps(nil, nil, uint(page), common.VisitorPageSize)
+	list := findAllIps(nil, nil, uint(page), common.VisitorPageSize)
 	c.JSON(200, gin.H{
 		"code": 200,
 		"msg":  "ok",
@@ -57,8 +117,20 @@ func GetIpblacks(c *gin.Context) {
 	})
 }
 func GetIpblacksByKefuId(c *gin.Context) {
-	kefuId, _ := c.Get("kefu_name")
-	list := models.FindIpsByKefuId(kefuId.(string))
+	var list []models.Ipblack
+	if isSuperAdmin(c) {
+		list = findAllIps(nil, nil, 1, 1000)
+	} else {
+		entId := c.GetString("ent_id")
+		if entId == "" {
+			c.JSON(200, gin.H{
+				"code": 403,
+				"msg":  "无法确认当前商户身份",
+			})
+			return
+		}
+		list = findIpsByEntId(entId)
+	}
 	c.JSON(200, gin.H{
 		"code":   200,
 		"msg":    "ok",

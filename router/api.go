@@ -251,7 +251,7 @@ func InitApiRouter(engine *gin.Engine) {
 	engine.POST("/about", middleware.JwtApiMiddleware, middleware.RbacAuth, controller.PostAbout)
 	engine.GET("/notice", middleware.SetLanguage, controller.GetNotice)
 
-	engine.GET("/ipblacks_all", middleware.JwtApiMiddleware, controller.GetIpblacks)
+	engine.GET("/ipblacks_all", middleware.JwtApiMiddleware, middleware.AdminAuth, controller.GetIpblacks)
 
 	engine.GET("/configs", middleware.JwtApiMiddleware, middleware.RbacAuth, controller.GetConfigs)
 	engine.GET("/ent_configs", middleware.JwtApiMiddleware, controller.GetEntConfigs)

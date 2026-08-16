@@ -451,8 +451,8 @@
                     this.getWelcomes();
                 }
                 if(ACTION=="setting_ipblack"){
-                    this.sendAjax("/ipblacks_all","get",{},function(result){
-                        _this.ipblackList=result.list;
+                    this.sendAjax("/kefu/ipblacks","get",{},function(result){
+                        _this.ipblackList=result;
                     });
                 }
                 if(ACTION=="setting_config"){
@@ -919,8 +919,8 @@
             deleteIpblack(ip){
                 let _this=this;
                 this.sendAjax("/kefu/ipblack?ip="+ip,"DELETE",{ip:ip},function(result){
-                    _this.sendAjax("/ipblacks_all","get",{},function(result){
-                        _this.ipblackList=result.list;
+                    _this.sendAjax("/kefu/ipblacks","get",{},function(result){
+                        _this.ipblackList=result;
                     });
                 });
             },
