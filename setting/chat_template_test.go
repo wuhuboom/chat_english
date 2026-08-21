@@ -13,6 +13,7 @@ func TestValidateH5ChatTemplate(t *testing.T) {
 	}{
 		{name: "modern template", value: "chat_page.html", want: "chat_page.html"},
 		{name: "classic one without time", value: "chat_page1_notime.html", want: "chat_page1_notime.html"},
+		{name: "classic three without time", value: "chat_page3_notime.html", want: "chat_page3_notime.html"},
 		{name: "legacy template", value: " chat_page3-1.html ", want: "chat_page3-1.html"},
 		{name: "unknown template", value: "unknown.html", wantErr: true},
 		{name: "path traversal", value: "../login.html", wantErr: true},

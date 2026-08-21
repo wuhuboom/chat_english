@@ -15,6 +15,7 @@ var allowedH5ChatTemplates = map[string]struct{}{
 	"chat_page1.html":        {},
 	"chat_page1_notime.html": {},
 	"chat_page3.html":        {},
+	"chat_page3_notime.html": {},
 	"chat_page3-1.html":      {},
 	"chat_page4.html":        {},
 	"chat_page5.html":        {},

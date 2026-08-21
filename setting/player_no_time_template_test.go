@@ -16,7 +16,7 @@ func readPlayerTemplate(t *testing.T, name string) string {
 	return string(content)
 }
 
-func TestClassicNoTimePlayerTemplateIsIsolated(t *testing.T) {
+func TestClassicOneNoTimePlayerTemplateIsIsolated(t *testing.T) {
 	original := readPlayerTemplate(t, "chat_page1.html")
 	if !strings.Contains(original, "formatTime(v.time)") {
 		t.Fatal("classic interface 1 must keep its existing message timestamps")
@@ -40,7 +40,7 @@ func TestClassicNoTimePlayerTemplateIsIsolated(t *testing.T) {
 	}
 }
 
-func TestClassicNoTimePlayerTemplateIsSelectable(t *testing.T) {
+func TestClassicOneNoTimePlayerTemplateIsSelectable(t *testing.T) {
 	settings := readPlayerTemplate(t, "setting_bottom.html")
 	for _, marker := range []string{"经典界面 1-无时间", "chat_page1_notime.html"} {
 		if !strings.Contains(settings, marker) {
@@ -49,7 +49,7 @@ func TestClassicNoTimePlayerTemplateIsSelectable(t *testing.T) {
 	}
 }
 
-func TestClassicNoTimeMessageRowsDoNotReserveTimeSlot(t *testing.T) {
+func TestClassicOneNoTimeMessageRowsDoNotReserveTimeSlot(t *testing.T) {
 	template := readPlayerTemplate(t, "chat_page1_notime.html")
 	start := strings.Index(template, `v-for="v in msgList"`)
 	if start < 0 {
@@ -67,6 +67,69 @@ func TestClassicNoTimeMessageRowsDoNotReserveTimeSlot(t *testing.T) {
 	for _, marker := range []string{"noTimeMessageMeta", "noTimeMineLine", "noTimeReadStatus"} {
 		if !strings.Contains(messageRows, marker) {
 			t.Fatalf("no-time message rows missing compact layout %q", marker)
+		}
+	}
+}
+
+func TestClassicThreeNoTimePlayerTemplateIsIsolated(t *testing.T) {
+	original := readPlayerTemplate(t, "chat_page3.html")
+	if !strings.Contains(original, "formatTime(v.time)") {
+		t.Fatal("classic interface 3 must keep its existing message timestamps")
+	}
+
+	noTime := readPlayerTemplate(t, "chat_page3_notime.html")
+	if strings.Contains(noTime, "formatTime(v.time)") {
+		t.Fatal("classic interface 3 without time must not render message timestamps")
+	}
+
+	for _, marker := range []string{
+		"syncUnreadVisitorMessages(this);",
+		"visibleUnreadVisitorMessageIDs(_this)",
+		`v-html="v.content"`,
+		"v.read_status",
+		"flyLang.moremessage",
+	} {
+		if !strings.Contains(noTime, marker) {
+			t.Fatalf("classic interface 3 without time lost required behavior %q", marker)
+		}
+	}
+}
+
+func TestClassicThreeNoTimeMessageRowsDoNotReserveTimeSlot(t *testing.T) {
+	template := readPlayerTemplate(t, "chat_page3_notime.html")
+	start := strings.Index(template, `v-for="v in msgList"`)
+	if start < 0 {
+		t.Fatal("message loop start marker not found")
+	}
+	end := strings.Index(template[start:], `</el-row>`)
+	if end < 0 {
+		t.Fatal("message loop end marker not found")
+	}
+	messageRows := template[start : start+end]
+
+	for _, marker := range []string{"chatTime", "formatTime(v.time)", "v.show_time"} {
+		if strings.Contains(messageRows, marker) {
+			t.Fatalf("no-time message rows must not keep time marker %q", marker)
+		}
+	}
+	for _, marker := range []string{
+		`<{v.name}>`,
+		`v-html="v.content"`,
+		"v.read_status",
+		`class="noTimeMessageMeta" v-if="showKefuName!='off'"`,
+		"chatReadStatus",
+	} {
+		if !strings.Contains(messageRows, marker) {
+			t.Fatalf("no-time message rows missing compact layout %q", marker)
+		}
+	}
+}
+
+func TestClassicThreeNoTimePlayerTemplateIsSelectable(t *testing.T) {
+	settings := readPlayerTemplate(t, "setting_bottom.html")
+	for _, marker := range []string{"经典界面 3-无时间", "chat_page3_notime.html"} {
+		if !strings.Contains(settings, marker) {
+			t.Fatalf("player skin settings missing %q", marker)
 		}
 	}
 }
