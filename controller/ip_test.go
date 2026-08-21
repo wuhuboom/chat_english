@@ -14,13 +14,30 @@ import (
 
 func TestPostIpblackUsesAuthenticatedEnterprise(t *testing.T) {
 	originalCreate := createIpblack
-	t.Cleanup(func() { createIpblack = originalCreate })
+	originalFind := findVisitorsByEntIP
+	originalCleanup := cleanupBlacklistedVisitorsFn
+	t.Cleanup(func() {
+		createIpblack = originalCreate
+		findVisitorsByEntIP = originalFind
+		cleanupBlacklistedVisitorsFn = originalCleanup
+	})
 
 	var capturedKefuId, capturedEntId string
 	createIpblack = func(ip, kefuId, entId, name string) (uint, error) {
 		capturedKefuId = kefuId
 		capturedEntId = entId
 		return 1, nil
+	}
+	findVisitorsByEntIP = func(entID, ip string) []models.Visitor {
+		if entID != "42" || ip != "203.0.113.10" {
+			t.Fatalf("IP visitor lookup = %q/%q, want 42/203.0.113.10", entID, ip)
+		}
+		return []models.Visitor{{VisitorId: "visitor-a", EntId: "42", ToId: "agent-a"}}
+	}
+	cleanupCalled := false
+	cleanupBlacklistedVisitorsFn = func(entID, actor, detail string, visitors []models.Visitor) {
+		cleanupCalled = entID == "42" && actor == "agent-a" &&
+			strings.Contains(detail, "IP") && len(visitors) == 1 && visitors[0].VisitorId == "visitor-a"
 	}
 
 	form := url.Values{"ip": {"203.0.113.10"}, "name": {"访客A"}, "ent_id": {"999"}}
@@ -31,6 +48,9 @@ func TestPostIpblackUsesAuthenticatedEnterprise(t *testing.T) {
 
 	if capturedKefuId != "agent-a" || capturedEntId != "42" {
 		t.Fatalf("captured kefu=%q ent=%q, want agent-a/42", capturedKefuId, capturedEntId)
+	}
+	if !cleanupCalled {
+		t.Fatal("successful IP blacklist did not terminate matching visitor conversations")
 	}
 	assertIpblackResponseCode(t, recorder, 200)
 }

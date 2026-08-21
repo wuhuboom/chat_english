@@ -88,6 +88,7 @@ new Vue({
             this.wsSocketClosed=false;
             this.sendVisitorLogin();
             this.getExtendInfo();
+            syncUnreadVisitorMessages(this);
         },
         OnMessage:function(e) {
             console.log("ws:onmessage");
@@ -147,6 +148,9 @@ new Vue({
             }
             if (redata.type == "message") {
                 let msg = redata.data
+                if (hasVisitorChatMessageID(this, msg.msg_id)) {
+                    return;
+                }
                 //this.visitor.to_id=msg.id;
 
 
@@ -157,6 +161,7 @@ new Vue({
                     content.name = msg.name;
                     content.content =replaceSpecialTag(msgArr[i]);
                     content.is_kefu = false;
+                    content.read_status = GOFLY_LANG[LANG].unread;
                     content.time = msg.time;
                     content.is_reply=true;
                     content.msg_id = msg.msg_id;
@@ -639,8 +644,12 @@ new Vue({
                 if (Date.now() - lastClick >= ms) {
                     lastClick = Date.now();
                     //如果有未读消息，调用已读接口
-                    _this.sendAjax("/2/messages_read","post",{"visitor_id":_this.visitor.visitor_id,"kefu":_this.visitor.to_id},function(data){
-                        _this.haveUnreadMessage=false;
+                    var visibleMessageIDs=visibleUnreadVisitorMessageIDs(_this);
+                    if(visibleMessageIDs.length===0){
+                        return;
+                    }
+                    _this.sendAjax("/2/messages_read","post",{"visitor_id":_this.visitor.visitor_id,"ent_id":ENT_ID,"kefu":_this.visitor.to_id,"msg_ids":visibleMessageIDs.join(",")},function(data){
+                        markVisitorMessagesRead(_this, data.msg_ids);
                     });
                 }
             });
@@ -1125,7 +1134,7 @@ new Vue({
                         content.name = visitorMes["name"];
                         content.msg_id = visitorMes["msg_id"];
                         content.time = visitorMes["time"];
-                        _this.msgList.unshift(content);
+                        insertVisitorChatMessageByID(_this, content);
                         _this.scrollBottom();
                     }
                 }else{

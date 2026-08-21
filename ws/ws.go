@@ -99,6 +99,7 @@ type TypeMessage struct {
 }
 type ClientMessage struct {
 	MsgId     uint   `json:"msg_id"`
+	MsgIds    []uint `json:"msg_ids,omitempty"`
 	Name      string `json:"name"`
 	Avator    string `json:"avator"`
 	Id        string `json:"id"`
@@ -294,6 +295,62 @@ func SendMessageToVisitor(user *User, content []byte) error {
 	return writeUserMessage(user, websocket.TextMessage, content)
 }
 
+// SendMessageToCurrentVisitor delivers through the currently registered
+// visitor session. A failed write must evict that exact session so callers do
+// not keep treating a dead websocket as an online customer.
+func SendMessageToCurrentVisitor(visitorID string, user *User, content []byte) (UserState, bool, error) {
+	return sendMessageToCurrentVisitorWith(visitorID, user, content, SendMessageToVisitor)
+}
+
+func sendMessageToCurrentVisitorWith(visitorID string, initial *User, content []byte, send func(*User, []byte) error) (UserState, bool, error) {
+	candidate := initial
+	var lastErr error
+	for attempt := 0; attempt < 4; attempt++ {
+		current, ok := VisitorConnection(visitorID)
+		if !ok || current == nil {
+			if lastErr == nil {
+				lastErr = fmt.Errorf("websocket connection is unavailable")
+			}
+			return UserState{}, false, lastErr
+		}
+		if candidate != current {
+			candidate = current
+		}
+
+		err := send(candidate, content)
+		latest, latestOK := VisitorConnection(visitorID)
+		if err == nil {
+			if latestOK && latest == candidate {
+				return UserState{}, false, nil
+			}
+			// A reconnect replaced the socket while this write was in flight.
+			// Deliver once more to the newest session so the new page cannot miss it.
+			candidate = latest
+			continue
+		}
+
+		lastErr = err
+		removedState := candidate.State()
+		removed := RemoveVisitorConnection(visitorID, candidate)
+		if candidate.Conn != nil {
+			_ = candidate.Conn.Close()
+		}
+		latest, latestOK = VisitorConnection(visitorID)
+		if latestOK && latest != nil && latest != candidate {
+			candidate = latest
+			continue
+		}
+		if removed {
+			return removedState, true, err
+		}
+		return UserState{}, false, err
+	}
+	if lastErr == nil {
+		lastErr = fmt.Errorf("visitor websocket changed repeatedly during delivery")
+	}
+	return UserState{}, false, lastErr
+}
+
 func storeVisitorConnection(user *User) *User {
 	clientMux.Lock()
 	defer clientMux.Unlock()
@@ -311,4 +368,27 @@ func RemoveVisitorConnection(visitorID string, target *User) bool {
 	}
 	delete(clientList, visitorID)
 	return true
+}
+
+// DisconnectVisitor atomically removes the currently registered visitor
+// session before closing its socket. Removing first prevents the read loop
+// from deleting a newer replacement connection.
+func DisconnectVisitor(visitorID string, content []byte) (UserState, bool, error) {
+	for attempt := 0; attempt < 4; attempt++ {
+		visitor, ok := VisitorConnection(visitorID)
+		if !ok || visitor == nil {
+			return UserState{}, false, nil
+		}
+		if !RemoveVisitorConnection(visitorID, visitor) {
+			continue
+		}
+
+		state := visitor.State()
+		err := writeUserMessage(visitor, websocket.TextMessage, content)
+		if visitor.Conn != nil {
+			_ = visitor.Conn.Close()
+		}
+		return state, true, err
+	}
+	return UserState{}, false, fmt.Errorf("visitor websocket changed repeatedly during disconnect")
 }

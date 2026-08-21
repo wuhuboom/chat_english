@@ -13,6 +13,14 @@ var deleteIpblackByIp = models.DeleteIpblackByIp
 var deleteIpblackByIpAndEntId = models.DeleteIpblackByIpAndEntId
 var findIpsByEntId = models.FindIpsByEntId
 var findAllIps = models.FindIps
+var findVisitorsByEntIP = func(entID, ip string) []models.Visitor {
+	return models.FindVisitorsByCondition(
+		"ent_id = ? AND (client_ip = ? OR source_ip = ?)",
+		entID,
+		ip,
+		ip,
+	)
+}
 
 func isSuperAdmin(c *gin.Context) bool {
 	roleId, exists := c.Get("role_id")
@@ -59,6 +67,12 @@ func PostIpblack(c *gin.Context) {
 		})
 		return
 	}
+	cleanupBlacklistedVisitorsFn(
+		entId,
+		kefuId,
+		"加入IP黑名单，自动结束会话",
+		findVisitorsByEntIP(entId, ip),
+	)
 	c.JSON(200, gin.H{
 		"code": 200,
 		"msg":  "已加入IP黑名单，可在右侧或设置中的IP黑名单解除",

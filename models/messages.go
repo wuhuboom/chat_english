@@ -48,6 +48,9 @@ func FindMessageByVisitorIdUnread(visitor_id, mes_type string) []MessageKefu {
 	messages = FindMessageByWhere("message.visitor_id=? and message.status='unread' and message.mes_type=?", visitor_id, mes_type)
 	return messages
 }
+func FindMessageByVisitorEntIdUnread(visitorID, entID, mesType string) []MessageKefu {
+	return FindMessageByWhere("message.visitor_id=? and message.ent_id=? and message.status='unread' and message.mes_type=?", visitorID, entID, mesType)
+}
 func FindMessageByVisitorId(visitor_id string) []MessageKefu {
 	var messages []MessageKefu
 	messages = FindMessageByWhere("message.visitor_id=?", visitor_id)
@@ -73,6 +76,31 @@ func ReadMessageByEntIdVisitorId(visitor_id, ent_id, mesType string) {
 		Status: "read",
 	}
 	DB.Model(&message).Where("visitor_id=? and ent_id=? and mes_type=?", visitor_id, ent_id, mesType).Update(message)
+}
+
+// ReadMessagesByIDs acknowledges only messages actually rendered by the
+// visitor browser. This prevents a different, undelivered message in the same
+// conversation from being incorrectly marked read.
+func ReadMessagesByIDs(visitorID, entID, mesType string, messageIDs []uint) ([]uint, error) {
+	if len(messageIDs) == 0 {
+		return nil, nil
+	}
+	var messages []Message
+	query := DB.Select("id").Where("id in (?) and visitor_id=? and ent_id=? and mes_type=?", messageIDs, visitorID, entID, mesType)
+	if err := query.Find(&messages).Error; err != nil {
+		return nil, err
+	}
+	actualIDs := make([]uint, 0, len(messages))
+	for _, message := range messages {
+		actualIDs = append(actualIDs, message.ID)
+	}
+	if len(actualIDs) == 0 {
+		return actualIDs, nil
+	}
+	if err := DB.Model(&Message{}).Where("id in (?)", actualIDs).Update("status", "read").Error; err != nil {
+		return nil, err
+	}
+	return actualIDs, nil
 }
 
 // 修改消息状态

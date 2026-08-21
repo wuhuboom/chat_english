@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"go-fly-muti/models"
 )
 
 func TestWebSocketCloseInfo(t *testing.T) {
@@ -169,6 +170,105 @@ func TestVisitorReconnectKeepsNewestConnection(t *testing.T) {
 	current, ok := VisitorConnection(visitorID)
 	if !ok || current != second {
 		t.Fatal("new visitor connection was not preserved")
+	}
+}
+
+func TestSendMessageToCurrentVisitorRemovesBrokenConnection(t *testing.T) {
+	const visitorID = "visitor-broken-send"
+	broken := &User{Id: visitorID}
+	storeVisitorConnection(broken)
+	t.Cleanup(func() { RemoveVisitorConnection(visitorID, broken) })
+
+	removedState, removed, err := SendMessageToCurrentVisitor(visitorID, broken, []byte(`{"type":"message"}`))
+	if err == nil {
+		t.Fatal("send through a visitor connection without a websocket must fail")
+	}
+	if !removed {
+		t.Fatal("failed current visitor session must report that it was removed")
+	}
+	if removedState.Id != visitorID {
+		t.Fatalf("removed state = %#v, want visitor %q", removedState, visitorID)
+	}
+	if _, ok := VisitorConnection(visitorID); ok {
+		t.Fatal("broken visitor connection remained registered as online")
+	}
+}
+
+func TestSendMessageToCurrentVisitorRetriesNewestReplacement(t *testing.T) {
+	const visitorID = "visitor-replaced-during-send"
+	oldUser := &User{Id: visitorID, SessionID: 1}
+	newUser := &User{Id: visitorID, SessionID: 2}
+	storeVisitorConnection(oldUser)
+	t.Cleanup(func() {
+		RemoveVisitorConnection(visitorID, oldUser)
+		RemoveVisitorConnection(visitorID, newUser)
+	})
+
+	var delivered []*User
+	_, removed, err := sendMessageToCurrentVisitorWith(visitorID, oldUser, []byte("message"), func(user *User, _ []byte) error {
+		delivered = append(delivered, user)
+		if user == oldUser {
+			storeVisitorConnection(newUser)
+		}
+		return nil
+	})
+	if err != nil || removed {
+		t.Fatalf("replacement delivery = (removed %v, error %v), want success", removed, err)
+	}
+	if len(delivered) != 2 || delivered[0] != oldUser || delivered[1] != newUser {
+		t.Fatalf("delivery sessions = %#v, want old then newest", delivered)
+	}
+}
+
+func TestSendMessageToCurrentVisitorReportsRemovedReplacementState(t *testing.T) {
+	const visitorID = "visitor-replacement-failure"
+	oldUser := &User{Id: visitorID, To_id: "WGG1", SessionID: 1}
+	newUser := &User{Id: visitorID, To_id: "WGG2", SessionID: 2}
+	storeVisitorConnection(oldUser)
+	t.Cleanup(func() {
+		RemoveVisitorConnection(visitorID, oldUser)
+		RemoveVisitorConnection(visitorID, newUser)
+	})
+
+	removedState, removed, err := sendMessageToCurrentVisitorWith(visitorID, oldUser, []byte("message"), func(user *User, _ []byte) error {
+		if user == oldUser {
+			storeVisitorConnection(newUser)
+		}
+		return errors.New("write failed")
+	})
+	if err == nil || !removed {
+		t.Fatalf("replacement failure = (removed %v, error %v), want removed error", removed, err)
+	}
+	if removedState.SessionID != newUser.SessionID || removedState.ToID != "WGG2" {
+		t.Fatalf("removed state = %#v, want newest WGG2 session", removedState)
+	}
+}
+
+func TestDisconnectVisitorRemovesCurrentSessionWithoutSocket(t *testing.T) {
+	const visitorID = "blocked-visitor-disconnect"
+	visitor := &User{Id: visitorID, To_id: "agent-a", Ent_id: "42", SessionID: 99}
+	storeVisitorConnection(visitor)
+	t.Cleanup(func() { RemoveVisitorConnection(visitorID, visitor) })
+
+	state, removed, err := DisconnectVisitor(visitorID, []byte(`{"type":"force_close"}`))
+	if !removed {
+		t.Fatal("blacklisted visitor connection was not removed")
+	}
+	if state.Id != visitorID || state.ToID != "agent-a" || state.EntID != "42" {
+		t.Fatalf("removed state = %#v", state)
+	}
+	if err == nil {
+		t.Fatal("missing websocket should be reported after registry removal")
+	}
+	if _, ok := VisitorConnection(visitorID); ok {
+		t.Fatal("blacklisted visitor remained in the online registry")
+	}
+}
+
+func TestVisitorWebSocketTargetUsesStoredAssignment(t *testing.T) {
+	visitor := models.Visitor{ToId: "WGG2"}
+	if got := visitorWebSocketTarget("attacker-selected-kefu", visitor); got != "WGG2" {
+		t.Fatalf("visitor websocket target = %q, want stored assignment WGG2", got)
 	}
 }
 

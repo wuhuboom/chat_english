@@ -109,8 +109,9 @@ var app=new Vue({
         currentPage:1,
         showLoadMore:false,
         loadMoreDisable:false,
-        alertSounding:false,
-        alertSoundingTimer:null,
+            alertSounding:false,
+            alertSoundingTimer:null,
+            alertSoundingVisitorId:"",
         socketState:"connecting",
         lastSocketSignalAt:0,
         socketHealthNow:Date.now(),
@@ -296,7 +297,7 @@ var app=new Vue({
                             item.waiting_seconds>=this.slaOverdueSeconds &&
                             !this.slaAlertedVisitors[item.visitor_id]){
                             this.$set(this.slaAlertedVisitors,item.visitor_id,true);
-                            this.newVisitorForceAlert(item.username+" 会话等待已超时");
+                            this.newVisitorForceAlert(item.username+" 会话等待已超时", item.visitor_id);
                         }
                     }
                 });
@@ -380,8 +381,11 @@ var app=new Vue({
             switch (redata.type){
                 case "read":
                     if (redata.data.visitor_id == this.visitor.visitor_id) {
+                        var msg = redata.data;
                         for(var i=0;i<this.msgList.length;i++){
-                            this.$set(this.msgList[i],'read_status',GOFLY_LANG[LANG]['read']);
+                            if(Array.isArray(msg.msg_ids) && msg.msg_ids.indexOf(this.msgList[i].msg_id)!==-1){
+                                this.$set(this.msgList[i],'read_status',GOFLY_LANG[LANG]['read']);
+                            }
                         }
                     }
                     break;
@@ -401,6 +405,9 @@ var app=new Vue({
                 case "userOffline":
                     this.removeOfflineUser(redata.data);
                     //this.sendKefuOnline();
+                    break;
+                case "conversationResolved":
+                    this.resolveVisitorConversation(redata.data);
                     break;
                 case "callpeer":
                     this.handleCall(redata.data);
@@ -477,7 +484,7 @@ var app=new Vue({
 
                 },"*");
                 if(this.visitor.visitor_id!=msg.id && _this.getConfig("VisitorMessageAlert")=="on"){
-                    _this.newVisitorForceAlert(msg.name+"新消息提醒");
+                    _this.newVisitorForceAlert(msg.name+"新消息提醒", msg.id);
                 }
                 _this.chatInputing="";
                 _this.newMessageComing=true;
@@ -679,6 +686,35 @@ var app=new Vue({
                 }
             }
         },
+        resolveVisitorConversation:function (retData) {
+            const visitorId=retData && (retData.visitor_id || retData.uid);
+            if(!visitorId){
+                return;
+            }
+            [this.users, this.visitors].forEach((list) => {
+                list.forEach((item) => {
+                    if(item.visitor_id===visitorId){
+                        item.service_status="resolved";
+                        item.waiting_since="";
+                        item.waiting_seconds=0;
+                    }
+                });
+            });
+            this.$delete(this.slaAlertedVisitors, visitorId);
+            if(this.alertSoundingVisitorId===visitorId){
+                clearInterval(this.alertSoundingTimer);
+                this.alertSoundingTimer=null;
+                this.alertSounding=false;
+                this.alertSoundingVisitorId="";
+                if(this.$msgbox && typeof this.$msgbox.close==="function"){
+                    this.$msgbox.close();
+                }
+            }
+            if(this.currentGuest===visitorId){
+                this.applyConversationState({status:"resolved", waiting_since:null});
+                this.getConversationEvents(visitorId);
+            }
+        },
         //处理当前在线用户列表
         handleOnlineUsers:function (retData) {
             if (this.currentGuest == "") {
@@ -757,7 +793,7 @@ var app=new Vue({
             });
         },
         //新访客强制提醒
-        newVisitorForceAlert:function (title) {
+        newVisitorForceAlert:function (title, visitorId) {
             var _this=this;
             if(_this.alertSounding){
                 return;
@@ -770,11 +806,14 @@ var app=new Vue({
             }).then(function(){
                 clearInterval(timer);
                 _this.alertSounding=false;
+                _this.alertSoundingVisitorId="";
             }).catch(function(){
                 clearInterval(timer);
                 _this.alertSounding=false;
+                _this.alertSoundingVisitorId="";
             });
             _this.alertSounding=true;
+            _this.alertSoundingVisitorId=visitorId || "";
         },
         newVisitorForceAlertSound(){
             var _this=this;

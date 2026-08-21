@@ -99,6 +99,22 @@ func ResolveConversation(entId, visitorId, kefuId string, at time.Time) {
 	})
 }
 
+// ResolveExistingConversation closes an existing workflow without creating a
+// synthetic conversation for visitors that never started one.
+func ResolveExistingConversation(entId, visitorId, kefuId string, at time.Time) bool {
+	conversation := FindConversation(entId, visitorId)
+	if conversation.ID == 0 {
+		return false
+	}
+	result := DB.Model(&conversation).Updates(map[string]interface{}{
+		"kefu_id":       kefuId,
+		"status":        ConversationStatusResolved,
+		"waiting_since": nil,
+		"resolved_at":   at,
+	})
+	return result.Error == nil && result.RowsAffected > 0
+}
+
 func UpdateConversationWorkflow(entId, visitorId, kefuId, status, priority string, at time.Time) Conversation {
 	conversation := ensureConversation(entId, visitorId, kefuId)
 	updates := map[string]interface{}{"kefu_id": kefuId}

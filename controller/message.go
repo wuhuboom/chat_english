@@ -171,6 +171,7 @@ func SendKefuMessage(c *gin.Context) {
 	var msg ws.TypeMessage
 	guest, ok := ws.VisitorConnection(vistorInfo.VisitorId)
 	isRead := "unread"
+	delivery := "queued"
 	msgId := models.CreateMessage(kefuInfo.Name, vistorInfo.VisitorId, content, cType, entId.(string), isRead)
 	models.MarkConversationPending(entId.(string), vistorInfo.VisitorId, kefuInfo.Name, setting.Now())
 	if guest != nil && ok {
@@ -188,7 +189,16 @@ func SendKefuMessage(c *gin.Context) {
 			},
 		}
 		str, _ := json.Marshal(msg)
-		_ = ws.SendMessageToVisitor(guest, str)
+		removedState, removed, err := ws.SendMessageToCurrentVisitor(vistorInfo.VisitorId, guest, str)
+		if err != nil {
+			log.Printf("visitor websocket delivery failed visitor_id=%q message_id=%d error=%q", vistorInfo.VisitorId, msgId, err)
+			if removed {
+				ws.VisitorOffline(removedState.ToID, removedState.Id, removedState.Name)
+			}
+			go SendWechatKefuTemplate(vistorInfo.VisitorId, kefuInfo.Name, kefuInfo.Nickname, content, fmt.Sprintf("%v", entId))
+		} else {
+			delivery = "live"
+		}
 	} else {
 		go SendWechatKefuTemplate(vistorInfo.VisitorId, kefuInfo.Name, kefuInfo.Nickname, content, fmt.Sprintf("%v", entId))
 	}
@@ -212,8 +222,9 @@ func SendKefuMessage(c *gin.Context) {
 	go models.ReadMessageByVisitorId(vistorInfo.VisitorId, "visitor")
 
 	c.JSON(200, gin.H{
-		"code": 200,
-		"msg":  "ok",
+		"code":     200,
+		"msg":      "ok",
+		"delivery": delivery,
 	})
 }
 func SendVisitorNotice(c *gin.Context) {
@@ -447,22 +458,96 @@ func GetMessagesV2(c *gin.Context) {
 }
 func PostMessagesVisitorRead(c *gin.Context) {
 	visitorId := c.PostForm("visitor_id")
-	toId := c.PostForm("kefu")
-	models.ReadMessageByVisitorId(visitorId, "kefu")
-	msg := ws.TypeMessage{
-		Type: "read",
-		Data: ws.ClientMessage{
-			VisitorId: visitorId,
-			ToId:      toId,
-		},
+	entID := c.PostForm("ent_id")
+	messageIDs := parseVisitorReadMessageIDs(c.PostForm("msg_ids"))
+	if len(messageIDs) == 0 {
+		c.JSON(200, gin.H{
+			"code": 200,
+			"msg":  "ok",
+		})
+		return
 	}
+	state, ok := validateVisitorReadSession(visitorId, entID)
+	if !ok {
+		c.JSON(200, gin.H{
+			"code": 409,
+			"msg":  "访客连接已变更，请重新连接",
+		})
+		return
+	}
+	actualIDs, err := models.ReadMessagesByIDs(visitorId, state.EntID, "kefu", messageIDs)
+	if err != nil {
+		log.Printf("visitor read acknowledgement failed visitor_id=%q error=%q", visitorId, err)
+		c.JSON(200, gin.H{
+			"code": 500,
+			"msg":  "消息已读状态更新失败",
+		})
+		return
+	}
+	if len(actualIDs) == 0 {
+		c.JSON(200, gin.H{
+			"code": 200,
+			"msg":  "ok",
+		})
+		return
+	}
+	msg := visitorReadNotification(visitorId, state.ToID, actualIDs)
 	str2, _ := json.Marshal(msg)
-	ws.OneKefuMessage(toId, str2)
+	ws.OneKefuMessage(state.ToID, str2)
 	c.JSON(200, gin.H{
-		"code": 200,
-		"msg":  "ok",
+		"code":    200,
+		"msg":     "ok",
+		"msg_ids": actualIDs,
 	})
 }
+
+func validateVisitorReadSession(visitorID, entID string) (ws.UserState, bool) {
+	visitor, ok := ws.VisitorConnection(visitorID)
+	if !ok || visitor == nil {
+		return ws.UserState{}, false
+	}
+	state := visitor.State()
+	if state.EntID == "" || state.EntID != entID || state.ToID == "" {
+		return ws.UserState{}, false
+	}
+	return state, true
+}
+
+func visitorReadNotification(visitorID, toID string, messageIDs []uint) ws.TypeMessage {
+	return ws.TypeMessage{
+		Type: "read",
+		Data: ws.ClientMessage{
+			VisitorId: visitorID,
+			ToId:      toID,
+			MsgIds:    messageIDs,
+		},
+	}
+}
+
+func parseVisitorReadMessageIDs(raw string) []uint {
+	parts := strings.Split(raw, ",")
+	ids := make([]uint, 0, len(parts))
+	seen := make(map[uint]struct{}, len(parts))
+	for _, part := range parts {
+		value, err := strconv.ParseUint(strings.TrimSpace(part), 10, 64)
+		if err != nil || value == 0 {
+			continue
+		}
+		id := uint(value)
+		if _, exists := seen[id]; exists {
+			continue
+		}
+		seen[id] = struct{}{}
+		ids = append(ids, id)
+		if len(ids) == maxVisitorReadMessageIDs {
+			break
+		}
+	}
+	return ids
+}
+
+const maxVisitorReadMessageIDs = 200
+
 func PostMessagesKefuRead(c *gin.Context) {
 	visitorId := c.PostForm("visitor_id")
 	entId, _ := c.Get("ent_id")
@@ -511,15 +596,18 @@ func PostMessagesAsk(c *gin.Context) {
 }
 func GetMessagesVisitorUnread(c *gin.Context) {
 	visitorId := c.Query("visitor_id")
-	messages := models.FindMessageByVisitorIdUnread(visitorId, "kefu")
+	entID := c.Query("ent_id")
+	messages := models.FindMessageByVisitorEntIdUnread(visitorId, entID, "kefu")
 	chatMessages := make([]ChatMessage, 0)
 
 	for _, message := range messages {
 		//item := make(map[string]interface{})
 		var chatMessage ChatMessage
+		chatMessage.MsgId = message.ID
 		chatMessage.Time = message.CreatedAt.Format("2006-01-02 15:04:05")
 		chatMessage.Content = message.Content
 		chatMessage.MesType = message.MesType
+		chatMessage.ReadStatus = message.Status
 		if message.MesType == "kefu" {
 			chatMessage.Name = message.KefuName
 			chatMessage.Avator = message.KefuAvator

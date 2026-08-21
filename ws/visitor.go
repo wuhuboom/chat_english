@@ -21,9 +21,9 @@ func NewVisitorServer(c *gin.Context) {
 		return
 	}
 	//获取GET参数,创建WS
-	toId := c.Query("to_id")
+	requestedToID := c.Query("to_id")
 	visitorId := c.Query("visitor_id")
-	if toId == "" || visitorId == "" {
+	if visitorId == "" {
 		log.Println("访客ws参数为空")
 		conn.Close()
 		return
@@ -31,10 +31,14 @@ func NewVisitorServer(c *gin.Context) {
 
 	//獲取訪客
 	vistorInfo := models.FindVisitorByVistorId(visitorId)
-	if vistorInfo.VisitorId == "" {
+	toId := visitorWebSocketTarget(requestedToID, vistorInfo)
+	if vistorInfo.VisitorId == "" || toId == "" {
 		log.Println("访客visitorId不存在:", visitorId)
 		conn.Close()
 		return
+	}
+	if requestedToID != "" && requestedToID != toId {
+		log.Printf("visitor websocket target ignored visitor_id=%q requested=%q stored=%q", visitorId, requestedToID, toId)
 	}
 	user := &User{
 		Conn:       conn,
@@ -98,6 +102,10 @@ func NewVisitorServer(c *gin.Context) {
 			messageType: messageType,
 		}
 	}
+}
+
+func visitorWebSocketTarget(_ string, visitor models.Visitor) string {
+	return visitor.ToId
 }
 
 // AddVisitorToList returns true only when this is a newly-online visitor.

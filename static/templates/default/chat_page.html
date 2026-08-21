@@ -12,7 +12,7 @@
     <script src="/static/element-ui/2.15.1/index.js"></script>
     <script src="/static/jquery/3.6.0/jquery.min.js"></script>
 
-    <script src="/static/js/functions.js?v=0.7.1"></script>
+    <script src="/static/js/functions.js?v=0.7.2"></script>
     <link rel="stylesheet" href="/static/css/front.css?v=0.6.0" />
     <link rel="stylesheet" href="/static/css/common.css?v=0.6.3" />
     <link rel="stylesheet" href="/static/css/icono.min.css" />
@@ -425,6 +425,7 @@
                 this.wsSocketClosed = false;
                 this.sendVisitorLogin();
                 this.getExtendInfo();
+                syncUnreadVisitorMessages(this);
                 this.reconnectDialog = false;
             },
             OnMessage: function (e) {
@@ -485,6 +486,9 @@
                 }
                 if (redata.type == "message") {
                     let msg = redata.data
+                    if (hasVisitorChatMessageID(this, msg.msg_id)) {
+                        return;
+                    }
                     //this.visitor.to_id=msg.id;
                     var _this = this;
 
@@ -495,6 +499,7 @@
                         content.name = msg.name;
                         content.content = replaceSpecialTag(msgArr[i]);
                         content.is_kefu = false;
+                        content.read_status = GOFLY_LANG[LANG].unread;
                         content.time = msg.time;
                         content.is_reply = true;
                         content.msg_id = msg.msg_id;
@@ -979,8 +984,12 @@
                     if (Date.now() - lastClick >= ms) {
                         lastClick = Date.now();
                         //如果有未读消息，调用已读接口
-                        _this.sendAjax("/2/messages_read", "post", { "visitor_id": _this.visitor.visitor_id, "kefu": _this.visitor.to_id }, function (data) {
-                            _this.haveUnreadMessage = false;
+                        var visibleMessageIDs = visibleUnreadVisitorMessageIDs(_this);
+                        if (visibleMessageIDs.length === 0) {
+                            return;
+                        }
+                        _this.sendAjax("/2/messages_read", "post", { "visitor_id": _this.visitor.visitor_id, "ent_id": ENT_ID, "kefu": _this.visitor.to_id, "msg_ids": visibleMessageIDs.join(",") }, function (data) {
+                            markVisitorMessagesRead(_this, data.msg_ids);
                         });
                     }
                 });
@@ -1530,7 +1539,7 @@
                             content.name = visitorMes["name"];
                             content.msg_id = visitorMes["msg_id"];
                             content.time = visitorMes["time"];
-                            _this.msgList.unshift(content);
+                            insertVisitorChatMessageByID(_this, content);
                             //_this.scrollBottom();
                         }
                     } else {

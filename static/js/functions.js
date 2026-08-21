@@ -295,6 +295,143 @@ function replaceSpecialTag(str,baseUrl) {
         });
         return str;
 }
+
+// Reconcile persisted unread messages whenever the visitor websocket opens.
+// WebSocket writes can fail during a short mobile-network transition even
+// though the message was safely stored by the server.
+function syncUnreadVisitorMessages(vm) {
+    if (!vm || !vm.visitor || !vm.visitor.visitor_id) {
+        return;
+    }
+    var entId = typeof ENT_ID === "undefined" ? "" : ENT_ID;
+    $.get("/2/messages_page", {visitor_id: vm.visitor.visitor_id, ent_id: entId, page: 1, pagesize: 50}, function (res) {
+        if (!res || res.code !== 200 || !res.result || !Array.isArray(res.result.list)) {
+            return;
+        }
+        mergeRecoveredVisitorMessages(vm, res.result.list);
+    });
+    $.get("/2/messages_unread", {visitor_id: vm.visitor.visitor_id, ent_id: entId}, function (res) {
+        if (!res || res.code !== 200 || !Array.isArray(res.result)) {
+            return;
+        }
+        mergeRecoveredVisitorMessages(vm, res.result);
+    });
+}
+
+function mergeRecoveredVisitorMessages(vm, messages) {
+    if (!vm || !Array.isArray(messages)) {
+        return;
+    }
+    var added = false;
+    for (var j = 0; j < messages.length; j++) {
+        var message = messages[j];
+        if (message.mes_type === "visitor") {
+            continue;
+        }
+        var content = {
+            avator: message.avator,
+            name: message.name,
+            content: replaceSpecialTag(message.content),
+            is_kefu: false,
+            is_reply: true,
+            msg_id: message.msg_id,
+            time: message.time,
+            read_status: message.read_status === "read" ? GOFLY_LANG[LANG].read : GOFLY_LANG[LANG].unread
+        };
+        if (insertVisitorChatMessageByID(vm, content)) {
+            added = true;
+        }
+    }
+    if (added || hasUnreadVisitorMessages(vm)) {
+        vm.haveUnreadMessage = true;
+    }
+    if (added) {
+        vm.scrollBottom();
+    }
+}
+
+function hasVisitorChatMessageID(vm, messageID) {
+    if (!vm || !Array.isArray(vm.msgList) || !messageID) {
+        return false;
+    }
+    for (var i = 0; i < vm.msgList.length; i++) {
+        if (String(vm.msgList[i].msg_id) === String(messageID)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function insertVisitorChatMessageByID(vm, message) {
+    if (!vm || !Array.isArray(vm.msgList) || !message) {
+        return false;
+    }
+    if (!message.msg_id) {
+        vm.msgList.push(message);
+        return true;
+    }
+    if (hasVisitorChatMessageID(vm, message.msg_id)) {
+        return false;
+    }
+    for (var i = 0; i < vm.msgList.length; i++) {
+        var existingID = Number(vm.msgList[i].msg_id || 0);
+        if (existingID > 0 && existingID > Number(message.msg_id)) {
+            vm.msgList.splice(i, 0, message);
+            return true;
+        }
+    }
+    vm.msgList.push(message);
+    return true;
+}
+
+function hasUnreadVisitorMessages(vm) {
+    if (!vm || !Array.isArray(vm.msgList)) {
+        return false;
+    }
+    for (var i = 0; i < vm.msgList.length; i++) {
+        var message = vm.msgList[i];
+        if (message.is_kefu === false && message.msg_id && message.read_status !== GOFLY_LANG[LANG].read) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function visibleUnreadVisitorMessageIDs(vm) {
+    if (!vm || !Array.isArray(vm.msgList)) {
+        return [];
+    }
+    var ids = [];
+    var seen = {};
+    for (var i = 0; i < vm.msgList.length; i++) {
+        var message = vm.msgList[i];
+        if (message.is_kefu !== false || !message.msg_id || message.read_status === GOFLY_LANG[LANG].read || seen[String(message.msg_id)]) {
+            continue;
+        }
+        seen[String(message.msg_id)] = true;
+        ids.push(message.msg_id);
+        if (ids.length === 200) {
+            break;
+        }
+    }
+    return ids;
+}
+
+function markVisitorMessagesRead(vm, messageIDs) {
+    if (!vm || !Array.isArray(vm.msgList) || !Array.isArray(messageIDs)) {
+        return;
+    }
+    var acknowledged = {};
+    for (var i = 0; i < messageIDs.length; i++) {
+        acknowledged[String(messageIDs[i])] = true;
+    }
+    for (var j = 0; j < vm.msgList.length; j++) {
+        if (acknowledged[String(vm.msgList[j].msg_id)]) {
+            vm.msgList[j].read_status = GOFLY_LANG[LANG].read;
+        }
+    }
+    vm.haveUnreadMessage = hasUnreadVisitorMessages(vm);
+}
 function bigPic(src,isVisitor){
     alert(src);
     if (isVisitor) {

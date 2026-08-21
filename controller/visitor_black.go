@@ -13,6 +13,11 @@ type VisitorBlackForm struct {
 	Name      string `form:"name" json:"name" uri:"name" xml:"name" binding:"required"`
 }
 
+var addVisitorBlack = func(model *models.VisitorBlack) error {
+	return model.AddVisitorBlack()
+}
+var findVisitorForBlacklist = models.FindVisitorByVistorId
+
 //列表
 func GeVisitorBlacks(c *gin.Context) {
 	entId, _ := c.Get("ent_id")
@@ -60,7 +65,23 @@ func PostVisitorBlack(c *gin.Context) {
 		KefuName:  kefuName.(string),
 	}
 
-	model.AddVisitorBlack()
+	if err := addVisitorBlack(model); err != nil {
+		c.JSON(200, gin.H{
+			"code": types.ApiCode.FAILED,
+			"msg":  "添加访客黑名单失败",
+		})
+		return
+	}
+
+	visitor := findVisitorForBlacklist(form.VisitorId)
+	if visitor.ID != 0 && visitor.EntId == entId.(string) {
+		cleanupBlacklistedVisitorsFn(
+			entId.(string),
+			kefuName.(string),
+			"加入访客黑名单，自动结束会话",
+			[]models.Visitor{visitor},
+		)
+	}
 
 	c.JSON(200, gin.H{
 		"code": types.ApiCode.SUCCESS,
