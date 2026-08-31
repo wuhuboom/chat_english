@@ -453,7 +453,9 @@ body{
     border: 1px solid rgb(237,237,237);
     min-height: 20px;
     padding: 8px 15px;
-    word-break: break-all;
+    /* Keep natural English word boundaries; only split unbroken URLs/IDs if needed. */
+    word-break: normal;
+    overflow-wrap: break-word;
     position: relative;
     border-radius: 5px;
     display: inline-block;
