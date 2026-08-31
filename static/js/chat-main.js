@@ -578,12 +578,17 @@ var app=new Vue({
             //     clearInterval(this.alertSoundingTimer);
             // }
         },
+        handleMessageKeydown(event) {
+            if(!ChatInput.shouldSendOnKeydown(event)){
+                return;
+            }
+            event.preventDefault();
+            this.chatToUser();
+        },
         //发送给客户
         chatToUser() {
-            this.messageContent=this.messageContent.trim("\r\n");
-            this.messageContent=this.messageContent.replace("\n","");
-            this.messageContent=this.messageContent.replace("\r\n","");
-            if(this.messageContent==""||this.messageContent=="\r\n"||this.currentGuest==""){
+            const messageContent=ChatInput.normalizeMessage(this.messageContent);
+            if(messageContent==""||this.currentGuest==""){
                 return;
             }
             if(this.sendDisabled){
@@ -593,10 +598,9 @@ var app=new Vue({
             let _this=this;
             let mes = {};
             mes.type = "kefu";
-            mes.content = this.messageContent;
+            mes.content = messageContent;
             mes.from_id = this.kfConfig.id;
             mes.to_id = this.currentGuest;
-            mes.content = this.messageContent;
             $.ajax({
                 type:"post",
                 url:"/kefu/message",

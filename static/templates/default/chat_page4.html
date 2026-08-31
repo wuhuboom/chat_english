@@ -114,13 +114,13 @@
                                     <div class="chatUser"  v-if="showKefuName!='off'"><{v.name}></div>
                                     <div class="chatTime" v-bind:class="{'chatTimeHide': v.show_time==false}"><{formatTime(v.time)}></div>
                                 </div>
-                                <div class="chatContent replyContentBtn" v-html="v.content"></div>
+                                <div class="chatContent replyContentBtn" v-html="v.content.replace(/\n/g, '<br/>')"></div>
                             </el-col>
                         </div>
                         <div class="kefuMe" v-if="v.is_kefu==true">
                             <div class="chatTime" v-bind:class="{'chatTimeHide': v.show_time==false}"><span><{formatTime(v.time)}></span></div>
                             <el-col :span="24">
-                                <div class="chatContent replyContentBtn" v-html="v.content"></div>
+                                <div class="chatContent replyContentBtn" v-html="v.content.replace(/\n/g, '<br/>')"></div>
                                 <div class="chatReadStatus"><{v.read_status}></div>
                             </el-col>
                         </div>

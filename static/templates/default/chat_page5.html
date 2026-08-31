@@ -147,7 +147,7 @@
                                 </div>
                                 <div
                                         style="padding: 1px;display: inline-block;border-radius: 0 10px 10px 10px;background-color: #353641;">
-                                    <div class="chatContent replyContentBtn" v-html="v.content"></div>
+                                    <div class="chatContent replyContentBtn" v-html="v.content.replace(/\n/g, '<br/>')"></div>
                                 </div>
                             </el-col>
                         </div>
@@ -156,7 +156,7 @@
                                         <{formatTime(v.time)}>
                                     </span></div>
                             <el-col :span="24">
-                                <div class="chatContent replyContentBtn" v-html="v.content"></div>
+                                <div class="chatContent replyContentBtn" v-html="v.content.replace(/\n/g, '<br/>')"></div>
                                 <!-- <div class="chatReadStatus">
                                     <{v.read_status}>
                                 </div> -->

@@ -153,13 +153,13 @@
                                 </div>
                                 <div
                                         style="padding: 1px;background: linear-gradient(to right, #20A2AA, #78F64E);display: inline-block;border-radius: 0 6px 6px 6px;">
-                                    <div class="chatContent replyContentBtn" v-html="v.content"></div>
+                                    <div class="chatContent replyContentBtn" v-html="v.content.replace(/\n/g, '<br/>')"></div>
                                 </div>
                             </el-col>
                         </div>
                         <div class="kefuMe" v-if="v.is_kefu==true">
                             <el-col :span="24">
-                                <div class="chatContent replyContentBtn" v-html="v.content"></div>
+                                <div class="chatContent replyContentBtn" v-html="v.content.replace(/\n/g, '<br/>')"></div>
                                 <div class="chatReadStatus">
                                     <{v.read_status}>
                                 </div>

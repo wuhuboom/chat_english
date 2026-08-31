@@ -149,12 +149,12 @@
                                     <div class="chatUser" v-if="showKefuName!='off'">
                                         <{v.name}>
                                     </div>
-                                    <div class="chatContent replyContentBtn" v-html="v.content"></div>
+                                    <div class="chatContent replyContentBtn" v-html="v.content.replace(/\n/g, '<br/>')"></div>
                                 </div>
                             </div>
                             <div class="visitorMessageLine visitorMessageMine" v-if="v.is_kefu==true">
                                 <div class="visitorMessagePayload">
-                                    <div class="chatContent replyContentBtn" v-html="v.content"></div>
+                                    <div class="chatContent replyContentBtn" v-html="v.content.replace(/\n/g, '<br/>')"></div>
                                     <div class="chatReadStatus">
                                         <{v.read_status}>
                                     </div>

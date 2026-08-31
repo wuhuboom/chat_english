@@ -158,7 +158,7 @@
                                 <el-col :span="3"><el-avatar shape="square" :size="48" :src="v.avator"></el-avatar></el-col>
                                 <el-col :span="21">
                                     <div class="chatUser"><{v.name}></div>
-                                    <div class="chatContent" v-html="v.content"></div>
+                                    <div class="chatContent" v-html="v.content.replace(/\n/g, '<br/>')"></div>
                                     <div class="chatReadStatus" v-show="v.is_kefu==true"><{v.read_status}></div>
                                     <div class="chatDeleteBtn">
                                         <el-button v-show="v.is_kefu==true"  v-on:click="deleteMessage(v.msg_id)" size="mini" type="danger" icon="el-icon-delete" circle></el-button>
@@ -211,7 +211,7 @@
                                 </div>
                             </div>
                             <div class="clear"></div>
-                            <el-input @blur="resizeChatBox"  @focus="resizeChatBox" :autosize="{ minRows: 2, maxRows: 10}" type="textarea" class="chatArea" v-model="messageContent"  v-on:keyup.enter.native="chatToUser"  placeholder="请输入内容"></el-input>
+                            <el-input @blur="resizeChatBox" @focus="resizeChatBox" :autosize="{ minRows: 2, maxRows: 10}" type="textarea" class="chatArea" v-model="messageContent" @keydown.native="handleMessageKeydown" placeholder="输入内容；Enter 换行，Ctrl/⌘+Enter 发送"></el-input>
                         </div>
 
                     </div>
@@ -584,6 +584,7 @@
 </body>
 <script src="/static/js/chat-lang.js?v=1.0.1"></script>
 <script src="/static/js/wangEditor.min.js"></script>
+<script src="/static/js/chat-input.js?v=1.0.0"></script>
 <script src="/static/js/chat-main.js?v=1.2.2"></script>
 
 </html>

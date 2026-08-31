@@ -168,7 +168,7 @@
                     <img class="noReadIcon" v-show="v.read_status!='已读'" src="/static/images/chatIcon/no-read.png"
                       alt="">
                   </div>
-                  <div class="chatContent replyContentBtn" v-html="v.content"></div>
+                  <div class="chatContent replyContentBtn" v-html="v.content.replace(/\n/g, '<br/>')"></div>
                 </el-col>
               </div>
               <div class="kefuMe" v-if="v.is_kefu==true">
@@ -179,7 +179,7 @@
                       <img class="noReadIcon" v-show="v.read_status!='已读'" src="/static/images/chatIcon/no-read.png"
                         alt="">
                     </div>
-                    <div class="chatContent replyContentBtn" v-html="v.content"></div>
+                    <div class="chatContent replyContentBtn" v-html="v.content.replace(/\n/g, '<br/>')"></div>
                   </div>
                   <!-- <div class="chatReadStatus">
                     <{v.read_status}>
