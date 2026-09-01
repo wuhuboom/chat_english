@@ -211,7 +211,7 @@
                                 </div>
                             </div>
                             <div class="clear"></div>
-                            <el-input @blur="resizeChatBox" @focus="resizeChatBox" :autosize="{ minRows: 2, maxRows: 10}" type="textarea" class="chatArea" v-model="messageContent" @keydown.native="handleMessageKeydown" placeholder="输入内容；Enter 换行，Ctrl/⌘+Enter 发送"></el-input>
+                            <el-input @blur="resizeChatBox" @focus="resizeChatBox" :autosize="{ minRows: 2, maxRows: 10}" type="textarea" class="chatArea" v-model="messageContent" @keydown.native="handleMessageKeydown" placeholder="输入内容；Enter 发送，Ctrl/⌘+Enter 换行"></el-input>
                         </div>
 
                     </div>
@@ -584,7 +584,7 @@
 </body>
 <script src="/static/js/chat-lang.js?v=1.0.1"></script>
 <script src="/static/js/wangEditor.min.js"></script>
-<script src="/static/js/chat-input.js?v=1.0.0"></script>
+<script src="/static/js/chat-input.js?v=1.0.1"></script>
 <script src="/static/js/chat-main.js?v=1.2.2"></script>
 
 </html>

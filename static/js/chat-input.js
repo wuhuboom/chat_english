@@ -17,7 +17,7 @@
             return false;
         }
         var isEnter = event.key === "Enter" || event.keyCode === 13;
-        return Boolean(isEnter && (event.ctrlKey || event.metaKey));
+        return Boolean(isEnter && !event.ctrlKey && !event.metaKey);
     }
 
     return {
