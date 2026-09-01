@@ -579,6 +579,23 @@ var app=new Vue({
             // }
         },
         handleMessageKeydown(event) {
+            if(ChatInput.shouldInsertNewlineOnKeydown(event)){
+                event.preventDefault();
+                const target=event.target;
+                const content=target&&typeof target.value==="string"?target.value:this.messageContent;
+                const result=ChatInput.insertNewlineAtSelection(
+                    content,
+                    target&&target.selectionStart,
+                    target&&target.selectionEnd
+                );
+                this.messageContent=result.content;
+                this.$nextTick(function(){
+                    if(target&&typeof target.setSelectionRange==="function"){
+                        target.setSelectionRange(result.cursorPosition,result.cursorPosition);
+                    }
+                });
+                return;
+            }
             if(!ChatInput.shouldSendOnKeydown(event)){
                 return;
             }
