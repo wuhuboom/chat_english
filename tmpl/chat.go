@@ -99,6 +99,7 @@ func PageChat(c *gin.Context) {
 		"Title":          title,
 		"ShowKefuName":   ShowKefuName,
 		"SystemTimezone": setting.CurrentTimezone(),
+		"H5ChatTemplate": FontVersion,
 	})
 }
 

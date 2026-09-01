@@ -19,6 +19,9 @@
     <link rel="icon" href="/static/images/favicon.ico">
     <link rel="stylesheet" href="/static/css/chart-page.css?v=0.0.1" />
     <link rel="stylesheet" href="/static/css/visitor-modern.css?v=1.1.1" />
+    {{if eq .H5ChatTemplate "chat_wx.html"}}
+    <link rel="stylesheet" href="/static/css/chat-wx.css?v=1.0.0" />
+    {{end}}
     <style>
         .el-message-box {
             width: auto;
@@ -29,7 +32,7 @@
     </style>
 </head>
 
-<body class="visitorChatBody">
+<body class="visitorChatBody{{if eq .H5ChatTemplate "chat_wx.html"}} visitorWechatSkin{{end}}">
     <div id="app" class="chatCenter">
         <template>
             <!--客服代码-->
@@ -159,6 +162,10 @@
                                         <{v.read_status}>
                                     </div>
                                 </div>
+                                {{if eq .H5ChatTemplate "chat_wx.html"}}
+                                <el-avatar class="visitorMessageAvatar visitorMessageSelfAvatar" shape="square" :size="40"
+                                        :src="v.avator"></el-avatar>
+                                {{end}}
                             </div>
                         </div>
 

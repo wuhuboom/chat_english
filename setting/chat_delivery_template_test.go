@@ -14,12 +14,7 @@ func TestEveryH5TemplateRecoversUnreadMessagesAndAcknowledgesVisibleIDs(t *testi
 		template := template
 		t.Run(template, func(t *testing.T) {
 			t.Parallel()
-			path := filepath.Join("..", "static", "templates", "default", template)
-			content, err := os.ReadFile(path)
-			if err != nil {
-				t.Fatalf("read %s: %v", path, err)
-			}
-			source := string(content)
+			source := readH5TemplateSource(t, template)
 			if !strings.Contains(source, "syncUnreadVisitorMessages(this);") {
 				t.Fatalf("%s does not recover persisted unread messages after websocket connect", template)
 			}
@@ -37,6 +32,20 @@ func TestEveryH5TemplateRecoversUnreadMessagesAndAcknowledgesVisibleIDs(t *testi
 			}
 		})
 	}
+}
+
+func readH5TemplateSource(t *testing.T, template string) string {
+	t.Helper()
+	path := filepath.Join("..", "static", "templates", "default", template)
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read %s: %v", path, err)
+	}
+	source := string(content)
+	if strings.Contains(source, `{{template "chat_page.html" .}}`) {
+		source += readH5TemplateSource(t, "chat_page.html")
+	}
+	return source
 }
 
 func TestAgentChatMarksOnlyAcknowledgedMessagesRead(t *testing.T) {

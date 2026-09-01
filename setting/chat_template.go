@@ -19,6 +19,7 @@ var allowedH5ChatTemplates = map[string]struct{}{
 	"chat_page3-1.html":      {},
 	"chat_page4.html":        {},
 	"chat_page5.html":        {},
+	"chat_wx.html":           {},
 }
 
 // ValidateH5ChatTemplate only accepts templates shipped with the application.
