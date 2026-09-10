@@ -12,7 +12,7 @@
     <script src="/static/js/reconnecting-websocket.min.js"></script>
     <link rel="stylesheet" href="/static/css/icono.min.css" />
     <link rel="stylesheet" href="/static/css/front.css"/>
-    <link rel="stylesheet" href="/static/css/common.css?v=1.0.2"/>
+    <link rel="stylesheet" href="/static/css/common.css?v=1.0.3"/>
 
     <style>
         .el-row{width:100%}
@@ -207,10 +207,20 @@
                                         <div title="拉黑用户" class="icono-forbidden" v-on:click="addVisitorBlack()"></div>
                                     </el-tooltip>
                                     <div style="display: none;" title="英文翻译" class="icono-dribbble" v-on:click="translate"></div>
-                                    <el-button class="kefuSendBtn" :disabled="sendDisabled" size="small" type="primary" v-on:click="chatToUser"><{flyLang.sent}></el-button>
+                                    <el-button class="kefuSendBtn" :disabled="sendDisabled" size="small" type="primary" v-on:click="chatToUser"><{pasteImageUploading ? '发送中…' : flyLang.sent}></el-button>
                                 </div>
                             </div>
                             <div class="clear"></div>
+                        <div class="pastedImageDraft" v-if="pendingImageFile">
+                            <img :src="pendingImagePreview" alt="待发送图片预览">
+                            <div class="pastedImageDraftInfo">
+                                <strong><{pendingImageName}></strong>
+                                <span><{pasteImageUploading ? '正在上传并发送…' : '待发送 · 按 Enter 或点击发送'}></span>
+                            </div>
+                            <button type="button" aria-label="取消发送图片" :disabled="pasteImageUploading" @click="clearPendingImage">
+                                <i class="el-icon-close"></i>
+                            </button>
+                        </div>
                             <el-input @blur="resizeChatBox" @focus="resizeChatBox" :autosize="{ minRows: 2, maxRows: 10}" type="textarea" class="chatArea" v-model="messageContent" @keydown.native="handleMessageKeydown" placeholder="输入内容；Enter 发送，Ctrl/⌘+Enter 换行"></el-input>
                         </div>
 
@@ -585,6 +595,6 @@
 <script src="/static/js/chat-lang.js?v=1.0.1"></script>
 <script src="/static/js/wangEditor.min.js"></script>
 <script src="/static/js/chat-input.js?v=1.0.2"></script>
-<script src="/static/js/chat-main.js?v=1.2.3"></script>
+<script src="/static/js/chat-main.js?v=1.2.4"></script>
 
 </html>

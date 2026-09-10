@@ -33,6 +33,12 @@ var app=new Vue({
         //server:getWsBaseUrl()+"/chat_server",
         socket:null,
         messageContent:"",
+        pendingImageFile:null,
+        pendingImagePreview:"",
+        pendingImageName:"",
+        pendingImageGuestId:"",
+        pasteImageUploading:false,
+        pasteImageDraftVersion:0,
         currentGuest:"",
         msgList:[],
         chatTitle:GOFLY_LANG[LANG].chatIntro,
@@ -528,6 +534,9 @@ var app=new Vue({
         },
         //接手客户
         talkTo(guestId,name) {
+            if(this.pendingImageGuestId && this.pendingImageGuestId!==guestId){
+                this.clearPendingImage();
+            }
             this.currentGuest = guestId;
             this.visitor.visitor_id=guestId;
             if(this.isMobile){
@@ -605,12 +614,22 @@ var app=new Vue({
         //发送给客户
         chatToUser() {
             const messageContent=ChatInput.normalizeMessage(this.messageContent);
-            if(messageContent==""||this.currentGuest==""){
+            if(this.currentGuest===""){
                 return;
             }
             if(this.sendDisabled){
                 return;
             }
+            if(this.pendingImageFile){
+                this.uploadPendingImageAndSend(messageContent);
+                return;
+            }
+            if(messageContent===""){
+                return;
+            }
+            this.sendChatMessage(messageContent, false);
+        },
+        sendChatMessage(messageContent, clearPendingImage) {
             this.sendDisabled=true;
             let _this=this;
             let mes = {};
@@ -640,11 +659,83 @@ var app=new Vue({
                         return;
                     }
                     _this.messageContent = "";
+                    if(clearPendingImage){
+                        _this.clearPendingImage();
+                    }
                     _this.sendSound();
                     _this.applyConversationState({status:"pending", waiting_since:null});
+                },
+                error: function() {
+                    _this.sendDisabled=false;
+                    _this.pasteImageUploading=false;
+                    _this.$message({
+                        message: "消息发送失败，请检查网络后重试",
+                        type: 'error'
+                    });
                 }
             });
             this.scrollBottom();
+        },
+        uploadPendingImageAndSend(messageContent) {
+            if(this.pasteImageUploading || !this.pendingImageFile){
+                return;
+            }
+            if(this.pendingImageGuestId!==this.currentGuest){
+                this.clearPendingImage();
+                this.$message({message:"会话已切换，请重新粘贴图片", type:'warning'});
+                return;
+            }
+            const file=this.pendingImageFile;
+            const guestId=this.currentGuest;
+            const draftVersion=this.pasteImageDraftVersion;
+            const formData=new FormData();
+            formData.append('imgfile', file);
+            this.sendDisabled=true;
+            this.pasteImageUploading=true;
+            let _this=this;
+            $.ajax({
+                url:'/uploadimg',
+                type:'post',
+                data:formData,
+                contentType:false,
+                processData:false,
+                dataType:'JSON',
+                mimeType:'multipart/form-data',
+                success:function(res){
+                    if(draftVersion!==_this.pasteImageDraftVersion || guestId!==_this.currentGuest){
+                        _this.sendDisabled=false;
+                        _this.pasteImageUploading=false;
+                        return;
+                    }
+                    if(res.code!==200){
+                        _this.sendDisabled=false;
+                        _this.pasteImageUploading=false;
+                        _this.$message({message:res.msg, type:'error'});
+                        return;
+                    }
+                    _this.pasteImageUploading=false;
+                    _this.sendDisabled=false;
+                    const imageContent='img[/' + res.result.path + ']';
+                    const content=messageContent ? messageContent+'\n'+imageContent : imageContent;
+                    _this.sendChatMessage(content, true);
+                },
+                error:function(){
+                    _this.sendDisabled=false;
+                    _this.pasteImageUploading=false;
+                    _this.$message({message:'图片上传失败，请重试', type:'error'});
+                }
+            });
+        },
+        clearPendingImage() {
+            this.pasteImageDraftVersion+=1;
+            if(this.pendingImagePreview){
+                URL.revokeObjectURL(this.pendingImagePreview);
+            }
+            this.pendingImageFile=null;
+            this.pendingImagePreview="";
+            this.pendingImageName="";
+            this.pendingImageGuestId="";
+            this.pasteImageUploading=false;
         },
         //处理当前在线用户列表
         addOnlineUser:function (retData) {
@@ -1334,47 +1425,40 @@ var app=new Vue({
                 }
             });
         },
-        //粘贴上传图片
+        //粘贴图片进入待发送区
         onPasteUpload(event){
-            let items = event.clipboardData && event.clipboardData.items;
-            let file = null
-            if (items && items.length) {
-                // 检索剪切板items
-                for (var i = 0; i < items.length; i++) {
-                    if (items[i].type.indexOf('image') !== -1) {
-                        file = items[i].getAsFile()
-                    }
-                }
-            }
-            if (!file) {
+            const target=event.target;
+            if(!target || typeof target.closest!=="function" || !target.closest(".chatArea")){
                 return;
             }
-            let _this=this;
-            var formData = new FormData();
-            formData.append('imgfile', file);
-            $.ajax({
-                url: '/uploadimg',
-                type: "post",
-                data: formData,
-                contentType: false,
-                processData: false,
-                dataType: 'JSON',
-                mimeType: "multipart/form-data",
-                success: function (res) {
-                    if(res.code!=200){
-                        _this.$message({
-                            message: res.msg,
-                            type: 'error'
-                        });
-                    }else{
-                        _this.messageContent+='img[/' + res.result.path + ']';
-                        _this.chatToUser();
+            let items = event.clipboardData && event.clipboardData.items;
+            let file = null;
+            if(items && items.length){
+                for(let i=0;i<items.length;i++){
+                    if(items[i].type.indexOf('image')!==-1){
+                        file=items[i].getAsFile();
+                        break;
                     }
-                },
-                error: function (data) {
-                    console.log(data);
                 }
-            });
+            }
+            if(!file){
+                return;
+            }
+            event.preventDefault();
+            if(!this.currentGuest){
+                this.$message({message:'请先选择要回复的访客', type:'warning'});
+                return;
+            }
+            if(!filter(file)){
+                this.$message({message:'仅支持 JPG、PNG、GIF 或 WebP 图片', type:'error'});
+                return;
+            }
+            this.clearPendingImage();
+            this.pendingImageFile=file;
+            this.pendingImagePreview=URL.createObjectURL(file);
+            this.pendingImageName=file.name || '剪贴板图片';
+            this.pendingImageGuestId=this.currentGuest;
+            this.$message({message:'图片已加入待发送区，请按 Enter 或点击发送', type:'success'});
         },
         openUrl(url){
             window.open(url);
@@ -1938,6 +2022,7 @@ var app=new Vue({
     beforeDestroy:function(){
         document.removeEventListener('paste', this.onPasteUpload);
         window.removeEventListener('resize', this.syncMobileLayout);
+        this.clearPendingImage();
         if(this.socketHealthTimer){
             clearInterval(this.socketHealthTimer);
         }

@@ -607,6 +607,51 @@ a{color: #07a9fe;text-decoration: none;cursor: pointer;}
     cursor: pointer;
 }
 .iconBtnsBox .kefuSendBtn{margin-right: 4px;float: right;}
+.pastedImageDraft{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin:6px 6px 2px 4px;
+    padding:8px 10px;
+    border:1px solid #d9e5f5;
+    border-radius:10px;
+    background:#f5f8fd;
+}
+.pastedImageDraft>img{
+    width:48px;
+    height:48px;
+    flex:0 0 48px;
+    border-radius:7px;
+    object-fit:cover;
+}
+.pastedImageDraftInfo{
+    min-width:0;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+}
+.pastedImageDraftInfo strong{
+    overflow:hidden;
+    color:#26364d;
+    font-size:13px;
+    font-weight:600;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+.pastedImageDraftInfo span{color:#718096;font-size:12px;}
+.pastedImageDraft>button{
+    width:28px;
+    height:28px;
+    padding:0;
+    border:0;
+    border-radius:50%;
+    color:#718096;
+    background:#fff;
+    cursor:pointer;
+}
+.pastedImageDraft>button:hover{color:#ef4444;background:#fee2e2;}
+.pastedImageDraft>button:disabled{cursor:not-allowed;opacity:.5;}
 .chatEntTitle{
     display: none;
     width: 100%;
