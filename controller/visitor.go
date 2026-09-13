@@ -99,12 +99,11 @@ func PostVisitorLogin(c *gin.Context) {
 
 	//fmt.Println(c.ClientIP())
 	//fmt.Println(ipCity)
-	ipCity := tools.ParseIpNew2(c.ClientIP())
+	ipCity := tools.ParseIPLocation(c.ClientIP())
 	//fmt.Println(ipCity)
 
-	if ipCity != nil {
-		form.CityAddress = ipCity.CountryName + ipCity.RegionName + ipCity.CityName
-	} else {
+	form.CityAddress = tools.FormatCityAddress(ipCity)
+	if form.CityAddress == "" {
 		form.CityAddress = "Unknown Area"
 	}
 	if form.VisitorName == "" && !isWechat {
@@ -166,6 +165,7 @@ func PostVisitorLogin(c *gin.Context) {
 		}
 		//更新状态上线
 		models.UpdateVisitor(form.EntId, form.VisitorName, form.Avator, form.VisitorId, form.ToId, visitor.Status, c.ClientIP(), c.ClientIP(), form.Refer, form.Extra)
+		models.DB.Model(&models.Visitor{}).Where("visitor_id = ? and ent_id = ?", form.VisitorId, form.EntId).Update("city", form.CityAddress)
 	} else {
 		visitor = *models.CreateVisitor(form.VisitorName, form.Avator, c.ClientIP(), form.ToId, form.VisitorId, form.Refer, form.CityAddress, form.ClientIp, form.EntId, form.Extra)
 	}

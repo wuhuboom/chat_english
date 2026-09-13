@@ -54,10 +54,9 @@ func PostVisitorLogin(c *gin.Context) {
 	if form.VisitorId == "" {
 		form.VisitorId = tools.Uuid()
 	}
-	ipCity := tools.ParseIpNew(c.ClientIP())
-	if ipCity != nil {
-		form.CityAddress = ipCity.CountryName + ipCity.RegionName + ipCity.CityName
-	} else {
+	ipCity := tools.ParseIPLocation(c.ClientIP())
+	form.CityAddress = tools.FormatCityAddress(ipCity)
+	if form.CityAddress == "" {
 		form.CityAddress = "Unknown Area"
 	}
 	form.VisitorName = form.CityAddress
