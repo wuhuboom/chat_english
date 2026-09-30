@@ -1,7 +1,6 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const cp = require('node:child_process');
 function load(source, lang) {
     let options;
     const requests = [], messages = [];
@@ -16,13 +15,7 @@ function load(source, lang) {
     return {instance,requests,messages};
 }
 const source=fs.readFileSync('static/js/chat-page.js','utf8');
-const old=cp.execFileSync('git',['show','HEAD:static/js/chat-page.js'],{encoding:'utf8'});
 const error={code:409,msg:'访客连接已变更，请重新连接'};
-const before=load(old,'en');
-before.instance.sendAjax('/2/messages_read','post',{},()=>{});
-before.requests[0].success(error);
-assert.equal(before.messages[0],error.msg);
-console.log('Reproduced: original lang=en displays Chinese 409 message');
 for(const lang of ['en','en-US','cn']){
     const t=load(source,lang);let acknowledged=0;
     const send=()=>t.instance.sendAjax('/2/messages_read','post',{},()=>acknowledged++);
