@@ -281,7 +281,7 @@
     var LANG = checkLang();
     var SHOW_KEFU_NAME = '{{.ShowKefuName}}'
 </script>
-<script src="/static/js/chat-lang.js?v=0.5.1"></script>
+<script src="/static/js/chat-lang.js?v=20260930.1"></script>
 <script src="/static/js/chat-config.js?v=0.5.1"></script>
 <script>
 
@@ -567,7 +567,7 @@
                     if (res.code != 200) {
                         _this.msgList.pop();
                         _this.$message({
-                            message: res.msg,
+                            message: visitorErrorMessage(res),
                             type: 'error'
                         });
                         if (res.code == 401) {
@@ -660,14 +660,14 @@
                     error: function (res) {
                         var data = JSON.parse(res.responseText);
                         _this.$message({
-                            message: data.msg,
+                            message: visitorErrorMessage(data),
                             type: 'error'
                         });
                     },
                     success: function (res) {
                         if (res.code != 200) {
                             _this.$message({
-                                message: res.msg,
+                                message: visitorErrorMessage(res),
                                 type: 'error'
                             });
                             _this.chatTitle = res.msg;
@@ -730,7 +730,7 @@
                         }
                         if (data.code != 200) {
                             _this.$message({
-                                message: data.msg,
+                                message: visitorErrorMessage(data),
                                 type: 'error'
                             });
                             _this.chatTitle = GOFLY_LANG[LANG]['refresh'];
@@ -749,7 +749,7 @@
                     success: function (data) {
                         if (data.code != 200) {
                             _this.$message({
-                                message: data.msg,
+                                message: visitorErrorMessage(data),
                                 type: 'error'
                             });
                         } else {
@@ -950,7 +950,7 @@
                 var ms = 1000 * 2;
                 var lastClick = Date.now() - ms;
                 $("body").mouseover(function () {
-                    if (!_this.haveUnreadMessage) {
+                    if (!_this.haveUnreadMessage || _this.wsSocketClosed) {
                         return;
                     }
                     if (Date.now() - lastClick >= ms) {
@@ -1034,7 +1034,7 @@
                         success: function (res) {
                             if (res.code != 200) {
                                 _this.$message({
-                                    message: res.msg,
+                                    message: visitorErrorMessage(res),
                                     type: 'error'
                                 });
                             } else {
@@ -1070,7 +1070,7 @@
 
                             if (res.code != 200) {
                                 _this.$message({
-                                    message: res.msg,
+                                    message: visitorErrorMessage(res),
                                     type: 'error'
                                 });
                             } else {
@@ -1113,7 +1113,7 @@
                     success: function (res) {
                         if (res.code != 200) {
                             _this.$message({
-                                message: res.msg,
+                                message: visitorErrorMessage(res),
                                 type: 'error'
                             });
                         } else {
@@ -1266,39 +1266,7 @@
                 } catch (e) {
                 }
             },
-            sendAjax: function (url, method, params, callback) {
-                let _this = this;
-                $.ajax({
-                    type: method,
-                    url: url,
-                    data: params,
-                    headers: {
-                        "lang": getQuery("lang"),
-                    },
-                    error: function (res) {
-                        var data = JSON.parse(res.responseText);
-                        // console.log(data);
-                        if (data.code != 200) {
-                            _this.$message({
-                                message: data.msg,
-                                type: 'error'
-                            });
-                        }
-                    },
-                    success: function (data) {
-                        if (data.code != 200) {
-                            _this.$message({
-                                message: data.msg,
-                                type: 'error'
-                            });
-                        } else if (data.result != null) {
-                            callback(data.result);
-                        } else {
-                            callback(data);
-                        }
-                    }
-                });
-            },
+            sendAjax: visitorSendAjax,
             showTitle: function (title) {
                 this.chatTitle = title;
                 $(".chatBox").append("<div class=\"chatTime\"><span>" + title + "</span></div>");
@@ -1366,7 +1334,7 @@
                         _this.loading.close();
                         if (res.code != 200) {
                             _this.$message({
-                                message: res.msg,
+                                message: visitorErrorMessage(res),
                                 type: 'error'
                             });
                         } else {

@@ -420,7 +420,7 @@ new Vue({
                     }
                     if(data.code!=200){
                         _this.$message({
-                            message: data.msg,
+                            message: visitorErrorMessage(data),
                             type: 'error'
                         });
                         _this.chatTitle=GOFLY_LANG[LANG]['refresh'];
@@ -439,7 +439,7 @@ new Vue({
                 success: function(data) {
                     if(data.code!=200){
                         _this.$message({
-                            message: data.msg,
+                            message: visitorErrorMessage(data),
                             type: 'error'
                         });
                     }else{
@@ -638,7 +638,7 @@ new Vue({
             var ms= 1000*2;
             var lastClick = Date.now() - ms;
             $("body").mouseover(function(){
-                if(!_this.haveUnreadMessage){
+                if(!_this.haveUnreadMessage || _this.wsSocketClosed){
                     return;
                 }
                 if (Date.now() - lastClick >= ms) {
@@ -940,36 +940,7 @@ new Vue({
                 };
             }
         },
-        sendAjax:function(url,method,params,callback){
-            let _this=this;
-            $.ajax({
-                type: method,
-                url: url,
-                data:params,
-                error:function(res){
-                    var data=JSON.parse(res.responseText);
-                    console.log(data);
-                    if(data.code!=200){
-                        _this.$message({
-                            message: data.msg,
-                            type: 'error'
-                        });
-                    }
-                },
-                success: function(data) {
-                    if(data.code!=200){
-                        _this.$message({
-                            message: data.msg,
-                            type: 'error'
-                        });
-                    }else if(data.result!=null){
-                        callback(data.result);
-                    }else{
-                        callback(data);
-                    }
-                }
-            });
-        },
+        sendAjax: visitorSendAjax,
         showTitle:function(title){
             $(".chatBox").append("<div class=\"chatTime\"><span>"+title+"</span></div>");
             this.scrollBottom();
