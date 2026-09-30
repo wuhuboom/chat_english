@@ -261,3 +261,56 @@ var GOFLY_LANG={
         "confirm":"確認",
     },
 };
+
+function visitorErrorMessage(data) {
+    var message = data && typeof data.msg === "string" ? data.msg : "";
+    if (typeof LANG !== "undefined" && /^en(?:[-_]|$)/i.test(LANG)) {
+        var translations = {
+            "访客连接已变更，请重新连接": "Your chat connection has changed. Please reconnect.",
+            "消息已读状态更新失败": "Unable to update the read status. Please try again.",
+            "当前会话没有有效的接待客服，请重新连接": "No agent is assigned to this chat. Please reconnect."
+        };
+        return translations[message] || (message && !/[\u3400-\u9fff]/.test(message) ? message : "Unable to complete the request. Please try again.");
+    }
+    return message || "请求失败，请稍后重试";
+}
+
+function visitorSendAjax(url,method,params,callback){
+            let _this=this;
+            var isReadReceipt = url === "/2/messages_read";
+            if (isReadReceipt && (_this.wsSocketClosed || _this.readReceiptPending || Date.now() < (_this.readReceiptRetryAt || 0))) return;
+            if (isReadReceipt) _this.readReceiptPending = true;
+            $.ajax({
+                type: method,
+                url: url,
+                data:params,
+                headers: {lang: typeof LANG === "undefined" ? "" : LANG},
+                timeout: 15000,
+                complete:function(){ if (isReadReceipt) _this.readReceiptPending = false; },
+                error:function(res){
+                    var data = res.responseJSON || {};
+                    if (!res.responseJSON) { try { data = JSON.parse(res.responseText); } catch (_) {} }
+                    console.log(data);
+                    if (isReadReceipt) _this.readReceiptRetryAt = Date.now() + 10000;
+                    if(data.code!=200){
+                        _this.$message({
+                            message: visitorErrorMessage(data),
+                            type: 'error'
+                        });
+                    }
+                },
+                success: function(data) {
+                    if (isReadReceipt) _this.readReceiptRetryAt = data.code == 200 ? 0 : Date.now() + 10000;
+                    if(data.code!=200){
+                        _this.$message({
+                            message: visitorErrorMessage(data),
+                            type: 'error'
+                        });
+                    }else if(data.result!=null){
+                        callback(data.result);
+                    }else{
+                        callback(data);
+                    }
+                }
+            });
+        }
