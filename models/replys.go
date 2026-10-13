@@ -36,7 +36,11 @@ func FindReplyByUserId(userId interface{}) []*ReplyGroup {
 		temp[replyGroup.Id] = replyGroup
 	}
 	for _, replyItem := range replyItems {
-		temp[replyItem.GroupId].Items = append(temp[replyItem.GroupId].Items, replyItem)
+		replyGroup, ok := temp[replyItem.GroupId]
+		if !ok || replyGroup == nil {
+			continue
+		}
+		replyGroup.Items = append(replyGroup.Items, replyItem)
 	}
 	return replyGroups
 }
@@ -52,7 +56,11 @@ func FindReplyTitleByUserId(userId interface{}) []*ReplyGroup {
 		temp[replyGroup.Id] = replyGroup
 	}
 	for _, replyItem := range replyItems {
-		temp[replyItem.GroupId].Items = append(temp[replyItem.GroupId].Items, replyItem)
+		replyGroup, ok := temp[replyItem.GroupId]
+		if !ok || replyGroup == nil {
+			continue
+		}
+		replyGroup.Items = append(replyGroup.Items, replyItem)
 	}
 	return replyGroups
 }
@@ -97,7 +105,11 @@ func FindReplyBySearcch(userId interface{}, search string) []*ReplyGroup {
 		temp[replyGroup.Id] = replyGroup
 	}
 	for _, replyItem := range replyItems {
-		temp[replyItem.GroupId].Items = append(temp[replyItem.GroupId].Items, replyItem)
+		replyGroup, ok := temp[replyItem.GroupId]
+		if !ok || replyGroup == nil {
+			continue
+		}
+		replyGroup.Items = append(replyGroup.Items, replyItem)
 	}
 	var newReplyGroups []*ReplyGroup = make([]*ReplyGroup, 0)
 	for _, replyGroup := range replyGroups {
