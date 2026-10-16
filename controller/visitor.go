@@ -625,6 +625,27 @@ func GetKefusVisitorOnlines(c *gin.Context) {
 		users = append(users, userInfo)
 		visitorIds = append(visitorIds, state.Id)
 	}
+	// The websocket connection keeps the visitor's original login name. A
+	// customer-service remark is persisted as visitor.real_name, so overlay it
+	// here to keep the online list consistent after the page is refreshed.
+	if len(visitorIds) > 0 {
+		realNames := make(map[string]string, len(visitorIds))
+		visitors := models.FindVisitorsByCondition(
+			"ent_id = ? AND visitor_id IN (?)",
+			fmt.Sprintf("%v", entId),
+			visitorIds,
+		)
+		for _, visitor := range visitors {
+			if visitor.RealName != "" {
+				realNames[visitor.VisitorId] = visitor.RealName
+			}
+		}
+		for _, user := range users {
+			if realName := realNames[user.VisitorId]; realName != "" {
+				user.Username = realName
+			}
+		}
+	}
 
 	//查询最新消息
 	messages := models.FindLastMessageDetailsMap(visitorIds)
