@@ -530,3 +530,80 @@ body.adminLogin .copyright {
         transition-duration: 0.01ms !important;
     }
 }
+
+body.adminLogin .googleBindPanel {
+    margin-bottom: 16px;
+    padding: 16px;
+    text-align: center;
+    background: #f7f9fc;
+    border: 1px solid #e5eaf2;
+    border-radius: 12px;
+}
+
+body.adminLogin .googleBindTitle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    color: #24324a;
+    font-size: 14px;
+}
+
+body.adminLogin .googleBindQr {
+    width: 180px;
+    height: 180px;
+    border-radius: 8px;
+}
+
+body.adminLogin .googleBindSecret {
+    margin: 10px 0 4px;
+    color: #334155;
+    word-break: break-all;
+}
+
+body.adminLogin .googleBindTip {
+    margin: 0;
+    color: #909399;
+    font-size: 12px;
+}
+
+body.adminLogin .googleTutorialDialog {
+    max-width: calc(100vw - 32px);
+    border-radius: 14px;
+}
+
+body.adminLogin .googleTutorialContent h3 {
+    margin: 4px 0 14px;
+    color: #1f2d3d;
+}
+
+body.adminLogin .googleTutorialContent ol {
+    margin: 0;
+    padding-left: 22px;
+    color: #44546a;
+    line-height: 1.9;
+}
+
+body.adminLogin .googleTutorialWarning {
+    margin-top: 18px;
+    padding: 12px 14px;
+    color: #8a5a12;
+    background: #fff8e8;
+    border: 1px solid #f4dfad;
+    border-radius: 8px;
+    line-height: 1.6;
+}
+
+@media (max-width: 520px) {
+    body.adminLogin .googleBindTitle {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 2px;
+        text-align: left;
+    }
+
+    body.adminLogin .googleTutorialDialog .el-dialog__body {
+        padding: 12px 18px 18px;
+    }
+}

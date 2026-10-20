@@ -86,6 +86,13 @@
                 {label:"经典界面 5",value:"chat_page5.html",description:"第五套经典访客界面。"},
                 {label:"微信风格 H5",value:"chat_wx.html",description:"微信风格的移动端聊天界面，包含绿色消息气泡、紧凑输入栏与 iPhone 安全区适配。"},
             ],
+            googleAuth:{
+                enabled:false,
+                configured:false,
+                secret:"",
+                qrCode:"",
+                code:"",
+            },
             slaForm:{
                 warningMinutes:5,
                 overdueMinutes:15,
@@ -470,6 +477,7 @@
                             }
                         }
                     });
+                    this.loadGoogleAuthenticator();
                 }
                 if(ACTION=="setting_configs"){
                     this.sendAjax("/ent_configs","get",{},function(result){
@@ -936,6 +944,43 @@
                 this.roleDialog=true;
             },
             //设置配置项
+            applyGoogleAuthenticatorState(result){
+                this.googleAuth.enabled=!!result.enabled;
+                this.googleAuth.configured=!!result.configured;
+                this.googleAuth.secret=result.secret || "";
+                this.googleAuth.qrCode=result.qr_code || "";
+                this.googleAuth.code="";
+            },
+            loadGoogleAuthenticator(){
+                let _this=this;
+                this.sendAjax("/system/google-authenticator","GET",{},function(result){
+                    _this.applyGoogleAuthenticatorState(result);
+                });
+            },
+            enableGoogleAuthenticator(){
+                let _this=this;
+                this.sendAjax("/system/google-authenticator","POST",{action:"enable",code:this.googleAuth.code},function(result){
+                    _this.applyGoogleAuthenticatorState(result);
+                    window.location.href="/login";
+                });
+            },
+            resetAccountAuthenticator(){
+                let _this=this;
+                this.$prompt("输入需要重置的账号ID（账号列表中的ID），重置后旧绑定和登录状态将失效", "重置个人谷歌验证器", {
+                    inputPattern:/^[1-9]\d*$/,inputErrorMessage:"请输入有效账号ID"
+                }).then(function(answer){
+                    _this.sendAjax("/system/google-authenticator","POST",{action:"reset-account",user_id:answer.value},function(result){
+                        _this.$message({message:"已重置，请通知该账号重新登录绑定",type:"success"});
+                    });
+                }).catch(function(){});
+            },
+            disableGoogleAuthenticator(){
+                let _this=this;
+                this.sendAjax("/system/google-authenticator","POST",{action:"disable"},function(result){
+                    _this.applyGoogleAuthenticatorState(result);
+                    _this.$message({message:"谷歌登录验证已关闭",type:"success"});
+                });
+            },
             setConfigItem(key,value){
                 let _this=this;
                 this.sendAjax("/config","POST",{key:key,value:value},function(result){

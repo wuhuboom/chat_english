@@ -1,18 +1,41 @@
 package tools
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt"
-	"go-fly-muti/common"
+	"log"
 	"os"
+	"strings"
+	"sync"
+)
+
+var (
+	jwtSecretOnce sync.Once
+	jwtSecretData []byte
 )
 
 func jwtSecret() []byte {
-	if secret := os.Getenv("GOFLY_JWT_SECRET"); secret != "" {
-		return []byte(secret)
-	}
-	return []byte(common.JwtSecret)
+	jwtSecretOnce.Do(func() {
+		secret := strings.TrimSpace(os.Getenv("GOFLY_JWT_SECRET"))
+		if len(secret) >= 32 {
+			jwtSecretData = []byte(secret)
+			return
+		}
+		// Never fall back to the old public, hard-coded signing key.  A random
+		// per-process key is safer and deliberately invalidates all sessions on
+		// restart. Production deployments must set GOFLY_JWT_SECRET so sessions
+		// remain valid across restarts and multiple instances.
+		random := make([]byte, 64)
+		if _, err := rand.Read(random); err != nil {
+			panic(fmt.Sprintf("cannot generate JWT signing secret: %v", err))
+		}
+		jwtSecretData = []byte(hex.EncodeToString(random))
+		log.Print("SECURITY WARNING: GOFLY_JWT_SECRET is missing or shorter than 32 characters; using an ephemeral random key")
+	})
+	return jwtSecretData
 }
 
 func validateJWTSigningMethod(token *jwt.Token) (interface{}, error) {
@@ -23,12 +46,14 @@ func validateJWTSigningMethod(token *jwt.Token) (interface{}, error) {
 }
 
 type UserClaims struct {
-	Id         uint   `json:"id"`
-	Pid        uint   `json:"pid"`
-	Username   string `json:"username"`
-	RoleName   string `json:"role_name"`
-	RoleId     uint   `json:"role_id"`
-	CreateTime string `json:"create_time"`
+	MFAVerified bool   `json:"mfa_verified"`
+	Id          uint   `json:"id"`
+	Pid         uint   `json:"pid"`
+	Username    string `json:"username"`
+	RoleName    string `json:"role_name"`
+	RoleId      uint   `json:"role_id"`
+	CreateTime  string `json:"create_time"`
+	AuthVersion int64  `json:"auth_version"`
 	jwt.StandardClaims
 }
 

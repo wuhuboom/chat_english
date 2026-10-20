@@ -12,7 +12,7 @@
     <script src="/static/vue/2.6.11/vue.min.js"></script>
 	<script src="/static/element-ui/2.15.1/index.js"></script>
 	<script src="/static/jquery/3.6.0/jquery.min.js"></script>
-    <link rel="stylesheet" href="/static/css/login-modern.css?v=1.0.0">
+    <link rel="stylesheet" href="/static/css/login-modern.css?v=1.0.1">
     <link rel="icon" href="/static/images/logo.png">
 </head>
 <body class="adminLogin">
@@ -90,6 +90,25 @@
                                     <i slot="prefix" class="el-icon-lock"></i>
                                 </el-input>
                             </el-form-item>
+                            {{if .GoogleAuthenticatorEnabled}}
+                            <div v-if="googleBinding.qr_code" class="googleBindPanel">
+                                <div class="googleBindTitle">
+                                    <span>首次登录：请使用自己的 Google Authenticator 扫码绑定</span>
+                                    <el-button type="text" icon="el-icon-question" @click="googleTutorialVisible=true">使用教程</el-button>
+                                </div>
+                                <img :src="googleBinding.qr_code" alt="个人谷歌验证器绑定二维码" class="googleBindQr">
+                                <p class="googleBindSecret">手动密钥：<{googleBinding.secret}></p>
+                                <p class="googleBindTip">绑定二维码10分钟有效，请勿分享。</p>
+                            </div>
+<label class="loginFieldLabel">谷歌验证码（未绑定时先提交账号密码）</label>
+                            <el-form-item prop="googleCode">
+                                <el-input maxlength="6" inputmode="numeric" autocomplete="one-time-code"
+                                    v-on:keyup.enter.native="kefuLogin('kefuForm')" v-model="kefuForm.googleCode"
+                                    placeholder="请输入 Google Authenticator 的 6 位动态码">
+                                    <i slot="prefix" class="el-icon-key"></i>
+                                </el-input>
+                            </el-form-item>
+                            {{end}}
                             <el-form-item class="loginSubmitItem">
                                 <el-button class="loginSubmitButton" :loading="loading" type="primary"
                                     @click="kefuLogin('kefuForm')">
@@ -106,6 +125,7 @@
                         </div>
                     </div>
 
+                    {{if .isRegister}}
                     <div class="regHtml" v-show="showRegHtml">
                         <button type="button" class="loginBackButton" @click="showRegHtml=false">
                             <i class="el-icon-arrow-left"></i>
@@ -156,11 +176,46 @@
                             </el-form-item>
                         </el-form>
                     </div>
+                    {{end}}
 
                     <div class="loginNotice">{{.SystemNotice}}</div>
                     <p class="copyright">{{.CopyrightTxt}}</p>
                 </div>
             </main>
+        <el-dialog title="Google Authenticator 使用教程" :visible.sync="googleTutorialVisible"
+            width="560px" custom-class="googleTutorialDialog">
+            <el-tabs v-model="googleTutorialPlatform" stretch>
+                <el-tab-pane label="Android 安卓" name="android">
+                    <div class="googleTutorialContent">
+                        <h3>安卓手机绑定步骤</h3>
+                        <ol>
+                            <li>在可信应用商店搜索并安装“Google Authenticator（谷歌身份验证器）”。</li>
+                            <li>打开应用，点击右下角“+”，选择“扫描二维码”。</li>
+                            <li>扫描登录页显示的二维码；无法扫码时，选择“输入设置密钥”并填写页面上的手动密钥。</li>
+                            <li>应用会生成每30秒更新一次的6位动态码，把当前动态码填入登录页后再次登录。</li>
+                        </ol>
+                    </div>
+                </el-tab-pane>
+                <el-tab-pane label="iPhone / iOS" name="ios">
+                    <div class="googleTutorialContent">
+                        <h3>iPhone 绑定步骤</h3>
+                        <ol>
+                            <li>打开 App Store，搜索并安装“Google Authenticator”。</li>
+                            <li>打开应用，点击“+”，选择“扫描二维码”。</li>
+                            <li>扫描登录页显示的二维码；无法扫码时，选择“输入设置密钥”并填写页面上的手动密钥。</li>
+                            <li>将应用中显示的6位动态码填入登录页，然后再次点击登录。</li>
+                        </ol>
+                    </div>
+                </el-tab-pane>
+            </el-tabs>
+            <div class="googleTutorialWarning">
+                <i class="el-icon-warning-outline"></i>
+                请勿截图、转发二维码或手动密钥。更换或丢失手机时，请联系超级管理员重置绑定。
+            </div>
+            <span slot="footer">
+                <el-button type="primary" @click="googleTutorialVisible=false">我知道了</el-button>
+            </span>
+        </el-dialog>
         </div>
     </template>
 </div>
@@ -185,7 +240,11 @@
             kefuForm:{
                 username:'',
                 password:'',
+                googleCode:'',
             },
+            googleBinding:{qr_code:"",secret:""},
+            googleTutorialVisible:false,
+            googleTutorialPlatform:"android",
             rules: {
                 username: [
                     { required: true, message: '用户名不能为空', trigger: 'blur' },
@@ -193,6 +252,11 @@
                 password: [
                     { required: true, message: '密码不能为空', trigger: 'blur' },
                 ],
+                {{if .GoogleAuthenticatorEnabled}}
+                googleCode: [
+                    { pattern: /^\d{6}$/, message: '请输入6位数字动态码', trigger: 'blur' },
+                ],
+                {{end}}
             },
             registerRules: {
                 username: [
@@ -241,6 +305,7 @@
                         data.type="kefu";
                         data.username = _this.kefuForm.username;
                         data.password = _this.kefuForm.password;
+                        data.google_code = _this.kefuForm.googleCode;
                         _this.loading = true;
                         $.post("/check", data, function (data) {
                             if (data.code == 200) {
@@ -252,6 +317,10 @@
                                 localStorage.setItem("ref_token",data.result.ref_token);
                                 localStorage.setItem("create_time",data.result.create_time);
                                 window.location.href="/main";
+                            } else if (data.code == 428) {
+                                _this.googleBinding=data.result;
+                                _this.kefuForm.googleCode="";
+                                _this.$message({message:data.msg,type:'warning'});
                             } else {
                                 _this.$message({
                                     message: data.msg,

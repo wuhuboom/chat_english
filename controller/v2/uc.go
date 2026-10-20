@@ -21,6 +21,10 @@ type RegisterForm struct {
 }
 
 func PostUcRegister(c *gin.Context) {
+	if !models.RegistrationEnabled() {
+		c.JSON(200, gin.H{"code": 403, "msg": "系统已关闭公开注册"})
+		return
+	}
 	var form RegisterForm
 	err := c.Bind(&form)
 
@@ -55,6 +59,9 @@ func PostUcRegister(c *gin.Context) {
 	c.JSON(200, UcRegister(form))
 }
 func UcRegister(form RegisterForm) gin.H {
+	if !models.RegistrationEnabled() {
+		return gin.H{"code": 403, "msg": "系统已关闭公开注册"}
+	}
 	//重复密码
 	if form.Password != form.RePassword {
 		return gin.H{

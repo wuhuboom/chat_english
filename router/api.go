@@ -283,6 +283,8 @@ func InitApiRouter(engine *gin.Engine) {
 	{
 		systemGroup.GET("/stop", controller.GetStop)
 		systemGroup.GET("/logs", controller.GetSystemLogs)
+		systemGroup.GET("/google-authenticator", controller.GetGoogleAuthenticatorSettings)
+		systemGroup.POST("/google-authenticator", controller.PostGoogleAuthenticatorSettings)
 		//systemGroup.POST("/saveNews", controller.PostNews)
 		//	systemGroup.GET("/delNews", controller.DelNews)
 	}

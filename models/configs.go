@@ -1,9 +1,16 @@
 package models
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/jinzhu/gorm"
+)
+
+const (
+	GoogleAuthenticatorEnabledKey = "GoogleAuthenticatorEnabled"
+	GoogleAuthenticatorSecretKey  = "GoogleAuthenticatorSecret"
+	SystemRegisterKey             = "SystemRegister"
 )
 
 var CustomConfigs []Config
@@ -65,4 +72,14 @@ func FindConfig(key string) string {
 		}
 	}
 	return ""
+}
+
+func GoogleAuthenticatorEnabled() bool {
+	return strings.EqualFold(strings.TrimSpace(FindConfig(GoogleAuthenticatorEnabledKey)), "true")
+}
+
+// RegistrationEnabled is fail-closed: public registration is allowed only
+// when an administrator explicitly stores the value "1".
+func RegistrationEnabled() bool {
+	return strings.TrimSpace(FindConfig(SystemRegisterKey)) == "1"
 }

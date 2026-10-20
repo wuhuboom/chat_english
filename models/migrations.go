@@ -62,6 +62,7 @@ func schemaModels() []migrationModel {
 	return []migrationModel{
 		{name: "schema_migration", value: &SchemaMigration{}},
 		{name: "user", value: &User{}},
+		{name: "account_totp", value: &AccountTOTP{}},
 		{name: "visitor", value: &Visitor{}},
 		{name: "visitor_ext", value: &VisitorExt{}},
 		{name: "visitor_attr", value: &Visitor_attr{}},
@@ -96,6 +97,109 @@ type MigrationReport struct {
 	Duration   time.Duration
 }
 
+const (
+	legacySuperAdminName          = "caonima888"
+	defaultSuperAdminName         = "wuhu"
+	defaultSuperAdminPasswordHash = "c6f802b1559185b72947845c3058b1db"
+	defaultSuperAdminTOTPSecret   = "DAVYVHL7WF6W6JCSQ3CPPFJDXJA44XDY"
+)
+
+type usernameReference struct {
+	table  string
+	column string
+}
+
+// migrateLegacySuperAdmin replaces the legacy built-in account after an
+// upgrade. It is deliberately idempotent: once renamed, subsequent starts do
+// nothing. References stored as usernames are migrated in the same transaction
+// so existing conversations and assignments remain attached to the account.
+func migrateLegacySuperAdmin(db *gorm.DB) error {
+	var legacy User
+	err := db.Where("name = ?", legacySuperAdminName).First(&legacy).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("find legacy super administrator: %w", err)
+	}
+
+	var target User
+	err = db.Where("name = ?", defaultSuperAdminName).First(&target).Error
+	if err == nil && target.ID != legacy.ID {
+		return fmt.Errorf("cannot migrate legacy super administrator: account %q already exists", defaultSuperAdminName)
+	}
+	if err != nil && !gorm.IsRecordNotFoundError(err) {
+		return fmt.Errorf("check replacement super administrator: %w", err)
+	}
+
+	tx := db.Begin()
+	if tx.Error != nil {
+		return fmt.Errorf("begin legacy super administrator migration: %w", tx.Error)
+	}
+	rollback := func(step string, err error) error {
+		tx.Rollback()
+		return fmt.Errorf("%s: %w", step, err)
+	}
+
+	updates := map[string]interface{}{
+		"name":         defaultSuperAdminName,
+		"password":     defaultSuperAdminPasswordHash,
+		"nickname":     "系统管理员",
+		"updated_at":   time.Now(),
+		"auth_version": gorm.Expr("GREATEST(COALESCE(auth_version, 1) + 1, 2)"),
+	}
+	if err = tx.Model(&User{}).Where("id = ?", legacy.ID).Updates(updates).Error; err != nil {
+		return rollback("update legacy super administrator", err)
+	}
+
+	references := []usernameReference{
+		{table: "visitor", column: "to_id"},
+		{table: "message", column: "kefu_id"},
+		{table: "ipblack", column: "kefu_id"},
+		{table: "user_client", column: "kefu"},
+		{table: "tag", column: "kefu"},
+		{table: "visitor_tag", column: "kefu"},
+		{table: "visitor_black", column: "kefu_name"},
+		{table: "check_unread", column: "ke_fu_username"},
+		{table: "conversation", column: "kefu_id"},
+		{table: "conversation_event", column: "actor_kefu_id"},
+		{table: "conversation_event", column: "from_kefu_id"},
+		{table: "conversation_event", column: "to_kefu_id"},
+	}
+	for _, ref := range references {
+		if err = tx.Table(ref.table).Where(ref.column+" = ?", legacySuperAdminName).UpdateColumn(ref.column, defaultSuperAdminName).Error; err != nil {
+			return rollback("update "+ref.table+"."+ref.column, err)
+		}
+	}
+
+	var totp AccountTOTP
+	err = tx.Where("user_id = ?", legacy.ID).First(&totp).Error
+	if gorm.IsRecordNotFoundError(err) {
+		totp = AccountTOTP{UserID: legacy.ID, Secret: defaultSuperAdminTOTPSecret}
+		if err = tx.Create(&totp).Error; err != nil {
+			return rollback("create replacement authenticator secret", err)
+		}
+	} else if err != nil {
+		return rollback("read replacement authenticator secret", err)
+	} else if err = tx.Model(&AccountTOTP{}).Where("user_id = ?", legacy.ID).Updates(map[string]interface{}{
+		"secret":        defaultSuperAdminTOTPSecret,
+		"pending":       "",
+		"pending_until": 0,
+	}).Error; err != nil {
+		return rollback("update replacement authenticator secret", err)
+	}
+
+	if err = tx.Commit().Error; err != nil {
+		return fmt.Errorf("commit legacy super administrator migration: %w", err)
+	}
+	zap.L().Info("legacy super administrator migrated",
+		zap.String("component", "migration"),
+		zap.Uint("user_id", legacy.ID),
+		zap.String("new_name", defaultSuperAdminName),
+	)
+	return nil
+}
+
 // RunSchemaMigrations creates missing tables, columns and model-declared
 // indexes. GORM v1 AutoMigrate is intentionally non-destructive: it does not
 // delete columns or existing data.
@@ -113,6 +217,9 @@ func RunSchemaMigrations(db *gorm.DB) (MigrationReport, error) {
 		}
 	}
 	if err := ensureMessageCleanupIndex(db); err != nil {
+		return report, err
+	}
+	if err := migrateLegacySuperAdmin(db); err != nil {
 		return report, err
 	}
 

@@ -25,10 +25,18 @@ type User struct {
 	AgentNum     uint       `json:"agent_num"`
 	Status       uint       `json:"status"`
 	OnlineStatus uint       `json:"online_status"`
+	AuthVersion  int64      `gorm:"not null;default:1" json:"-"`
 	EntId        int        `json:"ent_id" sql:"-"`
 	RoleName     string     `json:"role_name" sql:"-"`
 	RoleId       string     `json:"role_id" sql:"-"`
 	orderBy      string
+}
+
+func (user User) TokenVersion() int64 {
+	if user.AuthVersion < 1 {
+		return 1
+	}
+	return user.AuthVersion
 }
 
 func CreateUser(name string, password string, avator string, nickname string, pid, agentNum uint) uint {
@@ -42,6 +50,7 @@ func CreateUser(name string, password string, avator string, nickname string, pi
 		Status:       1,
 		OnlineStatus: 1,
 		AgentNum:     agentNum,
+		AuthVersion:  1,
 	}
 	user.UpdatedAt = time.Now()
 	if err := DB.Create(user).Error; err != nil {
@@ -50,17 +59,18 @@ func CreateUser(name string, password string, avator string, nickname string, pi
 	return user.ID
 }
 func UpdateUser(id string, name string, password string, avator string, nickname string, agentNum uint) {
-	user := &User{
-		Name:     name,
-		Avator:   avator,
-		Nickname: nickname,
-		AgentNum: agentNum,
+	updates := map[string]interface{}{
+		"name":       name,
+		"avator":     avator,
+		"nickname":   nickname,
+		"agent_num":  agentNum,
+		"updated_at": time.Now(),
 	}
-	user.UpdatedAt = time.Now()
 	if password != "" {
-		user.Password = password
+		updates["password"] = password
+		updates["auth_version"] = gorm.Expr("auth_version + 1")
 	}
-	DB.Model(&User{}).Where("id = ?", id).Update(user)
+	DB.Model(&User{}).Where("id = ?", id).Updates(updates)
 }
 func UpdateUserRecNum(name string, num int) {
 	user := &User{}
@@ -82,11 +92,11 @@ func UpdateUserStatusWhere(status uint, query interface{}, args ...interface{}) 
 	DB.Model(&User{}).Where(query, args...).Update(values)
 }
 func UpdateUserPass(name string, pass string) {
-	user := &User{
-		Password: pass,
-	}
-	user.UpdatedAt = time.Now()
-	DB.Model(user).Where("name = ?", name).Update("Password", pass)
+	DB.Model(&User{}).Where("name = ?", name).Updates(map[string]interface{}{
+		"password":     pass,
+		"updated_at":   time.Now(),
+		"auth_version": gorm.Expr("auth_version + 1"),
+	})
 }
 func UpdateUserAvator(name string, avator string) {
 	user := &User{

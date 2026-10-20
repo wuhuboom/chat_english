@@ -10,6 +10,7 @@ import (
 	"go-fly-muti/setting"
 	"go-fly-muti/tools"
 	"go-fly-muti/ws"
+	"go.uber.org/zap"
 	"strconv"
 )
 
@@ -150,6 +151,11 @@ func GetKefuInfoSetting(c *gin.Context) {
 	})
 }
 func PostKefuRegister(c *gin.Context) {
+	if !models.RegistrationEnabled() {
+		zap.L().Warn("public registration blocked", zap.String("ip", c.ClientIP()))
+		c.JSON(200, gin.H{"code": 403, "msg": "系统已关闭公开注册"})
+		return
+	}
 	name := c.PostForm("name")
 	password := c.PostForm("password")
 	rePassword := c.PostForm("rePassword")
@@ -378,6 +384,19 @@ func PostKefuInfo(c *gin.Context) {
 		models.CreateUserRole(uid, uint(roleIdInt))
 	} else {
 		//更新用户
+		// Non-super-admins may only edit direct child accounts. The previous
+		// implementation checked this for listing, but updated by an arbitrary
+		// submitted id, allowing cross-tenant account/password modification.
+		if mRoleId.(float64) != 1 {
+			target := models.FindUserByIdPid(kefuId, id)
+			if target.ID == 0 {
+				zap.L().Warn("blocked cross-tenant account update",
+					zap.String("actor", kefuName.(string)), zap.Any("actor_id", kefuId),
+					zap.String("target_id", id), zap.String("ip", c.ClientIP()))
+				c.JSON(200, gin.H{"code": 403, "msg": "无权修改该账号"})
+				return
+			}
+		}
 		if password != "" {
 			password = tools.Md5(password)
 		}
@@ -396,6 +415,10 @@ func PostKefuInfo(c *gin.Context) {
 		models.DeleteRoleByUserId(uid)
 		models.CreateUserRole(uint(uid), uint(roleIdInt))
 	}
+	zap.L().Warn("account configuration changed",
+		zap.String("actor", kefuName.(string)), zap.Any("actor_id", kefuId),
+		zap.String("target_id", id), zap.String("target_name", name),
+		zap.Bool("password_changed", c.PostForm("password") != ""), zap.String("ip", c.ClientIP()))
 
 	c.JSON(200, gin.H{
 		"code":   200,

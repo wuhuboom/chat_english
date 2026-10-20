@@ -74,6 +74,29 @@
                     </el-form>
                 </el-card>
 
+                <el-card shadow="never" style="margin-bottom: 18px;">
+                    <div slot="header">
+                        <span>Google Authenticator 登录验证</span>
+                    </div>
+                    <el-form label-width="110px">
+                        <el-form-item label="当前状态">
+                            <el-tag :type="googleAuth.enabled ? 'success' : 'info'">
+                                <{googleAuth.enabled ? '已开启' : '已关闭'}>
+                            </el-tag>
+                        </el-form-item>
+                        <el-form-item label="操作">
+                            <el-button v-if="!googleAuth.enabled" type="primary" @click="enableGoogleAuthenticator">开启全员谷歌验证</el-button>
+                            <el-button v-if="googleAuth.enabled" type="warning" @click="disableGoogleAuthenticator">关闭验证</el-button>
+                        </el-form-item>                        <el-form-item label="说明">
+                            <span style="color:#7f8da3;">由超级管理员开启。每个账号首次登录时绑定自己的验证器，绑定成功后使用自己的6位动态码登录。旧的共用密钥不再使用。</span>
+                        </el-form-item>
+                        <el-form-item label="账号恢复">
+                            <el-button type="danger" plain @click="resetAccountAuthenticator">重置指定账号绑定</el-button>
+                            <div style="color:#7f8da3;">手机遗失时由超级管理员重置，账号下次登录需重新扫码绑定。</div>
+                        </el-form-item>
+                    </el-form>
+                </el-card>
+
                 <el-table
                         :data="regularConfigList"
                         border

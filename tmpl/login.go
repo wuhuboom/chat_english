@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-//登陆界面
+// 登陆界面
 func PageLogin(c *gin.Context) {
 
 	SystemNotice := models.FindConfig("SystemNotice")
@@ -18,20 +18,18 @@ func PageLogin(c *gin.Context) {
 	CopyrightTxt := models.FindConfig("CopyrightTxt")
 	CopyrightUrl := models.FindConfig("CopyrightUrl")
 	SystemKefu := models.FindConfig("SystemKefu")
-	SystemRegister := models.FindConfig("SystemRegister")
-	isRegister := true
-	if SystemRegister == "2" {
-		isRegister = false
-	}
+	googleAuthenticatorEnabled := models.GoogleAuthenticatorEnabled()
+	isRegister := models.RegistrationEnabled()
 	c.HTML(http.StatusOK, "login.html", gin.H{
-		"SystemNotice":     template.HTML(SystemNotice),
-		"SystemTitle":      SystemTitle,
-		"SystemKeywords":   SystemKeywords,
-		"SystemDesc":       SystemDesc,
-		"CopyrightTxt":     CopyrightTxt,
-		"CopyrightUrl":     CopyrightUrl,
-		"SystemLoginTitle": SystemLoginTitle,
-		"isRegister":       isRegister,
-		"SystemKefu":       template.HTML(SystemKefu),
+		"SystemNotice":               template.HTML(SystemNotice),
+		"SystemTitle":                SystemTitle,
+		"SystemKeywords":             SystemKeywords,
+		"SystemDesc":                 SystemDesc,
+		"CopyrightTxt":               CopyrightTxt,
+		"CopyrightUrl":               CopyrightUrl,
+		"SystemLoginTitle":           SystemLoginTitle,
+		"isRegister":                 isRegister,
+		"SystemKefu":                 template.HTML(SystemKefu),
+		"GoogleAuthenticatorEnabled": googleAuthenticatorEnabled,
 	})
 }

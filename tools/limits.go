@@ -74,3 +74,13 @@ func LimitFreqSingle(queueName string, count uint, timeWindow int64) bool {
 	}
 	return LimitQueue.allow(queueName, count, timeWindow, time.Now().Unix())
 }
+
+// SecurityLimitFreqSingle is always enabled. It is intended for authentication
+// and other security boundaries which must not depend on an optional feature
+// flag.
+func SecurityLimitFreqSingle(queueName string, count uint, timeWindow int64) bool {
+	if count == 0 || timeWindow < 0 {
+		return true
+	}
+	return LimitQueue.allow("security:"+queueName, count, timeWindow, time.Now().Unix())
+}

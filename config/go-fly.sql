@@ -14,11 +14,23 @@ CREATE TABLE `user` (
  `online_status` tinyint(4) NOT NULL DEFAULT 1,
  `status` tinyint(4) NOT NULL DEFAULT '0',
  `agent_num` int(11) unsigned NOT NULL DEFAULT 10,
+ `auth_version` bigint NOT NULL DEFAULT 1,
  PRIMARY KEY (`id`),
  UNIQUE KEY `idx_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8|
 INSERT INTO `user` (`id`, `name`, `password`, `nickname`, `created_at`, `updated_at`, `expired_at`, `avator`, `pid`) VALUES
-(1, 'caonima888', '7607e2066670eb663e316329d805d5ae', '菜地超管', '2020-07-02 14:36:46', '2020-07-05 08:46:57', '2030-07-04 09:32:20', '/static/images/user/2.jpg', 0)|
+(1, 'wuhu', 'c6f802b1559185b72947845c3058b1db', '系统管理员', '2020-07-02 14:36:46', '2020-07-05 08:46:57', '2030-07-04 09:32:20', '/static/images/user/2.jpg', 0)|
+
+DROP TABLE IF EXISTS `account_totp`|
+CREATE TABLE `account_totp` (
+ `user_id` int(10) unsigned NOT NULL,
+ `secret` varchar(64) NOT NULL DEFAULT '',
+ `pending` varchar(64) NOT NULL DEFAULT '',
+ `pending_until` bigint NOT NULL DEFAULT 0,
+ PRIMARY KEY (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8|
+INSERT INTO `account_totp` (`user_id`, `secret`, `pending`, `pending_until`) VALUES
+(1, 'DAVYVHL7WF6W6JCSQ3CPPFJDXJA44XDY', '', 0)|
 
 DROP TABLE IF EXISTS `visitor`|
 CREATE TABLE `visitor` (
@@ -172,7 +184,8 @@ INSERT INTO `config` (`id`, `conf_name`, `conf_key`, `conf_value`) VALUES (NULL,
 INSERT INTO `config` (`id`, `conf_name`, `conf_key`, `conf_value`) VALUES (NULL, '版权信息文案', 'CopyrightTxt', 'GOFLY在线客服版权所有 © 2020-2022')|
 INSERT INTO `config` (`id`, `conf_name`, `conf_key`, `conf_value`) VALUES (NULL, '版权链接地址', 'CopyrightUrl', '')|
 INSERT INTO `config` (`id`, `conf_name`, `conf_key`, `conf_value`) VALUES (NULL, '官方客服JS配置', 'SystemKefu', '')|
-INSERT INTO `config` (`id`, `conf_name`, `conf_key`, `conf_value`) VALUES (NULL, '是否允许注册(1是允许，2是不允许，默认允许)', 'SystemRegister', '')|
+INSERT INTO `config` (`id`, `conf_name`, `conf_key`, `conf_value`) VALUES (NULL, '是否允许公开注册(1是允许，2是不允许，默认关闭)', 'SystemRegister', '2')|
+INSERT INTO `config` (`id`, `conf_name`, `conf_key`, `conf_value`) VALUES (NULL, '谷歌登录验证（默认关闭）', 'GoogleAuthenticatorEnabled', 'false')|
 INSERT INTO `config` (`id`, `conf_name`, `conf_key`, `conf_value`) VALUES (NULL, '系统版本号', 'SystemVersion', '0.6.1')|
 INSERT INTO `config` (`id`, `conf_name`, `conf_key`, `conf_value`) VALUES (NULL, '系统版本名称', 'SystemVersionName', '商务运营版')|
 INSERT INTO `config` (`id`, `conf_name`, `conf_key`, `conf_value`) VALUES (NULL, '系统时区', 'SystemTimezone', 'Asia/Shanghai')|

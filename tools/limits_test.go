@@ -36,3 +36,19 @@ func TestLimitQueueEnabled(t *testing.T) {
 		t.Fatal("request should pass after the oldest entry expires")
 	}
 }
+
+func TestSecurityLimiterCannotBeDisabled(t *testing.T) {
+	viper.Set("rate_limit.enabled", false)
+	t.Cleanup(viper.Reset)
+	LimitQueue.reset()
+
+	if !SecurityLimitFreqSingle("login-client", 2, 60) {
+		t.Fatal("first security request should pass")
+	}
+	if !SecurityLimitFreqSingle("login-client", 2, 60) {
+		t.Fatal("second security request should pass")
+	}
+	if SecurityLimitFreqSingle("login-client", 2, 60) {
+		t.Fatal("security limiter must remain active when optional rate limiting is disabled")
+	}
+}

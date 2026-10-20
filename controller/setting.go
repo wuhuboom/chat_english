@@ -46,10 +46,17 @@ func parseRoutingSettings(autoReassignValue, graceValue string) (bool, int, erro
 
 func GetConfigs(c *gin.Context) {
 	configs := models.FindConfigs()
+	publicConfigs := make([]models.Config, 0, len(configs))
+	for _, config := range configs {
+		if config.ConfKey == models.GoogleAuthenticatorSecretKey {
+			continue
+		}
+		publicConfigs = append(publicConfigs, config)
+	}
 	c.JSON(200, gin.H{
 		"code":   200,
 		"msg":    "ok",
-		"result": configs,
+		"result": publicConfigs,
 	})
 }
 func GetEntConfigs(c *gin.Context) {
@@ -63,6 +70,10 @@ func GetEntConfigs(c *gin.Context) {
 }
 func GetConfig(c *gin.Context) {
 	key := c.Query("key")
+	if key == models.GoogleAuthenticatorSecretKey {
+		c.JSON(200, gin.H{"code": 400, "msg": "该配置不允许公开读取"})
+		return
+	}
 	config := models.FindConfig(key)
 	c.JSON(200, gin.H{
 		"code":   200,
@@ -262,6 +273,10 @@ func PostConfig(c *gin.Context) {
 			"code": 400,
 			"msg":  "error",
 		})
+		return
+	}
+	if key == models.GoogleAuthenticatorSecretKey || key == models.GoogleAuthenticatorEnabledKey {
+		c.JSON(200, gin.H{"code": 400, "msg": "请使用谷歌验证器设置面板"})
 		return
 	}
 	if key == "SystemTimezone" {

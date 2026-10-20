@@ -2,6 +2,7 @@ package v2
 
 import (
 	"github.com/gin-gonic/gin"
+	"go-fly-muti/models"
 	"go-fly-muti/tools"
 	"go-fly-muti/types"
 	"time"
@@ -31,6 +32,9 @@ func RefreshToken(form TokenForm) gin.H {
 			"code": types.ApiCode.TOKEN_FAILED,
 			"msg":  err.Error(),
 		}
+	}
+	if models.GoogleAuthenticatorEnabled() && (!orgToken.MFAVerified || !models.AccountTOTPBound(orgToken.Id)) {
+		return gin.H{"code": 401, "msg": "请重新登录并完成个人谷歌验证"}
 	}
 	orgToken.CreateTime = time.Now().Format("2006-01-02 15:04:05")
 	orgToken.ExpiresAt = time.Now().Unix() + 24*3600
@@ -104,6 +108,10 @@ func PostRefreshTokenV1(c *gin.Context) {
 			"code": types.ApiCode.FAILED,
 			"msg":  types.ApiCode.GetMessage(types.ApiCode.INVALID),
 		})
+		return
+	}
+	if models.GoogleAuthenticatorEnabled() && userinfo["mfa_verified"] != true {
+		c.JSON(200, gin.H{"code": 401, "msg": "请重新登录并完成个人谷歌验证"})
 		return
 	}
 	userinfo["create_time"] = time.Now().Unix()

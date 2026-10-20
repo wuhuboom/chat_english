@@ -84,6 +84,14 @@ func run(cmd *cobra.Command, args []string) {
 	gin.SetMode(gin.ReleaseMode)
 	engine := gin.New()
 	engine.Use(logger.GinLogger(), logger.GinRecovery(true))
+	engine.Use(func(c *gin.Context) {
+		if strings.HasPrefix(c.Request.URL.Path, "/static/upload/") {
+			c.Header("X-Content-Type-Options", "nosniff")
+			c.Header("Content-Security-Policy", "default-src 'none'; sandbox")
+			c.Header("Referrer-Policy", "no-referrer")
+		}
+		c.Next()
+	})
 
 	engine.MaxMultipartMemory = 32 << 20 // 32 MiB
 
