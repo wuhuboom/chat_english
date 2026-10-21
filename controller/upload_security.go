@@ -29,7 +29,12 @@ const (
 	maxAudioUpload = 20 * 1024 * 1024
 )
 
+var allowedImageExtensions = map[string]bool{
+	".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".webp": true,
+}
+
 var allowedAttachmentExtensions = map[string]bool{
+	".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".webp": true,
 	".pdf": true, ".txt": true, ".zip": true, ".rar": true, ".7z": true,
 	".doc": true, ".docx": true, ".xls": true, ".xlsx": true,
 	".ppt": true, ".pptx": true, ".mp4": true,
@@ -44,7 +49,7 @@ func validateUpload(header *multipart.FileHeader, kind string) (string, error) {
 	switch kind {
 	case "image":
 		maxSize = maxImageUpload
-		if !map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".webp": true}[ext] {
+		if !allowedImageExtensions[ext] {
 			return "", errors.New("只允许 jpg、jpeg、png、gif、webp 图片")
 		}
 	case "attachment":

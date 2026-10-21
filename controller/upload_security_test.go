@@ -13,3 +13,14 @@ func TestUploadSignaturesRejectDisguisedScripts(t *testing.T) {
 		t.Fatal("valid PNG signature was rejected")
 	}
 }
+
+func TestAttachmentUploadAllowsValidatedImages(t *testing.T) {
+	for _, ext := range []string{".jpg", ".jpeg", ".png", ".gif", ".webp"} {
+		if !allowedAttachmentExtensions[ext] {
+			t.Errorf("attachment upload should allow image extension %s", ext)
+		}
+	}
+	if allowedAttachmentExtensions[".svg"] || allowedAttachmentExtensions[".php"] {
+		t.Fatal("active-content attachment extension was accepted")
+	}
+}
