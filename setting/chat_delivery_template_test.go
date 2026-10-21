@@ -30,6 +30,9 @@ func TestEveryH5TemplateRecoversUnreadMessagesAndAcknowledgesVisibleIDs(t *testi
 			if !strings.Contains(source, "markVisitorMessagesRead(_this, data.msg_ids)") {
 				t.Fatalf("%s can overwrite a newer unread state when an older acknowledgement completes", template)
 			}
+			if strings.Contains(source, "websocketMaxOpenNum") || strings.Contains(source, "websocketOpenNum") {
+				t.Fatalf("%s permanently stops reconnecting after a lifetime connection limit", template)
+			}
 		})
 	}
 }

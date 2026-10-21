@@ -344,8 +344,6 @@
             currentPage: 1,
             showLoadMore: false,
             loadMoreDisable: false,
-            websocketOpenNum: 0,//websocket打开次数
-            websocketMaxOpenNum: 10,//websocket最大打开次数
             talkBtnText: "按住 说话",
             recorderEnd: false,
             isMobile: false,
@@ -368,14 +366,6 @@
             },
             OnOpen: function () {
                 // console.log("ws:onopen");
-                //限制最大打开次数
-                if (this.websocketOpenNum >= this.websocketMaxOpenNum) {
-                    this.chatTitle = GOFLY_LANG[LANG]['refresh'];
-                    this.socket.close();
-                    return;
-                }
-                this.websocketOpenNum++;
-
                 this.chatTitle = this.noticeName + " , " + GOFLY_LANG[LANG]['connectok'];
                 this.checkTimeout();
                 this.socketClosed = false;
