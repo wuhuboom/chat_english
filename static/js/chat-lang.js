@@ -74,6 +74,7 @@ var GOFLY_LANG={
         "comment":"备注",
         "success":"操作成功",
         "failed":"操作失败",
+        "requestFailed":"请求失败，请稍后重试",
         "back":"返回上一页",
         "onlineService":"在线客服",
         "replyInMinutes":"通常会在几分钟内回复",
@@ -166,6 +167,7 @@ var GOFLY_LANG={
         "comment":"comment",
         "success":"success",
         "failed":"failed",
+        "requestFailed":"Unable to complete the request. Please try again.",
         "back":"Go back",
         "onlineService":"Online support",
         "replyInMinutes":"Usually replies within a few minutes",
@@ -243,6 +245,7 @@ var GOFLY_LANG={
         "messageDeleted":"消息撤回",
         "read":"已读",
         "unread":"未读",
+        "requestFailed":"リクエストを完了できませんでした。もう一度お試しください。",
         "back":"前のページに戻る",
         "onlineService":"オンラインサポート",
         "replyInMinutes":"通常、数分以内に返信します",
@@ -264,15 +267,32 @@ var GOFLY_LANG={
 
 function visitorErrorMessage(data) {
     var message = data && typeof data.msg === "string" ? data.msg : "";
-    if (typeof LANG !== "undefined" && /^en(?:[-_]|$)/i.test(LANG)) {
-        var translations = {
-            "访客连接已变更，请重新连接": "Your chat connection has changed. Please reconnect.",
-            "消息已读状态更新失败": "Unable to update the read status. Please try again.",
-            "当前会话没有有效的接待客服，请重新连接": "No agent is assigned to this chat. Please reconnect."
-        };
-        return translations[message] || (message && !/[\u3400-\u9fff]/.test(message) ? message : "Unable to complete the request. Please try again.");
+    var language = typeof LANG === "undefined" ? "cn" : String(LANG).toLowerCase();
+    var locale = /^en(?:[-_]|$)/i.test(language) ? "en" : (/^jp(?:[-_]|$)/i.test(language) ? "jp" : "cn");
+    var translations = {
+        "访客连接已变更，请重新连接": {cn:"访客连接已变更，请重新连接", en:"Your chat connection has changed. Please reconnect."},
+        "消息已读状态更新失败": {cn:"消息已读状态更新失败", en:"Unable to update the read status. Please try again."},
+        "当前会话没有有效的接待客服，请重新连接": {cn:"当前会话没有有效的接待客服，请重新连接", en:"No agent is assigned to this chat. Please reconnect."},
+        "用户不存在": {cn:"用户不存在", en:"The user does not exist."},
+        "上传过于频繁，请稍后重试": {cn:"上传过于频繁，请稍后重试", en:"Uploads are too frequent. Please try again later."},
+        "禁止上传附件!": {cn:"禁止上传附件!", en:"Attachments are disabled."},
+        "上传目录创建失败": {cn:"上传目录创建失败", en:"Unable to prepare the upload. Please try again."},
+        "文件保存失败": {cn:"文件保存失败", en:"Unable to save the file. Please try again."}
+    };
+    if (translations[message] && translations[message][locale]) {
+        return translations[message][locale];
     }
-    return message || "请求失败，请稍后重试";
+    if (/^(上传失败|该附件类型不允许上传|未知上传类型|无法读取上传文件)/.test(message)) {
+        return locale === "en" ? "Image upload failed. Please choose a supported image and try again." :
+            (locale === "cn" ? message : "画像のアップロードに失敗しました。対応画像を選択してもう一度お試しください。");
+    }
+    if (locale === "en") {
+        return message && !/[\u3400-\u9fff]/.test(message) ? message : GOFLY_LANG.en.requestFailed;
+    }
+    if (locale === "cn") {
+        return message && /[\u3400-\u9fff]/.test(message) ? message : GOFLY_LANG.cn.requestFailed;
+    }
+    return message && !/[\u3400-\u9fff]/.test(message) ? message : GOFLY_LANG.jp.requestFailed;
 }
 
 function visitorSendAjax(url,method,params,callback){

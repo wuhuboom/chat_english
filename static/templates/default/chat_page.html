@@ -712,7 +712,7 @@
                                 message: visitorErrorMessage(res),
                                 type: 'error'
                             });
-                            _this.chatTitle = res.msg;
+                            _this.chatTitle = visitorErrorMessage(res);
                             _this.sendDisabled = true;
                             return;
                         }
@@ -1104,7 +1104,7 @@
                     },
                     success: function (res) {
                         if (res.code != 200) {
-                            _this.$message({message: res.msg || _this.uploadCopy.failed, type: 'error'});
+                            _this.$message({message: visitorErrorMessage(res), type: 'error'});
                             return;
                         }
                         _this.imageUploadProgress = 100;

@@ -33,6 +33,9 @@ func TestEveryH5TemplateRecoversUnreadMessagesAndAcknowledgesVisibleIDs(t *testi
 			if strings.Contains(source, "websocketMaxOpenNum") || strings.Contains(source, "websocketOpenNum") {
 				t.Fatalf("%s permanently stops reconnecting after a lifetime connection limit", template)
 			}
+			if strings.Contains(source, "chatTitle = res.msg") || strings.Contains(source, "chatTitle=res.msg") {
+				t.Fatalf("%s displays a server error without applying the visitor language", template)
+			}
 		})
 	}
 }

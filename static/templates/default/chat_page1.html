@@ -698,7 +698,7 @@
                 message: visitorErrorMessage(res),
                 type: 'error'
               });
-              _this.chatTitle = res.msg;
+              _this.chatTitle = visitorErrorMessage(res);
               _this.sendDisabled = true;
               return;
             }
