@@ -78,6 +78,15 @@ func validateUpload(header *multipart.FileHeader, kind string) (string, error) {
 		return "", errors.New("无法读取上传文件")
 	}
 	if !validUploadSignature(ext, buf[:n]) {
+		// Clipboard images may retain a filename from a different image encoding.
+		// Normalize only allowed image types; never bypass signature checks.
+		if allowedImageExtensions[ext] {
+			for _, imageExt := range []string{".jpg", ".png", ".gif", ".webp"} {
+				if validUploadSignature(imageExt, buf[:n]) {
+					return imageExt, nil
+				}
+			}
+		}
 		return "", errors.New("文件内容与扩展名不符")
 	}
 	return ext, nil
