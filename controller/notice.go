@@ -55,6 +55,18 @@ func welcomesForVersion(welcomes []models.Welcome, knownVersion string) []models
 	return welcomes
 }
 
+func welcomeMessagePayload(welcome models.Welcome, kefu models.User, messageID uint) gin.H {
+	return gin.H{
+		"msg_id":       messageID,
+		"name":         kefu.Nickname,
+		"avator":       kefu.Avator,
+		"is_kefu":      false,
+		"content":      welcome.Content,
+		"delay_second": welcome.DelaySecond,
+		"time":         setting.Now().Format("2006-01-02 15:04:05"),
+	}
+}
+
 func GetNotice(c *gin.Context) {
 	var form KefuNoticeForm
 	err := c.Bind(&form)
@@ -121,18 +133,11 @@ func GetNotice(c *gin.Context) {
 	welcomes = welcomesForVersion(welcomes, form.WelcomeVersion)
 	result := make([]gin.H, 0)
 	for _, welcome := range welcomes {
-		h := gin.H{
-			"name":         kefu.Nickname,
-			"avator":       kefu.Avator,
-			"is_kefu":      false,
-			"content":      welcome.Content,
-			"delay_second": welcome.DelaySecond,
-			"time":         setting.Now().Format("2006-01-02 15:04:05"),
-		}
-		result = append(result, h)
+		var messageID uint
 		if form.KefuName != "" && form.VisitorId != "" {
-			models.CreateMessage(kefu.Name, form.VisitorId, welcome.Content, "kefu", entId, "unread")
+			messageID = models.CreateMessage(kefu.Name, form.VisitorId, welcome.Content, "kefu", entId, "unread")
 		}
+		result = append(result, welcomeMessagePayload(welcome, kefu, messageID))
 	}
 	c.JSON(200, gin.H{
 		"code": 200,

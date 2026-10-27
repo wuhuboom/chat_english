@@ -560,7 +560,9 @@ new Vue({
                         var timer =  setTimeout(function (msg) {
                             msg.time=_this.getNowDate();
                             msg.content = replaceSpecialTag(msg.content);
-                            _this.msgList.push(msg);
+                            if(!insertVisitorChatMessageByID(_this,msg)){
+                                return;
+                            }
                             _this.scrollBottom();
                             _this.alertSound();
                             var redata={

@@ -38,3 +38,16 @@ func TestWelcomesForVersion(t *testing.T) {
 		t.Fatalf("welcomesForVersion() returned %d changed welcomes, want %d", len(got), len(welcomes))
 	}
 }
+
+func TestWelcomeMessagePayloadIncludesPersistedMessageID(t *testing.T) {
+	welcome := models.Welcome{Content: "Welcome", DelaySecond: 2}
+	kefu := models.User{Nickname: "Support", Avator: "/support.png"}
+
+	payload := welcomeMessagePayload(welcome, kefu, 10772)
+	if got := payload["msg_id"]; got != uint(10772) {
+		t.Fatalf("welcome msg_id = %#v, want 10772", got)
+	}
+	if got := payload["content"]; got != "Welcome" {
+		t.Fatalf("welcome content = %#v, want Welcome", got)
+	}
+}

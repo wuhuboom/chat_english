@@ -36,6 +36,10 @@ func TestEveryH5TemplateRecoversUnreadMessagesAndAcknowledgesVisibleIDs(t *testi
 			if strings.Contains(source, "chatTitle = res.msg") || strings.Contains(source, "chatTitle=res.msg") {
 				t.Fatalf("%s displays a server error without applying the visitor language", template)
 			}
+			if !strings.Contains(source, "insertVisitorChatMessageByID(_this, msg)") &&
+				!strings.Contains(source, "insertVisitorChatMessageByID(_this,msg)") {
+				t.Fatalf("%s cannot deduplicate an automatic welcome racing with unread recovery", template)
+			}
 		})
 	}
 }

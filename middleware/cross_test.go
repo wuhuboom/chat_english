@@ -3,6 +3,7 @@ package middleware
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -22,6 +23,31 @@ func TestCrossSiteWildcardDoesNotAllowCredentials(t *testing.T) {
 	}
 	if got := recorder.Header().Get("Access-Control-Allow-Credentials"); got != "" {
 		t.Fatalf("credentials header = %q, want empty", got)
+	}
+}
+
+func TestCrossSiteAllowsPackagedChatHeaders(t *testing.T) {
+	t.Setenv("GOFLY_ALLOWED_ORIGINS", "")
+	recorder := httptest.NewRecorder()
+	context, _ := gin.CreateTestContext(recorder)
+	context.Request = httptest.NewRequest(http.MethodOptions, "/2/messages_page", nil)
+	context.Request.Header.Set("Origin", "null")
+	context.Request.Header.Set("Access-Control-Request-Method", http.MethodPost)
+	context.Request.Header.Set("Access-Control-Request-Headers", "lang,x-requested-with,content-type")
+
+	CrossSite(context)
+
+	if recorder.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d", recorder.Code, http.StatusNoContent)
+	}
+	if got := recorder.Header().Get("Access-Control-Allow-Origin"); got != "*" {
+		t.Fatalf("allow origin = %q, want *", got)
+	}
+	allowedHeaders := strings.ToLower(recorder.Header().Get("Access-Control-Allow-Headers"))
+	for _, header := range []string{"lang", "x-requested-with", "content-type"} {
+		if !strings.Contains(allowedHeaders, header) {
+			t.Errorf("allowed headers %q does not contain %q", allowedHeaders, header)
+		}
 	}
 }
 
