@@ -1,4 +1,50 @@
 {{template "header" }}
+<style>
+    .professional-avatar-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(72px, 1fr));
+        gap: 12px;
+        max-width: 560px;
+    }
+    .professional-avatar-option {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 6px;
+        border: 2px solid transparent;
+        border-radius: 10px;
+        background: #f5f7fa;
+        color: #606266;
+        cursor: pointer;
+        transition: border-color .2s, background-color .2s, box-shadow .2s;
+    }
+    .professional-avatar-option:hover {
+        border-color: #a0cfff;
+        background: #ecf5ff;
+    }
+    .professional-avatar-option.is-selected {
+        border-color: #409eff;
+        background: #ecf5ff;
+        box-shadow: 0 0 0 2px rgba(64, 158, 255, .12);
+    }
+    .professional-avatar-option img {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    .professional-avatar-option span {
+        font-size: 12px;
+        line-height: 1;
+    }
+    @media (max-width: 900px) {
+        .professional-avatar-grid {
+            grid-template-columns: repeat(3, minmax(72px, 1fr));
+        }
+    }
+</style>
 <div id="app" style="width:100%">
     <template>
         <el-container v-loading.fullscreen.lock="fullscreenLoading">
@@ -127,11 +173,40 @@
                     <el-input v-model="kefuForm.nickname"></el-input>
                 </el-form-item>
                 <el-form-item label="头像"  prop="avator">
-                    <el-select v-model="kefuForm.avator" placeholder="请选择头像">
-                        <el-option :label="'头像'+item" :value="'/static/images/'+item+'.jpg'" v-for="item in [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]" v-bind:key="item">
-                            <el-avatar :size="30" :src="'/static/images/'+item+'.jpg'"></el-avatar>
-                        </el-option>
-                    </el-select>
+                    <div class="professional-avatar-grid">
+                        <button
+                                v-for="item in [
+                                    {name:'女客服 1', file:'professional-woman-01.jpg'},
+                                    {name:'女客服 2', file:'professional-woman-02.jpg'},
+                                    {name:'女客服 3', file:'professional-woman-03.jpg'},
+                                    {name:'女客服 4', file:'professional-woman-04.jpg'},
+                                    {name:'女客服 5', file:'professional-woman-05.jpg'},
+                                    {name:'男客服 1', file:'professional-man-01.jpg'},
+                                    {name:'男客服 2', file:'professional-man-02.jpg'},
+                                    {name:'男客服 3', file:'professional-man-03.jpg'},
+                                    {name:'男客服 4', file:'professional-man-04.jpg'},
+                                    {name:'男客服 5', file:'professional-man-05.jpg'},
+                                    {name:'中式女客服 1', file:'chinese-woman-01.jpg'},
+                                    {name:'中式女客服 2', file:'chinese-woman-02.jpg'},
+                                    {name:'中式女客服 3', file:'chinese-woman-03.jpg'},
+                                    {name:'中式女客服 4', file:'chinese-woman-04.jpg'},
+                                    {name:'中式女客服 5', file:'chinese-woman-05.jpg'},
+                                    {name:'中式男客服 1', file:'chinese-man-01.jpg'},
+                                    {name:'中式男客服 2', file:'chinese-man-02.jpg'},
+                                    {name:'中式男客服 3', file:'chinese-man-03.jpg'},
+                                    {name:'中式男客服 4', file:'chinese-man-04.jpg'},
+                                    {name:'中式男客服 5', file:'chinese-man-05.jpg'}
+                                ]"
+                                :key="item.file"
+                                type="button"
+                                class="professional-avatar-option"
+                                :class="{'is-selected': kefuForm.avator === '/static/images/support-avatars/' + item.file}"
+                                :aria-pressed="kefuForm.avator === '/static/images/support-avatars/' + item.file"
+                                @click="kefuForm.avator = '/static/images/support-avatars/' + item.file">
+                            <img :src="'/static/images/support-avatars/' + item.file" :alt="item.name">
+                            <span><{item.name}></span>
+                        </button>
+                    </div>
                 </el-form-item>
                 <el-form-item label="角色"  prop="role_id">
                     <el-select v-model="kefuForm.role_id" placeholder="请选择角色">
