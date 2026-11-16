@@ -37,9 +37,10 @@ When HTTPS terminates at nginx, set `GOFLY_BROWSER_ORIGIN` in
 `/etc/gofly/gofly.env` to the exact public origin (for example,
 `https://chat.example.com`, without a trailing slash). Preserve the public
 Host header, including a non-default port if applicable. Staff browser sessions
-use a host-only HttpOnly cookie. HTTP is supported for loopback testing only;
-use HTTPS for remote staff access. Logging out revokes all sessions for that
-staff account.
+use a host-only HttpOnly cookie with SameSite=Strict. HTTP login does not
+require extra configuration; passwords and session cookies on HTTP travel
+without transport encryption. HTTPS cookies remain Secure.
+Logging out revokes all sessions for that staff account.
 
 ## 3. Install the reverse proxy
 

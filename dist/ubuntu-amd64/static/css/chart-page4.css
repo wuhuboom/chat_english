@@ -1,0 +1,205 @@
+.chatEntBox {
+  position: relative;
+  background: #050033;
+}
+.chatVisitorPage {
+  height: calc(100% - 134px);
+}
+.chatContext {
+  background: transparent;
+  overflow-x: hidden;
+  position: relative;
+  z-index: 2;
+}
+.chatCenter ::-webkit-scrollbar-thumb {
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  background-color: #0d0d16;
+}
+.chatCenter ::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  background-color: #27273b;
+}
+.chatVisitorPage .chatBox {
+  background: transparent;
+  padding: 0 8px;
+  padding-top: 16px;
+}
+.chatBoxSend {
+  border-top: none;
+  background: #05113b;
+  padding: 8px 0;
+  border-top: 1px solid rgb(238 250 248 / 10%);
+}
+.text_photo_mod {
+  display: flex;
+  align-items: center;
+  background-color: #13254d;
+  flex: 1;
+  border-radius: 8px;
+  padding-right: 16px;
+}
+.text_photo_mod input {
+  border: none;
+  background: transparent;
+  color: #fff;
+}
+.text_photo_mod ::-webkit-input-placeholder {
+  /* WebKit, Blink, Edge */
+  color: #B3BED9;
+}
+.text_photo_mod :-moz-placeholder {
+  /* Mozilla Firefox 4 to 18 */
+  color: #B3BED9;
+}
+.text_photo_mod ::-moz-placeholder {
+  /* Mozilla Firefox 19+ */
+  color: #B3BED9;
+}
+.text_photo_mod :-ms-input-placeholder {
+  /* Internet Explorer 10-11 */
+  color: #B3BED9;
+}
+
+/* uploadFileicon and uploadImgicon and visitorEditorBtnicon*/
+#uploadFile,
+#uploadImg {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+#uploadFile {
+  margin: 0 8px;
+}
+#uploadFile img,
+#uploadImg img {
+  width: 24px;
+  object-fit: contain;
+}
+.visitorEditor {
+  margin-top: 0;
+}
+.visitorEditorBtn {
+  padding: 0 16px;
+}
+.visitorEditorBtn img {
+  width: 40px;
+  object-fit: contain;
+}
+
+/* MessageBox*/
+.chatContent {
+  border-radius: 16px;
+  padding: 6px 10px;
+  background: #13254D;
+  border: none;
+  color: #B3BED9;
+  padding: 6px 12px;
+}
+.chatContent:before,
+.chatContent::after {
+  display: none;
+}
+.chatBox .el-row {
+  display: flex;
+  flex-direction: column;
+}
+.chatTime {
+  margin: 0;
+  margin-bottom: 12px;
+  align-self: start;
+  color: #B3BED9;
+}
+.chatTime span {
+  background: transparent;
+  color: #B3BED9;
+}
+.kefuMe {
+  display: flex;
+  flex-direction: column;
+}
+.kefuMe .chatContent {
+  border-radius: 16px;
+  background: #4acfee;
+  border: 1px solid #4acfee;
+  color: #000E08;
+  padding: 6px 12px;
+}
+.kefuMe .chatTime {
+  align-self: end;
+}
+.kefuMe .el-col {
+  margin-top: 0;
+}
+.chatUser {
+  margin-top: 0;
+  margin-bottom: 12px;
+  margin-right: 8px;
+  color: #B3BED9;
+}
+.chatReadStatus {
+  margin: 8px 8px 0px 0px;
+  color: #B3BED9;
+}
+
+/* chatbox nav */
+.back_btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.back_btn img {
+  width: 24px;
+  object-fit: contain;
+}
+.avatar {
+  width: 42px;
+  object-fit: contain;
+  margin-left: 10px;
+  border-radius: 50%;
+}
+.chatBoxNav {
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  background: #05113b;
+}
+
+/* pc */
+
+.chatEntTitle {
+  background: #05113b;
+}
+.chatCenter {
+  background: #05113b;
+}
+@media screen and (min-width: 900px) {
+  .chatEntBox {
+    height: calc(100% - 50px);
+    padding-top: 16px;
+    box-sizing: border-box;
+    border-right: 1px solid rgb(255 255 255 / 10%);
+    border-top: 1px solid rgb(255 255 255 / 10%);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .chatVisitorPage .chatBox {
+    padding-top: 0;
+  }
+  .companyInfo {
+    color: #fff;
+  }
+  .chatContext {
+    flex: 1;
+  }
+  .chatBoxNav {
+    display: none;
+  }
+}
+

@@ -1,0 +1,494 @@
+:root {
+    --wx-page: #ededed;
+    --wx-header: #ededed;
+    --wx-panel: #f7f7f7;
+    --wx-border: #d9d9d9;
+    --wx-text: #111111;
+    --wx-muted: #8a8a8a;
+    --wx-green: #95ec69;
+    --wx-green-dark: #89df5f;
+}
+
+body.visitorWechatSkin {
+    color: var(--wx-text);
+    background: #d8d8d8;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+}
+
+.visitorWechatSkin #app.chatCenter {
+    width: min(760px, calc(100vw - 32px));
+    height: min(860px, calc(var(--visitor-viewport-height, 100vh) - 32px)) !important;
+    border-color: #cfcfcf;
+    border-radius: 8px;
+    background: var(--wx-page);
+    box-shadow: 0 18px 55px rgba(0, 0, 0, 0.2);
+}
+
+.visitorWechatSkin .chatEntTitle {
+    position: relative;
+    z-index: 5;
+    height: 56px;
+    min-height: 56px;
+    padding: 0 64px;
+    justify-content: center;
+    color: var(--wx-text);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    background: rgba(237, 237, 237, 0.96);
+    box-shadow: none;
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+}
+
+.visitorWechatSkin .visitorHeaderBack {
+    position: absolute;
+    left: 14px;
+    width: 38px;
+    height: 38px;
+    margin: 0;
+    border: 0;
+    border-radius: 5px;
+    color: #181818;
+    background: transparent;
+    font-size: 24px;
+    box-shadow: none;
+}
+
+.visitorWechatSkin .visitorHeaderBack:hover,
+.visitorWechatSkin .visitorHeaderBack:active {
+    color: #000;
+    border-color: transparent;
+    background: rgba(0, 0, 0, 0.06);
+    transform: none;
+}
+
+.visitorWechatSkin .visitorHeaderBack:focus-visible {
+    outline: 2px solid #07c160;
+    outline-offset: 1px;
+}
+
+.visitorWechatSkin .chatEntTitle .el-badge {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+}
+
+.visitorWechatSkin .chatEntTitle .chatEntTitleLogo {
+    border: 0;
+    border-radius: 5px;
+    background: #fff;
+}
+
+.visitorWechatSkin .chatEntTitle .el-badge__content.is-fixed.is-dot {
+    right: -1px;
+    bottom: -1px;
+    width: 9px;
+    height: 9px;
+    border: 2px solid var(--wx-header);
+    background: #07c160;
+}
+
+.visitorWechatSkin .chatEntTitle .visitorHeaderTitle {
+    max-width: calc(100vw - 150px);
+    margin-left: 9px;
+    color: #111;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+.visitorWechatSkin .chatEntBox {
+    width: 100%;
+    height: calc(100% - 56px);
+    border-right: 0;
+}
+
+.visitorWechatSkin .chatContext,
+.visitorWechatSkin .chatVisitorPage .chatBox {
+    background: var(--wx-page);
+}
+
+.visitorWechatSkin .chatVisitorPage {
+    scroll-behavior: smooth;
+    scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+}
+
+.visitorWechatSkin .chatVisitorPage .chatBox {
+    padding: 18px 18px 28px;
+}
+
+.visitorWechatSkin .chatArticle,
+.visitorWechatSkin .chatBoxNav {
+    display: none;
+}
+
+.visitorWechatSkin .visitorMessageRow {
+    margin-bottom: 20px;
+}
+
+.visitorWechatSkin .visitorMessageRow .chatTime {
+    margin: 0 0 13px;
+    color: var(--wx-muted);
+    line-height: 18px;
+}
+
+.visitorWechatSkin .visitorMessageRow .chatTime span {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    color: #999;
+    background: transparent;
+    font-size: 11px;
+}
+
+.visitorWechatSkin .visitorMessageLine {
+    gap: 11px;
+}
+
+.visitorWechatSkin .visitorMessageAvatar {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    border: 0;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: none;
+}
+
+.visitorWechatSkin .visitorMessagePayload {
+    max-width: min(72%, 520px);
+}
+
+.visitorWechatSkin .visitorMessagePayload .chatUser {
+    margin: 0 0 4px;
+    color: #858585;
+    font-size: 11px;
+    line-height: 14px;
+}
+
+.visitorWechatSkin .visitorMessagePayload .chatContent {
+    position: relative;
+    min-height: 40px;
+    padding: 9px 12px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 4px;
+    color: var(--wx-text);
+    background: #fff;
+    box-shadow: none;
+    font-size: 15px;
+    line-height: 1.55;
+    overflow-wrap: break-word;
+    word-break: normal;
+    white-space: normal;
+}
+
+.visitorWechatSkin .visitorMessagePayload .chatContent::before {
+    position: absolute;
+    top: 12px;
+    left: -6px;
+    display: block;
+    width: 10px;
+    height: 10px;
+    border: 0;
+    border-left: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    background: #fff;
+    content: "";
+    transform: rotate(45deg);
+}
+
+.visitorWechatSkin .visitorMessageMine {
+    align-items: flex-start;
+    justify-content: flex-end;
+}
+
+.visitorWechatSkin .visitorMessageMine .visitorMessagePayload {
+    align-items: flex-end;
+}
+
+.visitorWechatSkin .visitorMessageMine .chatContent {
+    border-color: rgba(0, 0, 0, 0.06);
+    border-radius: 4px;
+    color: #111;
+    background: var(--wx-green);
+    box-shadow: none;
+}
+
+.visitorWechatSkin .visitorMessageMine .chatContent::before {
+    right: -6px;
+    left: auto;
+    border: 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    border-right: 1px solid rgba(0, 0, 0, 0.06);
+    background: var(--wx-green);
+}
+
+.visitorWechatSkin .visitorMessageMine .chatReadStatus {
+    margin: 4px 2px 0 0;
+    color: #9a9a9a;
+    font-size: 10px;
+}
+
+.visitorWechatSkin .chatContent a {
+    color: #576b95;
+}
+
+.visitorWechatSkin .chatImagePic {
+    max-width: min(280px, 100%);
+    max-height: 360px;
+    border-radius: 3px;
+}
+
+.visitorWechatSkin .chatReplay {
+    margin: 4px 0 18px !important;
+    padding: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.74);
+}
+
+.visitorWechatSkin .visitorReply {
+    border-radius: 4px;
+    box-shadow: none;
+}
+
+.visitorWechatSkin .visitorReplyContent {
+    color: #576b95;
+}
+
+.visitorWechatSkin .chatBoxSend {
+    min-height: 64px;
+    padding: 9px 10px 9px;
+    border-top: 1px solid var(--wx-border);
+    background: var(--wx-panel);
+    box-shadow: none;
+}
+
+.visitorWechatSkin .visitorEditor {
+    height: 44px;
+    padding: 3px 4px 3px 10px;
+    gap: 3px;
+    border: 0;
+    border-radius: 5px;
+    background: #fff;
+    box-shadow: none;
+}
+
+.visitorWechatSkin .visitorEditor:focus-within {
+    border-color: transparent;
+    background: #fff;
+    box-shadow: none;
+}
+
+.visitorWechatSkin .visitorEditorArea .el-input__inner {
+    height: 38px;
+    color: #111;
+    background: transparent;
+    font-size: 16px;
+    line-height: 38px;
+}
+
+.visitorWechatSkin .visitorEditorArea .el-input__inner::placeholder {
+    color: #b2b2b2;
+}
+
+.visitorWechatSkin .visitorEditorSmile,
+.visitorWechatSkin .visitorEditorChoose {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+    opacity: 0.82;
+    filter: grayscale(1) contrast(1.2);
+}
+
+.visitorWechatSkin .visitorEditorSmile:hover,
+.visitorWechatSkin .visitorEditorChoose:hover {
+    opacity: 1;
+    transform: none;
+}
+
+.visitorWechatSkin .visitorEditorBtn {
+    height: 34px;
+    min-width: 58px;
+    border-radius: 4px;
+    color: #fff;
+    background: #07c160;
+    box-shadow: none;
+}
+
+.visitorWechatSkin .visitorEditorBtn:hover,
+.visitorWechatSkin .visitorEditorBtn:focus {
+    background: #06ae56;
+}
+
+.visitorWechatSkin .footContact {
+    display: none;
+}
+
+.visitorWechatSkin .iconBtns.visitorIconBox,
+.visitorWechatSkin .faceBox.visitorFaceBox {
+    right: 10px;
+    bottom: 62px;
+    left: 10px;
+    border: 1px solid #dedede;
+    border-radius: 7px;
+    background: #f7f7f7;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.12);
+    backdrop-filter: none;
+}
+
+.visitorWechatSkin .emojiPickerHeader,
+.visitorWechatSkin .emojiPickerTabs {
+    border-color: #e5e5e5;
+    background: #f7f7f7;
+}
+
+.visitorWechatSkin .emojiPickerItem,
+.visitorWechatSkin .emojiPickerTab {
+    border-radius: 4px;
+}
+
+.visitorWechatSkin .emojiPickerItem:hover,
+.visitorWechatSkin .emojiPickerTab:hover,
+.visitorWechatSkin .emojiPickerTab.is-active {
+    color: #111;
+    background: #e7e7e7;
+    box-shadow: none;
+}
+
+.visitorWechatSkin .visitorUploadStatus {
+    bottom: 66px;
+    border-color: #dedede;
+    border-radius: 5px;
+    color: #555;
+    background: #fff;
+}
+
+.visitorWechatSkin ::-webkit-scrollbar {
+    width: 5px;
+}
+
+.visitorWechatSkin ::-webkit-scrollbar-thumb {
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.18);
+}
+
+@media screen and (min-width: 900px) {
+    .visitorWechatSkin #app.chatCenter {
+        margin: 16px auto;
+    }
+
+    .visitorWechatSkin .chatEntBox {
+        width: 100%;
+    }
+
+    .visitorWechatSkin .chatArticle {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 899px) {
+    body.visitorWechatSkin {
+        background: var(--wx-page);
+    }
+
+    .visitorWechatSkin #app.chatCenter {
+        top: var(--visitor-viewport-offset-top, 0px);
+        width: 100%;
+        height: var(--visitor-viewport-height, 100dvh) !important;
+        margin: 0;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .visitorWechatSkin .chatEntTitle {
+        height: calc(52px + env(safe-area-inset-top, 0px));
+        min-height: calc(52px + env(safe-area-inset-top, 0px));
+        padding: env(safe-area-inset-top, 0px) 58px 0;
+    }
+
+    .visitorWechatSkin .visitorHeaderBack {
+        top: calc(env(safe-area-inset-top, 0px) + 7px);
+        left: 8px;
+    }
+
+    .visitorWechatSkin .chatEntTitle .el-badge {
+        width: 32px;
+        height: 32px;
+        flex-basis: 32px;
+    }
+
+    .visitorWechatSkin .chatEntTitle .chatEntTitleLogo {
+        width: 32px !important;
+        height: 32px !important;
+    }
+
+    .visitorWechatSkin .chatEntTitle .visitorHeaderTitle {
+        max-width: calc(100vw - 132px);
+        font-size: 15px;
+    }
+
+    .visitorWechatSkin .chatEntBox {
+        height: calc(100% - 52px - env(safe-area-inset-top, 0px));
+    }
+
+    .visitorWechatSkin .chatVisitorPage .chatBox {
+        padding: 16px 12px 24px;
+    }
+
+    .visitorWechatSkin .visitorMessageRow {
+        margin-bottom: 18px;
+    }
+
+    .visitorWechatSkin .visitorMessagePayload {
+        max-width: calc(100% - 102px);
+    }
+
+    .visitorWechatSkin .visitorMessagePayload .chatContent {
+        font-size: 16px;
+    }
+
+    .visitorWechatSkin .chatBoxSend {
+        min-height: calc(62px + env(safe-area-inset-bottom, 0px));
+        padding: 9px 8px max(9px, env(safe-area-inset-bottom, 0px));
+    }
+
+    .visitorWechatSkin .iconBtns.visitorIconBox,
+    .visitorWechatSkin .faceBox.visitorFaceBox {
+        right: 8px;
+        bottom: calc(62px + env(safe-area-inset-bottom, 0px));
+        left: 8px;
+    }
+
+    .visitorWechatSkin .visitorUploadStatus {
+        right: 10px;
+        bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .visitorWechatSkin .chatImagePic {
+        max-width: min(66vw, 260px);
+        max-height: min(44vh, 340px);
+    }
+}
+
+@media screen and (max-width: 360px) {
+    .visitorWechatSkin .chatEntTitle .chatEntTitleLogo,
+    .visitorWechatSkin .chatEntTitle .el-badge {
+        display: none;
+    }
+
+    .visitorWechatSkin .chatEntTitle .visitorHeaderTitle {
+        max-width: calc(100vw - 116px);
+        margin-left: 0;
+    }
+
+    .visitorWechatSkin .visitorMessageAvatar {
+        width: 36px !important;
+        height: 36px !important;
+        flex-basis: 36px;
+    }
+
+    .visitorWechatSkin .visitorMessagePayload {
+        max-width: calc(100% - 94px);
+    }
+}

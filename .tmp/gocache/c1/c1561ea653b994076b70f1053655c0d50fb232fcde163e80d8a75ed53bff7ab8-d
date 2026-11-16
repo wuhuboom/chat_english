@@ -1,0 +1,5 @@
+./base_station.go
+./city.go
+./district.go
+./idc.go
+./reader.go

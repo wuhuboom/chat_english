@@ -188,7 +188,7 @@ INSERT INTO `config` (`id`, `conf_name`, `conf_key`, `conf_value`) VALUES (NULL,
 INSERT INTO `config` (`id`, `conf_name`, `conf_key`, `conf_value`) VALUES (NULL, '谷歌登录验证（默认关闭）', 'GoogleAuthenticatorEnabled', 'false')|
 INSERT INTO `config` (`id`, `conf_name`, `conf_key`, `conf_value`) VALUES (NULL, '系统版本号', 'SystemVersion', '0.6.1')|
 INSERT INTO `config` (`id`, `conf_name`, `conf_key`, `conf_value`) VALUES (NULL, '系统版本名称', 'SystemVersionName', '商务运营版')|
-INSERT INTO `config` (`id`, `conf_name`, `conf_key`, `conf_value`) VALUES (NULL, '客服系统版本号', 'version', '4')|
+INSERT INTO `config` (`id`, `conf_name`, `conf_key`, `conf_value`) VALUES (NULL, '客服系统版本号', 'version', '5')|
 INSERT INTO `config` (`id`, `conf_name`, `conf_key`, `conf_value`) VALUES (NULL, '系统时区', 'SystemTimezone', 'Asia/Shanghai')|
 INSERT INTO `config` (`id`, `conf_name`, `conf_key`, `conf_value`) VALUES (NULL, '是否显示客服名称（off是不显示）', 'ShowKefuName', '')|
 INSERT INTO `config` (`id`, `conf_name`, `conf_key`, `conf_value`) VALUES (NULL, '微信模板消息备注字段(remark)', 'WechatTemplateRemark', '')|

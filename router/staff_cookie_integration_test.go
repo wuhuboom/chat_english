@@ -1,9 +1,11 @@
 package router
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -82,17 +84,26 @@ func TestStaffCookieLifecycle(t *testing.T) {
 	engine.GET("/staff-test-page", middleware.JwtPageMiddleware, func(c *gin.Context) { c.Status(204) })
 	server := httptest.NewServer(engine)
 	defer server.Close()
+	// Simulate a public HTTP origin without putting any test traffic on the network.
+	origin := "http://192.0.2.10:8081"
+	t.Setenv("GOFLY_BROWSER_ORIGIN", "")
+	dialLocal := func(ctx context.Context, network, address string) (net.Conn, error) {
+		return (&net.Dialer{}).DialContext(ctx, network, server.Listener.Addr().String())
+	}
+	transport := &http.Transport{DialContext: dialLocal}
+	defer transport.CloseIdleConnections()
+	wsDialer := websocket.Dialer{NetDialContext: dialLocal}
 	jar, _ := cookiejar.New(nil)
-	client := &http.Client{Jar: jar, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
-	request := func(method, path, origin string, form url.Values, replay *http.Cookie) (*http.Response, map[string]interface{}) {
+	client := &http.Client{Transport: transport, Jar: jar, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+	request := func(method, path, sender string, form url.Values, replay *http.Cookie) (*http.Response, map[string]interface{}) {
 		t.Helper()
-		req, err := http.NewRequest(method, server.URL+path, strings.NewReader(form.Encode()))
+		req, err := http.NewRequest(method, origin+path, strings.NewReader(form.Encode()))
 		if err != nil {
 			t.Fatal(err)
 		}
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		if origin != "" {
-			req.Header.Set("Origin", origin)
+		if sender != "" {
+			req.Header.Set("Origin", sender)
 		}
 		if replay != nil {
 			req.AddCookie(replay)
@@ -106,9 +117,9 @@ func TestStaffCookieLifecycle(t *testing.T) {
 		_ = json.NewDecoder(res.Body).Decode(&payload)
 		return res, payload
 	}
-	dial := func(origin string, cookie *http.Cookie) (*websocket.Conn, error) {
-		header := http.Header{"Origin": []string{origin}, "Cookie": []string{cookie.Name + "=" + cookie.Value}}
-		conn, res, err := websocket.DefaultDialer.Dial("ws"+strings.TrimPrefix(server.URL, "http")+"/ws_kefu", header)
+	dial := func(sender string, cookie *http.Cookie) (*websocket.Conn, error) {
+		header := http.Header{"Origin": []string{sender}, "Cookie": []string{cookie.Name + "=" + cookie.Value}}
+		conn, res, err := wsDialer.Dial("ws"+strings.TrimPrefix(origin, "http")+"/ws_kefu", header)
 		if err != nil && res != nil {
 			res.Body.Close()
 		}
@@ -116,25 +127,25 @@ func TestStaffCookieLifecycle(t *testing.T) {
 	}
 	form := url.Values{"username": {user.Name}, "password": {password}}
 	wrong := url.Values{"username": {user.Name}, "password": {"incorrect"}}
-	if res, data := request("POST", "/check", server.URL, wrong, nil); data["code"] == float64(200) || len(res.Cookies()) != 0 {
+	if res, data := request("POST", "/check", origin, wrong, nil); data["code"] == float64(200) || len(res.Cookies()) != 0 {
 		t.Fatal("incorrect password authenticated")
 	}
 	if res, _ := request("POST", "/check", "http://other.invalid", form, nil); res.StatusCode != 403 {
 		t.Fatal("cross-origin login accepted")
 	}
-	res, data := request("POST", "/check", server.URL, form, nil)
+	res, data := request("POST", "/check", origin, form, nil)
 	if data["code"] != float64(200) || data["result"] != nil || len(res.Cookies()) != 1 {
 		t.Fatal("login did not return a cookie-only session")
 	}
 	cookie := res.Cookies()[0]
-	if cookie.Name != middleware.StaffCookie || !cookie.HttpOnly || cookie.SameSite != http.SameSiteStrictMode || cookie.Domain != "" {
+	if cookie.Name != middleware.StaffCookie || !cookie.HttpOnly || cookie.Secure || cookie.SameSite != http.SameSiteStrictMode || cookie.Domain != "" {
 		t.Fatal("wrong session cookie attributes")
 	}
 	if page, _ := request("GET", "/staff-test-page", "", nil, nil); page.StatusCode != 204 {
 		t.Fatal("page reload did not authenticate")
 	}
 	for _, key := range []string{"SystemKefu", " systemkefu ", "SYSTEMKEFU"} {
-		res, _ := request("POST", "/config", server.URL, url.Values{"key": {key}, "value": {"replacement fixture"}}, nil)
+		res, _ := request("POST", "/config", origin, url.Values{"key": {key}, "value": {"replacement fixture"}}, nil)
 		if res.StatusCode != 403 {
 			t.Fatalf("retired config write accepted for %q", key)
 		}
@@ -154,7 +165,7 @@ func TestStaffCookieLifecycle(t *testing.T) {
 		{"version", "999", 403},
 		{"SystemTitle", "Safe fixture", 200},
 	} {
-		res, data := request("POST", "/config", server.URL, url.Values{"key": {test.key}, "value": {test.value}}, nil)
+		res, data := request("POST", "/config", origin, url.Values{"key": {test.key}, "value": {test.value}}, nil)
 		if res.StatusCode != test.status || data["code"] != float64(test.status) {
 			t.Fatalf("unexpected result for %s: %d", test.key, res.StatusCode)
 		}
@@ -169,7 +180,7 @@ func TestStaffCookieLifecycle(t *testing.T) {
 	if denied, _ := request("POST", "/staff/session/refresh", "http://other.invalid", nil, nil); denied.StatusCode != 403 {
 		t.Fatal("cross-origin refresh accepted")
 	}
-	res, data = request("POST", "/staff/session/refresh", server.URL, nil, nil)
+	res, data = request("POST", "/staff/session/refresh", origin, nil, nil)
 	if data["code"] != float64(200) || data["result"] != nil || len(res.Cookies()) != 1 {
 		t.Fatal("refresh did not renew cookie")
 	}
@@ -178,12 +189,12 @@ func TestStaffCookieLifecycle(t *testing.T) {
 		bad.Close()
 		t.Fatal("cross-origin WebSocket accepted")
 	}
-	first, err := dial(server.URL, cookie)
+	first, err := dial(origin, cookie)
 	if err != nil {
 		t.Fatal("WebSocket initial handshake:", err)
 	}
 	first.Close()
-	active, err := dial(server.URL, cookie)
+	active, err := dial(origin, cookie)
 	if err != nil {
 		t.Fatal("WebSocket reconnect:", err)
 	}
@@ -192,7 +203,7 @@ func TestStaffCookieLifecycle(t *testing.T) {
 	for !ws.IsKefuOnline(user.Name) && time.Now().Before(deadline) {
 		time.Sleep(time.Millisecond)
 	}
-	res, data = request("POST", "/staff/session/logout", server.URL, nil, nil)
+	res, data = request("POST", "/staff/session/logout", origin, nil, nil)
 	if data["code"] != float64(200) || len(res.Cookies()) != 1 || res.Cookies()[0].MaxAge != -1 {
 		t.Fatal("logout did not clear cookie")
 	}
@@ -205,12 +216,12 @@ func TestStaffCookieLifecycle(t *testing.T) {
 	if page, _ := request("GET", "/staff-test-page", "", nil, cookie); page.StatusCode != 302 {
 		t.Fatal("revoked cookie still authenticated")
 	}
-	if stale, err := dial(server.URL, cookie); err == nil {
+	if stale, err := dial(origin, cookie); err == nil {
 		stale.Close()
 		t.Fatal("revoked cookie reconnected")
 	}
 	models.CustomConfigs = []models.Config{{ConfKey: models.GoogleAuthenticatorEnabledKey, ConfValue: "true"}}
-	if res, data := request("POST", "/check", server.URL, form, nil); data["code"] != float64(428) || len(res.Cookies()) != 0 {
+	if res, data := request("POST", "/check", origin, form, nil); data["code"] != float64(428) || len(res.Cookies()) != 0 {
 		t.Fatal("TOTP required but issued session before enrollment")
 	}
 }

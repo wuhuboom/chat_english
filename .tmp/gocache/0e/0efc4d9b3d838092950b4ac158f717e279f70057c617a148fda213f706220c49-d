@@ -1,0 +1,8 @@
+./chat.go
+./common.go
+./detail.go
+./folder.go
+./index.go
+./login.go
+./mail.go
+./setting.go

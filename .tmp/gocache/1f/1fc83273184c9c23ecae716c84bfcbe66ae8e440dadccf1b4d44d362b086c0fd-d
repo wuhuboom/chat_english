@@ -1,0 +1,6 @@
+./disk.go
+./hex_gzip.go
+./ident.go
+./in_memory.go
+./packable.go
+./resolver.go

@@ -1,0 +1,22 @@
+#香满园 端口配置
+app:
+  name: "4545"
+  mode: "dev"
+  port: 7777
+  version: "v1"
+  white: "127.0.0.11@0.0.0.0"
+  timeZone: "Asia/Kolkata"
+  FontVersion: "chat_page111.html"
+  TelegramToken: ""
+  TelegramUsername: ""
+  TelegramChatId: ""
+
+
+
+#日志
+log:
+  level: "debug"
+  filename: "web_app.log"
+  max_size: 300  #每个人日志文件大小
+  max_age: 30    #存储天数
+  max_backups: 7 #备份数量

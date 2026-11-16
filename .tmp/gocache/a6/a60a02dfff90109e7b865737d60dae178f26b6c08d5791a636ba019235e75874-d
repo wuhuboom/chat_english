@@ -1,0 +1,13 @@
+# test log
+open C:\Users\Administrator\AppData\Local\Temp\TestReadAndWriteProcessIDs3743594090\001\gofly.sock
+open C:\Users\Administrator\AppData\Local\Temp\TestReadAndWriteProcessIDs3743594090\001\gofly.sock
+stat C:\Users\Administrator\AppData\Local\Temp\TestReadAndWriteProcessIDs3743594090
+open C:\Users\Administrator\AppData\Local\Temp\TestReadAndWriteProcessIDs3743594090
+stat C:\Users\Administrator\AppData\Local\Temp\TestReadAndWriteProcessIDs3743594090\001
+open C:\Users\Administrator\AppData\Local\Temp\TestReadAndWriteProcessIDs3743594090\001
+open C:\Users\Administrator\AppData\Local\Temp\TestReadProcessIDsRejectsInvalidFile2355977312\001\gofly.sock
+open C:\Users\Administrator\AppData\Local\Temp\TestReadProcessIDsRejectsInvalidFile2355977312\001\gofly.sock
+stat C:\Users\Administrator\AppData\Local\Temp\TestReadProcessIDsRejectsInvalidFile2355977312
+open C:\Users\Administrator\AppData\Local\Temp\TestReadProcessIDsRejectsInvalidFile2355977312
+stat C:\Users\Administrator\AppData\Local\Temp\TestReadProcessIDsRejectsInvalidFile2355977312\001
+open C:\Users\Administrator\AppData\Local\Temp\TestReadProcessIDsRejectsInvalidFile2355977312\001

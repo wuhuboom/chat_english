@@ -1,0 +1,7 @@
+# test log
+open C:\Users\Administrator\AppData\Local\Temp\TestTailLinesDropsPartialFirstLine986742678\001\app.log
+open C:\Users\Administrator\AppData\Local\Temp\TestTailLinesDropsPartialFirstLine986742678\001\app.log
+stat C:\Users\Administrator\AppData\Local\Temp\TestTailLinesDropsPartialFirstLine986742678
+open C:\Users\Administrator\AppData\Local\Temp\TestTailLinesDropsPartialFirstLine986742678
+stat C:\Users\Administrator\AppData\Local\Temp\TestTailLinesDropsPartialFirstLine986742678\001
+open C:\Users\Administrator\AppData\Local\Temp\TestTailLinesDropsPartialFirstLine986742678\001

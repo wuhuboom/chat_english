@@ -1,0 +1,43 @@
+.chatVisitorPage {
+  height: calc(100% - 123px);
+}
+/* chatbox nav */
+.back_btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.el-icon-back {
+  width: 24px;
+  height: 24px;
+  font-size: 24px;
+}
+.avatar {
+  width: 42px;
+  object-fit: contain;
+  margin-right: 8px;
+  margin-left: 10px;
+  border-radius: 50%;
+}
+.chatBoxNav {
+  background: #fff;
+  color: #000;
+  display: flex;
+  align-items: center;
+  padding: 8px;
+}
+.chatBoxNav p {
+  flex: 1;
+  text-align: center;
+  padding-right: 36px;
+}
+@media screen and (min-width: 900px) {
+  .chatBoxNav {
+    display: none;
+  }
+  .chatVisitorPage {
+    height: calc(100% - 121px);
+  }
+}

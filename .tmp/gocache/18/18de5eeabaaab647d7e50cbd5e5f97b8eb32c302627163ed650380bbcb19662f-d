@@ -1,0 +1,6 @@
+./dirent.go
+./doc.go
+./readdir.go
+./readdir_windows.go
+./symdir.go
+./walk.go

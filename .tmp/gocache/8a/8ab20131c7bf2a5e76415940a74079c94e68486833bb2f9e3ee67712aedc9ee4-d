@@ -1,0 +1,8 @@
+# test log
+getenv GOFLY_ALLOWED_ORIGINS
+getenv GOFLY_ALLOWED_ORIGINS
+getenv GOFLY_ALLOWED_ORIGINS
+getenv GOFLY_ALLOWED_ORIGINS
+getenv GOFLY_ALLOWED_ORIGINS
+getenv GOFLY_ALLOWED_ORIGINS
+open ..\config\GeoLite2-Country.mmdb

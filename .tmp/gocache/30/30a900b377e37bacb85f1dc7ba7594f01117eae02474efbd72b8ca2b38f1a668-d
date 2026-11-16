@@ -1,0 +1,7 @@
+./index.go
+./install.go
+./monitor.go
+./process.go
+./root.go
+./server.go
+./stop.go

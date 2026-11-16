@@ -1,0 +1,5 @@
+./failover.go
+./room.go
+./user.go
+./visitor.go
+./ws.go

@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -23,7 +22,7 @@ func staffOrigin(r *http.Request) string {
 		scheme = "https"
 	}
 	// Behind a reverse proxy, configure the public origin explicitly.
-	if public, err := url.Parse(os.Getenv("GOFLY_BROWSER_ORIGIN")); err == nil &&
+	if public, err := url.Parse(os.Getenv("GOFLY_BROWSER_ORIGIN")); r.TLS == nil && err == nil &&
 		(public.Scheme == "https" || public.Scheme == "http") && public.User == nil &&
 		strings.EqualFold(public.Host, r.Host) && public.Path == "" && public.RawQuery == "" && public.Fragment == "" {
 		scheme = public.Scheme
@@ -32,14 +31,8 @@ func staffOrigin(r *http.Request) string {
 }
 
 func SetStaffCookie(c *gin.Context, token string, age int) {
-	host := c.Request.Host
-	if parsed, _, err := net.SplitHostPort(host); err == nil {
-		host = parsed
-	}
-	ip := net.ParseIP(strings.Trim(host, "[]"))
-	loopback := strings.EqualFold(host, "localhost") || (ip != nil && ip.IsLoopback())
 	c.SetSameSite(http.SameSiteStrictMode)
-	c.SetCookie(StaffCookie, token, age, "/", "", !loopback || strings.HasPrefix(staffOrigin(c.Request), "https://"), true)
+	c.SetCookie(StaffCookie, token, age, "/", "", strings.HasPrefix(staffOrigin(c.Request), "https://"), true)
 	c.Header("Cache-Control", "no-store")
 }
 
