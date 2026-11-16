@@ -719,9 +719,6 @@ function sendAjax(url,method,params,callback){
         type: method,
         url: url,
         data:params,
-        headers: {
-            "token": localStorage.getItem("token")
-        },
         success: function(data) {
             callback(data);
         }

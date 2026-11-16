@@ -17,7 +17,6 @@ func PageLogin(c *gin.Context) {
 	SystemDesc := models.FindConfig("SystemDesc")
 	CopyrightTxt := models.FindConfig("CopyrightTxt")
 	CopyrightUrl := models.FindConfig("CopyrightUrl")
-	SystemKefu := models.FindConfig("SystemKefu")
 	googleAuthenticatorEnabled := models.GoogleAuthenticatorEnabled()
 	isRegister := models.RegistrationEnabled()
 	c.HTML(http.StatusOK, "login.html", gin.H{
@@ -29,7 +28,6 @@ func PageLogin(c *gin.Context) {
 		"CopyrightUrl":               CopyrightUrl,
 		"SystemLoginTitle":           SystemLoginTitle,
 		"isRegister":                 isRegister,
-		"SystemKefu":                 SystemKefu,
 		"GoogleAuthenticatorEnabled": googleAuthenticatorEnabled,
 	})
 }

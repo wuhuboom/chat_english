@@ -2,12 +2,15 @@ package ws
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"go-fly-muti/middleware"
 	"go-fly-muti/models"
 	"go-fly-muti/setting"
 	"log"
+	"net/http"
 	"time"
 )
 
@@ -23,7 +26,11 @@ func NewKefuServer(c *gin.Context) {
 		})
 		return
 	}
-	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	// StaffSameOrigin has already checked the exact staff origin. The visitor
+	// allowlist is separate and must not block the staff console.
+	staffUpgrader := upgrader
+	staffUpgrader.CheckOrigin = func(r *http.Request) bool { return middleware.IsStaffOrigin(r) }
+	conn, err := staffUpgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Print("upgrade:", err)
 		return
@@ -45,7 +52,31 @@ func NewKefuServer(c *gin.Context) {
 		_ = conn.Close()
 		return
 	}
+	version := c.GetInt64("staff_auth_version")
+	expires := c.GetInt64("staff_expires")
+	mfa := c.GetBool("staff_mfa")
+	validateSession := func() error {
+		user := models.FindUserByUid(kefuInfo.ID)
+		if time.Now().Unix() >= expires || user.ID == 0 || user.Name != kefuInfo.Name ||
+			user.Status == 1 || user.TokenVersion() != version ||
+			(models.GoogleAuthenticatorEnabled() && (!mfa || !models.AccountTOTPBound(user.ID))) {
+			return errors.New("staff session expired or revoked")
+		}
+		return nil
+	}
+	pong := conn.PongHandler()
+	conn.SetPongHandler(func(data string) error {
+		if err := validateSession(); err != nil {
+			return err
+		}
+		return pong(data)
+	})
 	AddKefuToList(&kefu)
+	if err := validateSession(); err != nil {
+		_ = conn.Close()
+		RemoveKefuConnection(kefu.Id, &kefu)
+		return
+	}
 	log.Printf(
 		"websocket connected role=kefu id=%q session=%d active=%d remote=%q",
 		kefu.Id, kefu.SessionID, len(KefuConnections(kefu.Id)), c.ClientIP(),
@@ -55,6 +86,9 @@ func NewKefuServer(c *gin.Context) {
 		//接受消息
 		var receive []byte
 		messageType, receive, err := conn.ReadMessage()
+		if err == nil {
+			err = validateSession()
+		}
 		if err != nil {
 			code, reason := websocketCloseInfo(err)
 			_ = conn.Close()

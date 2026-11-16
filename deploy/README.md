@@ -33,6 +33,14 @@ sudo systemctl status gofly
 The service restarts after crashes with a three-second delay and raises the
 open-file limit for concurrent WebSocket sessions.
 
+When HTTPS terminates at nginx, set `GOFLY_BROWSER_ORIGIN` in
+`/etc/gofly/gofly.env` to the exact public origin (for example,
+`https://chat.example.com`, without a trailing slash). Preserve the public
+Host header, including a non-default port if applicable. Staff browser sessions
+use a host-only HttpOnly cookie. HTTP is supported for loopback testing only;
+use HTTPS for remote staff access. Logging out revokes all sessions for that
+staff account.
+
 ## 3. Install the reverse proxy
 
 Copy `deploy/nginx-gofly.conf` to the server's nginx `conf.d` directory, replace

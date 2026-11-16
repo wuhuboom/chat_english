@@ -3,6 +3,7 @@ package tmpl
 import (
 	"github.com/gin-gonic/gin"
 	"go-fly-muti/models"
+	"go-fly-muti/setting"
 	"net/http"
 )
 
@@ -15,8 +16,9 @@ func PageFirstIndex(c *gin.Context) {
 
 	//首页默认跳转地址
 	IndexJumpUrl := models.FindConfig("IndexJumpUrl")
-	if IndexJumpUrl != "" {
+	if setting.SafeIndexDestination(IndexJumpUrl) {
 		c.Redirect(302, IndexJumpUrl)
+		return
 	}
 	lang, _ := c.Get("lang")
 	if lang == "en" {

@@ -29,7 +29,7 @@ var app=new Vue({
         rightTabActive:"visitorInfo",
         users:[],
         usersMap:[],
-        server:getWsBaseUrl()+"/ws_kefu?token="+localStorage.getItem("token"),
+        server:getWsBaseUrl()+"/ws_kefu",
         //server:getWsBaseUrl()+"/chat_server",
         socket:null,
         messageContent:"",
@@ -642,9 +642,6 @@ var app=new Vue({
                 type:"post",
                 url:"/kefu/message",
                 data:mes,
-                headers:{
-                    "token":localStorage.getItem("token")
-                },
                 success: function(data) {
                     _this.sendDisabled=false;
                     if(data.code!=200){
@@ -942,9 +939,6 @@ var app=new Vue({
             $.ajax({
                 type:"get",
                 url:"/kefuinfo",
-                headers:{
-                    "token":localStorage.getItem("token")
-                },
                 success: function(data) {
                     if(data.code==200 && data.result!=null){
                         _this.kfConfig.id=data.result.id;
@@ -967,9 +961,6 @@ var app=new Vue({
             $.ajax({
                 type:"get",
                 url:"/visitors_kefu_online",
-                headers:{
-                    "token":localStorage.getItem("token")
-                },
                 success: function(data) {
                     if(data.code==200 && data.result!=null){
                         _this.users=data.result;
@@ -1000,9 +991,6 @@ var app=new Vue({
             $.ajax({
                 type:"get",
                 url:"/kefu/messages?visitor_id="+visitorId,
-                headers:{
-                    "token":localStorage.getItem("token")
-                },
                 success: function(data) {
                     if(data.code==200 && data.result!=null){
                         let msgList=data.result;
@@ -1049,9 +1037,6 @@ var app=new Vue({
                 type:"get",
                 url:"/kefu/visitor",
                 data:{visitorId:vid},
-                headers:{
-                    "token":localStorage.getItem("token")
-                },
                 success: function(data) {
                     if(data.result!=null){
                         let r=data.result;
@@ -1102,9 +1087,6 @@ var app=new Vue({
                 type:"get",
                 url:"/kefu/message_close",
                 data:{visitor_id:visitorId},
-                headers:{
-                    "token":localStorage.getItem("token")
-                },
                 success: function(data) {
                     if(data.code!=200){
                         _this.$message({
@@ -1243,9 +1225,6 @@ var app=new Vue({
                 type:"get",
                 url:"/kefu/visitorList",
                 data:parames,
-                headers:{
-                    "token":localStorage.getItem("token")
-                },
                 success: function(data) {
                     if(data.result.list!=null){
                         _this.visitors=data.result.list;
@@ -1406,9 +1385,6 @@ var app=new Vue({
                 type:"post",
                 url:"/kefu/ipblack",
                 data:{ip:ip,name:this.visitor.name},
-                headers:{
-                    "token":localStorage.getItem("token")
-                },
                 success: function(data) {
                     if(data.code!=200){
                         _this.$message({
@@ -1739,9 +1715,6 @@ var app=new Vue({
                 type: method,
                 url: url,
                 data:params,
-                headers: {
-                    "token": localStorage.getItem("token")
-                },
                 error:function(res){
                     var data=JSON.parse(res.responseText);
                     if(data.code==200|| data.code==20000){
@@ -1883,9 +1856,6 @@ var app=new Vue({
                 data:JSON.stringify(info),
                 dataType:"json",
                 contentType: "application/json",
-                headers: {
-                    "token": localStorage.getItem("token")
-                },
                 success: function(data) {
                     if(data.code!=200){
                         _this.$message({

@@ -313,9 +313,9 @@
                                     message: data.msg,
                                     type: 'success'
                                 });
-                                localStorage.setItem("token",data.result.token);
-                                localStorage.setItem("ref_token",data.result.ref_token);
-                                localStorage.setItem("create_time",data.result.create_time);
+                                localStorage.removeItem("token");
+                                localStorage.removeItem("ref_token");
+                                localStorage.removeItem("create_time");
                                 window.location.href="/main";
                             } else if (data.code == 428) {
                                 _this.googleBinding=data.result;
@@ -379,6 +379,5 @@
 
 </script>
 
-{{.SystemKefu}}
 
 </html>

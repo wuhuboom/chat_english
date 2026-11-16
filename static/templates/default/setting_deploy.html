@@ -100,9 +100,9 @@
                         _this.nickname = result.nickname;
                         _this.visitorUrl=_this.host+'/chatIndex?kefu_id='+result.name+'&ent_id='+result.ent_id;
                         var visitorUrlTxt=_this.host+'/chatIndex?kefu_id='+result.name+'%26ent_id='+result.ent_id;
-                        _this.visitorQrcode=_this.host+"/kefu/qrcode?str="+visitorUrlTxt+"&token="+localStorage.getItem("token");
+                        _this.visitorQrcode=_this.host+"/kefu/qrcode?str="+visitorUrlTxt;
                         _this.wechatMenuUrl=_this.host+'/wechatIndex?ent_id='+result.ent_id+'%26kefu_id='+result.name;
-                        _this.wechatVisitorQrcode=_this.host+"/kefu/qrcode?str="+_this.wechatMenuUrl+"&token="+localStorage.getItem("token");
+                        _this.wechatVisitorQrcode=_this.host+"/kefu/qrcode?str="+_this.wechatMenuUrl;
                         _this.getWechatKefuQrcode();
                     }
                 });

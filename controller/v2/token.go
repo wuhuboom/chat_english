@@ -103,7 +103,7 @@ func PostRefreshTokenV1(c *gin.Context) {
 		return
 	}
 	userinfo := tools.ParseToken(form.Token)
-	if userinfo == nil || userinfo["name"] == nil || userinfo["create_time"] == nil {
+	if userinfo == nil || userinfo["staff_cookie"] == true || userinfo["name"] == nil || userinfo["create_time"] == nil {
 		c.JSON(200, gin.H{
 			"code": types.ApiCode.FAILED,
 			"msg":  types.ApiCode.GetMessage(types.ApiCode.INVALID),

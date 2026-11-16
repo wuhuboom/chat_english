@@ -1,5 +1,5 @@
 {{define "setting_bottom"}}
-<script src="/static/js/functions.js?v=embed-safe-3"></script>
+<script src="/static/js/functions.js?v=staff-cookie-4"></script>
 <script src="/static/js/chat-lang.js?v=1.0.0"></script>
 <script>
     var ACTION="{{.action}}";
@@ -147,13 +147,13 @@
                 {conf_name: "微信公众号(AppId)", conf_key: "WechatAppId", conf_value: ""},
                 {conf_name: "微信公众号(AppSecret)", conf_key: "WechatAppSecret", conf_value: ""},
                 {conf_name: "微信公众号(Token)", conf_key: "WechatAppToken", conf_value: ""},
-                {conf_name: "微信给客服新访客提醒模板消息ID <a href='/static/images/install/visitor_tpl.png' target='_blank'>查看模板消息格式</a>", conf_key: "WechatVisitorTemplateId", conf_value: ""},
-                {conf_name: "微信给客服新消息提醒模板消息ID <a href='/static/images/install/msg_tpl.png' target='_blank'>查看模板消息格式</a>", conf_key: "WechatMessageTemplateId", conf_value: ""},
-                {conf_name: "微信给访客新消息提醒模板ID <a href='/static/images/install/customer_tpl.png' target='_blank'>查看模板消息格式</a>", conf_key: "WechatKefuTemplateId", conf_value: ""},
+                {conf_name: "微信给客服新访客提醒模板消息ID", conf_key: "WechatVisitorTemplateId", conf_value: ""},
+                {conf_name: "微信给客服新消息提醒模板消息ID", conf_key: "WechatMessageTemplateId", conf_value: ""},
+                {conf_name: "微信给访客新消息提醒模板ID", conf_key: "WechatKefuTemplateId", conf_value: ""},
                 {conf_name: "微信客服消息接口( on开启;off关闭;默认关闭 )", conf_key: "WechatKefu", conf_value: "on"},
                 {conf_name: "微信授权域名(例: 当前域名)", conf_key: "WechatHost", conf_value: ""},
                 {conf_name: "微信授权文件( 公众号需要验证域名权限 )", conf_key: "WechatAuthFile", conf_value: ""},
-                {conf_name: "微信菜单JSON <a href='/setting_wechat_menu'>可视化编辑</a>", conf_key: "WechatMenu", conf_value: ""},
+                {conf_name: "微信菜单JSON", conf_key: "WechatMenu", conf_value: ""},
                 {conf_name: "邮箱(SMTP地址, 例: smtp.qq.com:465)", conf_key: "NoticeEmailSmtp", conf_value: ""},
                 {conf_name: "邮箱(邮箱名, 例: 6308xxx07@qq.com)", conf_key: "NoticeEmailAddress", conf_value: ""},
                 {conf_name: "邮箱(授权码, 例: ubbabcdefocbfce)", conf_key: "NoticeEmailPassword", conf_value: ""},
@@ -266,7 +266,7 @@
             kefuIdMessage:"",
             allTags:[],
             editor:null,
-            uploadWechatUrl:"/kefu/uploadWechatAuthFile?token="+localStorage.getItem("token"),
+            uploadWechatUrl:"/kefu/uploadWechatAuthFile",
             newsList:{},
             newsDialog:false,
             newsForm:{
@@ -574,7 +574,6 @@
                         start_time:this.messageCleanupForm.range[0],
                         end_time:this.messageCleanupForm.range[1]
                     },
-                    headers:{"token":localStorage.getItem("token")},
                     complete:function(){
                         _this.messageCleanupPreviewLoading=false;
                     },
@@ -619,7 +618,6 @@
                             end_time:_this.messageCleanupForm.range[1],
                             confirmation:"CLEAR_CHAT_MESSAGES"
                         },
-                        headers:{"token":localStorage.getItem("token")},
                         complete:function(){
                             _this.messageCleanupDeleting=false;
                         },
@@ -727,9 +725,6 @@
                     type: method,
                     url: url,
                     data:params,
-                    headers: {
-                        "token": localStorage.getItem("token")
-                    },
                     error:function(res){
                         var data=JSON.parse(res.responseText);
                         if(data.code==200|| data.code==20000){
@@ -1216,9 +1211,6 @@
                 $.ajax({
                     type:"get",
                     url:"/kefu/kefuinfo",
-                    headers:{
-                        "token":localStorage.getItem("token")
-                    },
                     success: function(data) {
                         if (data.code != 200) {
                             _this.$message({
@@ -1425,9 +1417,6 @@
                     type: "get",
                     url: "/kefu/visitor",
                     data: {visitorId: visitor_id},
-                    headers: {
-                        "token": localStorage.getItem("token")
-                    },
                     success: function (data) {
                         if (data.result != null) {
                             let r = data.result;
@@ -1481,9 +1470,6 @@
                     type: "get",
                     url: "/wechat/oauth",
                     data: {visitor_id: visitor_id},
-                    headers: {
-                        "token": localStorage.getItem("token")
-                    },
                     success: function (data) {
                         if(data.code==400){
                             _this.visitor.wechat_oauth="未绑定"

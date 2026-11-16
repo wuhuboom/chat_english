@@ -1,7 +1,6 @@
 package tmpl
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/silenceper/wechat/v2"
 	"github.com/silenceper/wechat/v2/cache"
@@ -13,6 +12,7 @@ import (
 	"go-fly-muti/models"
 	"go-fly-muti/setting"
 	"net/http"
+	"net/url"
 )
 
 var memory = cache.NewMemory()
@@ -55,9 +55,11 @@ func PageChat(c *gin.Context) {
 	}
 	//落地域名跳转
 	landHost := models.FindConfig("LandHost")
-	if landHost != "" && landHost != c.Request.Host {
-		c.Redirect(302, fmt.Sprintf("//%s/chatIndex?kefu_id=%s&ent_id=%s&lang=%s&visitor_id=%s&visitor_name=%s&avator=%s", landHost,
-			kefuId, entId, "en", visitorId, visitorName, avator))
+	if setting.SafeLandingHost(landHost) && landHost != c.Request.Host {
+		query := url.Values{"kefu_id": {kefuId}, "ent_id": {entId}, "lang": {"en"},
+			"visitor_id": {visitorId}, "visitor_name": {visitorName}, "avator": {avator}}
+		target := url.URL{Host: landHost, Path: "/chatIndex", RawQuery: query.Encode()}
+		c.Redirect(302, target.String())
 		return
 	}
 	SystemNotice := models.FindConfig("SystemNotice")

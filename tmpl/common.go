@@ -47,12 +47,10 @@ func (obj *CommonHtml) Display(file string, data interface{}) {
 // 登陆界面
 func PageMain(c *gin.Context) {
 	SystemTitle := models.FindConfig("SystemTitle")
-	SystemKefu := models.FindConfig("SystemKefu")
 	nav := tools.FileGetContent("html/nav.html")
 	c.HTML(http.StatusOK, "main.html", gin.H{
 		"Nav":           template.HTML(nav),
 		"SystemTitle":   SystemTitle,
-		"SystemKefu":    SystemKefu,
 		"SystemVersion": models.CustomerServiceVersion(),
 	})
 }

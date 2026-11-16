@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"strings"
 	"sync"
 
@@ -12,7 +13,14 @@ const (
 	GoogleAuthenticatorSecretKey  = "GoogleAuthenticatorSecret"
 	SystemRegisterKey             = "SystemRegister"
 	CustomerServiceVersionKey     = "version"
+	LegacySystemKefuKey           = "SystemKefu"
 )
+
+var ErrRetiredConfig = errors.New("该配置已停用")
+
+func IsRetiredConfigKey(key string) bool {
+	return strings.EqualFold(strings.TrimSpace(key), LegacySystemKefuKey)
+}
 
 var CustomConfigs []Config
 var customConfigsMux sync.RWMutex
@@ -29,8 +37,15 @@ func UpdateConfig(key string, value string) {
 }
 
 func SaveConfig(name, key, value string) error {
+	if IsRetiredConfigKey(key) {
+		return ErrRetiredConfig
+	}
 	var config Config
 	err := DB.Where("conf_key = ?", key).First(&config).Error
+	// MySQL can match alternate spellings under its column collation.
+	if err == nil && IsRetiredConfigKey(config.ConfKey) {
+		return ErrRetiredConfig
+	}
 	if gorm.IsRecordNotFoundError(err) {
 		if name == "" {
 			name = key

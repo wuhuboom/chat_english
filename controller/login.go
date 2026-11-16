@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"go-fly-muti/middleware"
 	"go-fly-muti/models"
 	"go-fly-muti/tools"
 	"go-fly-muti/types"
@@ -81,13 +82,15 @@ func LoginCheckPass(c *gin.Context) {
 	}
 
 	token := GenUserToken(info)
+	if token == "" {
+		c.JSON(500, gin.H{"code": 500, "msg": "创建会话失败"})
+		return
+	}
+	middleware.SetStaffCookie(c, token, middleware.StaffCookieLifetime)
 	zap.L().Info("login succeeded", zap.String("ip", c.ClientIP()), zap.String("username", info.Name), zap.Uint("kefu_id", info.ID))
 	c.JSON(200, gin.H{
 		"code": 200,
 		"msg":  "验证成功,正在跳转",
-		"result": gin.H{
-			"token": token,
-		},
 	})
 }
 func GenUserToken(info models.User) string {
@@ -95,6 +98,8 @@ func GenUserToken(info models.User) string {
 	userinfo["name"] = info.Name
 	userinfo["kefu_id"] = info.ID
 	userinfo["type"] = "kefu"
+	userinfo["staff_cookie"] = true
+	userinfo["session_started"] = time.Now().Unix()
 	userinfo["mfa_verified"] = models.GoogleAuthenticatorEnabled()
 	uRole := models.FindRoleByUserId(info.ID)
 	if uRole.RoleId != 0 {

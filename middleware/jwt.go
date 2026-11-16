@@ -10,19 +10,29 @@ import (
 )
 
 func JwtPageMiddleware(c *gin.Context) {
-	//暂时不处理
-	//token := c.Query("token")
-	//userinfo := tools.ParseToken(token)
-	//if userinfo == nil {
-	//	c.Redirect(302,"/login")
-	//	c.Abort()
-	//}
+	c.Set("staff_page", true)
+	JwtApiMiddleware(c)
+}
+
+func staffAuthError(c *gin.Context, code int, message string) {
+	if c.GetBool("staff_page") {
+		c.Redirect(302, "/login")
+		c.Abort()
+		return
+	}
+	c.AbortWithStatusJSON(200, gin.H{"code": code, "msg": message})
 }
 
 func JwtApiMiddleware(c *gin.Context) {
-	token := c.GetHeader("token")
-	if token == "" {
-		token = c.Query("token")
+	token, _ := c.Cookie(StaffCookie)
+	fromCookie := token != ""
+	if fromCookie {
+		StaffSameOrigin(c)
+		if c.IsAborted() {
+			return
+		}
+	} else if !c.GetBool("staff_page") && c.FullPath() != "/ws_kefu" {
+		token = c.GetHeader("token")
 	}
 	userinfo := tools.ParseToken(token)
 	name, nameOK := userinfo["name"].(string)
@@ -31,35 +41,37 @@ func JwtApiMiddleware(c *gin.Context) {
 	roleID, roleOK := numericClaim(userinfo["role_id"])
 	pid, pidOK := numericClaim(userinfo["pid"])
 	authVersion, versionOK := numericClaim(userinfo["auth_version"])
-	if userinfo == nil || !nameOK || name == "" || !createOK || !idOK || !roleOK || !pidOK || !versionOK {
-		c.JSON(200, gin.H{
-			"code": 400,
-			"msg":  "验证失败",
-		})
-		c.Abort()
+	if userinfo == nil || (userinfo["staff_cookie"] == true) != fromCookie || !nameOK || name == "" || !createOK || !idOK || !roleOK || !pidOK || !versionOK {
+		staffAuthError(c, 401, "请重新登录")
 		return
 	}
-	var expire int64 = 24 * 60 * 60
 	nowTime := time.Now().Unix()
-	if createTime > nowTime+60 || (nowTime-createTime) >= expire {
-		c.JSON(200, gin.H{
-			"code": 401,
-			"msg":  "token失效",
-		})
-		c.Abort()
+	if createTime > nowTime+60 || nowTime-createTime >= StaffCookieLifetime {
+		staffAuthError(c, 401, "登录已过期")
 		return
+	}
+	if fromCookie {
+		started, ok := numericClaim(userinfo["session_started"])
+		if !ok || started > nowTime+60 || nowTime-started >= 7*StaffCookieLifetime {
+			staffAuthError(c, 401, "登录已过期")
+			return
+		}
 	}
 	currentUser := models.FindUserByUid(uint(kefuID))
 	if currentUser.ID == 0 || currentUser.Name != name || currentUser.Status == 1 || authVersion <= 0 || currentUser.TokenVersion() != authVersion {
-		c.JSON(200, gin.H{"code": 401, "msg": "登录状态已失效，请重新登录"})
-		c.Abort()
+		staffAuthError(c, 401, "登录状态已失效，请重新登录")
 		return
 	}
 	if models.GoogleAuthenticatorEnabled() && (userinfo["mfa_verified"] != true || !models.AccountTOTPBound(currentUser.ID)) {
-		c.JSON(200, gin.H{"code": 401, "msg": "请重新登录并完成个人谷歌验证"})
-		c.Abort()
+		staffAuthError(c, 401, "请重新登录并完成个人谷歌验证")
 		return
 	}
+	c.Set("staff_cookie", fromCookie)
+	c.Set("staff_claims", userinfo)
+	c.Set("staff_auth_version", authVersion)
+	c.Set("staff_mfa", userinfo["mfa_verified"] == true)
+	c.Set("staff_expires", createTime+StaffCookieLifetime)
+	c.Header("Cache-Control", "no-store")
 	c.Set("user", name)
 	c.Set("kefu_id", float64(kefuID))
 	c.Set("kefu_name", name)

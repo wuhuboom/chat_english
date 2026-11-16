@@ -179,12 +179,8 @@ func PageSettingNews(c *gin.Context) {
 
 // 配置微信菜单
 func PageSettingWechatMenu(c *gin.Context) {
-	entId := c.Query("ent_id")
-	wechatMenu := models.FindEntConfig(entId, "WechatMenu")
-
 	c.HTML(http.StatusOK, "setting_wechat_menu.html", gin.H{
-		"tab_index":  "4-9",
-		"wechatMenu": wechatMenu,
-		"action":     "setting_wechat_menu",
+		"tab_index": "4-9",
+		"action":    "setting_wechat_menu",
 	})
 }

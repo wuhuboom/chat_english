@@ -187,7 +187,6 @@
                 $.ajax({
                     type:"get",
                     url:"/system/logs",
-                    headers:{token:localStorage.getItem("token")},
                     data:{
                         level:this.filters.level,
                         keyword:this.filters.keyword,

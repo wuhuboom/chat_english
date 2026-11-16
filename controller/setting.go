@@ -48,7 +48,7 @@ func GetConfigs(c *gin.Context) {
 	configs := models.FindConfigs()
 	publicConfigs := make([]models.Config, 0, len(configs))
 	for _, config := range configs {
-		if config.ConfKey == models.GoogleAuthenticatorSecretKey {
+		if config.ConfKey == models.GoogleAuthenticatorSecretKey || models.IsRetiredConfigKey(config.ConfKey) {
 			continue
 		}
 		publicConfigs = append(publicConfigs, config)
@@ -70,8 +70,19 @@ func GetEntConfigs(c *gin.Context) {
 }
 func GetConfig(c *gin.Context) {
 	key := c.Query("key")
+	if models.IsRetiredConfigKey(key) {
+		c.AbortWithStatusJSON(403, gin.H{"code": 403, "msg": "该配置已停用"})
+		return
+	}
 	if key == models.GoogleAuthenticatorSecretKey {
 		c.JSON(200, gin.H{"code": 400, "msg": "该配置不允许公开读取"})
+		return
+	}
+	switch key {
+	case "SystemTitle", "SystemLoginTitle", "SystemNotice", "SystemKeywords", "SystemDesc",
+		"CopyrightTxt", "CopyrightUrl", "ShowKefuName", models.CustomerServiceVersionKey:
+	default:
+		c.AbortWithStatusJSON(403, gin.H{"code": 403, "msg": "该配置不允许公开读取"})
 		return
 	}
 	config := models.FindConfig(key)
@@ -266,7 +277,15 @@ func GetWechatMenu(c *gin.Context) {
 	})
 }
 func PostConfig(c *gin.Context) {
-	key := c.PostForm("key")
+	key := strings.TrimSpace(c.PostForm("key"))
+	if models.IsRetiredConfigKey(key) {
+		c.AbortWithStatusJSON(403, gin.H{"code": 403, "msg": "该配置已停用"})
+		return
+	}
+	if strings.EqualFold(key, models.CustomerServiceVersionKey) {
+		c.AbortWithStatusJSON(403, gin.H{"code": 403, "msg": "版本号由发布迁移管理"})
+		return
+	}
 	value := c.PostForm("value")
 	if key == "" {
 		c.JSON(200, gin.H{
@@ -275,8 +294,22 @@ func PostConfig(c *gin.Context) {
 		})
 		return
 	}
-	if key == models.GoogleAuthenticatorSecretKey || key == models.GoogleAuthenticatorEnabledKey {
+	for _, ch := range key {
+		if !(ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch >= '0' && ch <= '9' || ch == '_') {
+			c.AbortWithStatusJSON(400, gin.H{"code": 400, "msg": "配置键格式无效"})
+			return
+		}
+	}
+	if strings.EqualFold(key, models.GoogleAuthenticatorSecretKey) || strings.EqualFold(key, models.GoogleAuthenticatorEnabledKey) {
 		c.JSON(200, gin.H{"code": 400, "msg": "请使用谷歌验证器设置面板"})
+		return
+	}
+	if strings.EqualFold(key, "IndexJumpUrl") && value != "" && !setting.SafeIndexDestination(value) {
+		c.AbortWithStatusJSON(400, gin.H{"code": 400, "msg": "首页跳转只允许站内路径或 HTTP(S) 地址"})
+		return
+	}
+	if strings.EqualFold(key, "LandHost") && value != "" && !setting.SafeLandingHost(value) {
+		c.AbortWithStatusJSON(400, gin.H{"code": 400, "msg": "落地域名只允许主机名和可选端口"})
 		return
 	}
 	if key == "SystemTimezone" {
@@ -307,6 +340,10 @@ func PostConfig(c *gin.Context) {
 		name = "H5访客界面"
 	}
 	if err := models.SaveConfig(name, key, value); err != nil {
+		if err == models.ErrRetiredConfig {
+			c.AbortWithStatusJSON(403, gin.H{"code": 403, "msg": "该配置已停用"})
+			return
+		}
 		c.JSON(200, gin.H{
 			"code": 400,
 			"msg":  "保存配置失败: " + err.Error(),

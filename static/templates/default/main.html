@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="/static/css/common.css?v=0.6.1">
     <link rel="stylesheet" href="/static/css/admin-modern.css?v=1.4.1">
     <script src="/static/js/reconnecting-websocket.min.js"></script>
-    <script src="/static/js/functions.js?v=embed-safe-3"></script>
+    <script src="/static/js/functions.js?v=staff-cookie-4"></script>
     <script src="/static/js/chat-lang.js?v=1.0.1"></script>
     <link rel="icon" href="/static/images/favicon.ico">
 </head>
@@ -89,7 +89,6 @@
     </template>
 </div>
 </body>
-{{.SystemKefu}}
 
 <script>
     var LANG=checkLang();
@@ -111,7 +110,7 @@
             superShow:false,
             onlineType:"success",
             adminAvator:"",
-            server:getWsBaseUrl()+"/ws_kefu?token="+localStorage.getItem("token"),
+            server:getWsBaseUrl()+"/ws_kefu",
             haveNewMessage:"",
             notificationPermission:window.Notification ? Notification.permission : "unsupported",
             notificationGuideVisible:false,
@@ -329,8 +328,15 @@
             },
             //退出
             logout(){
-                localStorage.removeItem("token");
-                this.openIframeUrl('/login');
+                $.post("/staff/session/logout").done((data)=>{
+                    if(data.code!==200 && data.code!==401){
+                        this.$message.error(data.msg || "退出失败，请重试");
+                        return;
+                    }
+                    if(this.socket) this.socket.close();
+                    ["token","ref_token","create_time"].forEach(key=>localStorage.removeItem(key));
+                    window.location.replace("/login");
+                }).fail(()=>this.$message.error("退出失败，请重试"));
             },
             //跳转
             openUrl(url){
@@ -439,9 +445,6 @@
                 $.ajax({
                     type:"get",
                     url:"/kefu/kefuinfo",
-                    headers:{
-                        "token":localStorage.getItem("token")
-                    },
                     success: function(data) {
                         if (data.code != 200) {
                             window.location.href="/login";
@@ -529,6 +532,8 @@
         created: function () {
             this.notificationGuideBrowser=this.detectNotificationGuideBrowser();
             window.addEventListener("focus",this.refreshNotificationPermission);
+            ["token","ref_token","create_time"].forEach(key=>localStorage.removeItem(key));
+            $.post("/staff/session/refresh");
             this.kefuInfo();
             this.initConn();
             this.getConfigs();

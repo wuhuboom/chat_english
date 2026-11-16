@@ -11,6 +11,8 @@ import (
 func InitApiRouter(engine *gin.Engine) {
 	engine.GET("/healthz", controller.GetHealth)
 	engine.GET("/readyz", controller.GetReadiness)
+	engine.POST("/staff/session/refresh", middleware.StaffSameOrigin, middleware.JwtApiMiddleware, controller.RefreshStaffSession)
+	engine.POST("/staff/session/logout", middleware.StaffSameOrigin, middleware.JwtApiMiddleware, controller.LogoutStaffSession)
 
 	//用户身份接口
 	ucv1 := engine.Group("/uc/v1", middleware.Ipblack, middleware.SetLanguage)
@@ -18,7 +20,7 @@ func InitApiRouter(engine *gin.Engine) {
 		//刷新token
 		ucv1.POST("/refreshToken", controllerV2.PostRefreshTokenV1)
 		//刷新token
-		ucv1.POST("/loginCheck", controller.LoginCheckPass)
+		ucv1.POST("/loginCheck", middleware.StaffSameOrigin, controller.LoginCheckPass)
 		//访客登录
 		ucv1.POST("/visitorLogin", middleware.Ipblack, controller.PostVisitorLogin)
 	}
@@ -190,7 +192,7 @@ func InitApiRouter(engine *gin.Engine) {
 		room.POST("/message", middleware.Ipblack, controller.PostRoomMessage)
 	}
 	engine.GET("/captcha", controller.GetCaptcha)
-	engine.POST("/check", controller.LoginCheckPass)
+	engine.POST("/check", middleware.StaffSameOrigin, controller.LoginCheckPass)
 	engine.POST("/JyKey", controller.JyKey)
 
 	engine.POST("/check_auth", middleware.JwtApiMiddleware, controller.MainCheckAuth)
@@ -198,7 +200,7 @@ func InitApiRouter(engine *gin.Engine) {
 	engine.POST("/register", middleware.Ipblack, controller.PostKefuRegister)
 	//engine.POST("/install", controller.PostInstall)
 	//前后聊天
-	engine.GET("/ws_kefu", middleware.JwtApiMiddleware, ws.NewKefuServer)
+	engine.GET("/ws_kefu", middleware.StaffSameOrigin, middleware.JwtApiMiddleware, ws.NewKefuServer)
 	engine.GET("/ws_visitor", middleware.Ipblack, ws.NewVisitorServer)
 	//websocket路由分组
 	//wsGroup := engine.Group("/ws")
@@ -256,7 +258,7 @@ func InitApiRouter(engine *gin.Engine) {
 	engine.GET("/configs", middleware.JwtApiMiddleware, middleware.RbacAuth, controller.GetConfigs)
 	engine.GET("/ent_configs", middleware.JwtApiMiddleware, controller.GetEntConfigs)
 
-	engine.POST("/config", middleware.JwtApiMiddleware, middleware.RbacAuth, controller.PostConfig)
+	engine.POST("/config", middleware.JwtApiMiddleware, middleware.AdminAuth, middleware.RbacAuth, controller.PostConfig)
 	engine.GET("/config", controller.GetConfig)
 	engine.GET("/autoreply", controller.GetAutoReplys)
 	engine.GET("/replys", middleware.JwtApiMiddleware, controller.GetReplys)
