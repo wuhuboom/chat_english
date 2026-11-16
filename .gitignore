@@ -12,4 +12,4 @@ static/images/favicon.ico
 static/upload
 logs/gofly.log
 static/templates/default/chat_page11.html
-dist
+/dist/
