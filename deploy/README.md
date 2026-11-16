@@ -68,3 +68,7 @@ WebSocket logs now include `role`, account/visitor `id`, `session`, close
 When one browser tab closes, `active` must stay above zero while another tab for
 the same agent is connected. Automatic visitor failover starts only after the
 last agent session disappears and the configured grace period expires.
+
+After pulling an update, rebuild the binary and restart the service before
+checking /readyz. Git updates the checkout, but the running process keeps using
+the old binary until it is restarted.
