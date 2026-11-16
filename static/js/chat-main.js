@@ -177,6 +177,7 @@ var app=new Vue({
         },
     },
     methods: {
+        renderSafeChat: renderChatMessage,
         syncMobileLayout() {
             this.isMobile=window.matchMedia("(max-width: 760px)").matches;
             if(!this.isMobile){
@@ -437,7 +438,7 @@ var app=new Vue({
                 let _this=this;
                 content.avator = msg.avator;
                 content.name = msg.name;
-                content.content = replaceSpecialTag(msg.content);
+                content.content = msg.content;
                 content.is_kefu = msg.is_kefu=="yes"? true:false;
                 content.time = msg.time;
                 content.msg_id=msg.msg_id;
@@ -1021,7 +1022,7 @@ var app=new Vue({
                             }
                             content.avator = visitorMes["avator"];
                             content.name = visitorMes["name"];
-                            content.content = replaceSpecialTag(visitorMes["content"]);
+                            content.content = visitorMes["content"];
                             content.time = visitorMes["time"];
                             _this.msgList.push(content);
                             _this.scrollBottom();
@@ -1833,7 +1834,7 @@ var app=new Vue({
                         }
                         content.avator = visitorMes["avator"];
                         content.name = visitorMes["name"];
-                        content.content = replaceSpecialTag(visitorMes["content"]);
+                        content.content = visitorMes["content"];
                         content.msg_id = visitorMes["msg_id"];
                         content.time = visitorMes["time"];
                         _this.msgList.unshift(content);

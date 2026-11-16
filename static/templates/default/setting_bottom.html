@@ -1,5 +1,5 @@
 {{define "setting_bottom"}}
-<script src="/static/js/functions.js?v=1.0.0"></script>
+<script src="/static/js/functions.js?v=embed-safe-3"></script>
 <script src="/static/js/chat-lang.js?v=1.0.0"></script>
 <script>
     var ACTION="{{.action}}";
@@ -295,6 +295,7 @@
         },
 
         methods: {
+            renderSafeChat: renderChatMessage,
             //提交表单
             setAccount(formName){
                 let _this=this;

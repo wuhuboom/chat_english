@@ -10,7 +10,7 @@
     <script src="/static/vue/2.6.11/vue.min.js"></script>
     <script src="/static/element-ui/2.15.1/index.js"></script>
     <script src="/static/jquery/3.6.0/jquery.min.js"></script>
-    <script src="/static/js/functions.js?v=1.0.1"></script>
+    <script src="/static/js/functions.js?v=embed-safe-3"></script>
     <script src="/static/js/reconnecting-websocket.min.js"></script>
     <link rel="stylesheet" href="/static/css/icono.min.css" />
     <link rel="stylesheet" href="/static/css/front.css"/>
@@ -269,7 +269,7 @@
                                 <el-avatar class="chatMessageAvatar" shape="square" :size="42" :src="v.avator"></el-avatar>
                                 <div class="chatMessagePayload">
                                     <div class="chatUser"><{v.name}></div>
-                                    <div class="chatContent" v-html="v.content.replace(/\n/g, '<br/>')"></div>
+                                    <div class="chatContent" v-html="renderSafeChat(v.content)"></div>
                                     <div class="chatMessageMeta" v-show="v.is_kefu==true">
                                         <span class="chatReadStatus"><{v.read_status}></span>
                                         <el-button class="chatDeleteBtn"
@@ -706,7 +706,7 @@
                 :close-on-click-modal="false"
         >
             <el-input style="margin-bottom: 10px;" placeholder="关键词"  v-model="replyTitle"></el-input>
-            <div id="welcomeEditor" v-html="replyContent"></div>
+            <div id="welcomeEditor" v-html="replaceContent(replyContent)"></div>
 
             <span slot="footer" class="dialog-footer">
                 <el-button @click="addReplyContent"><{flyLang.save}></el-button>
@@ -739,7 +739,7 @@
 <script src="/static/js/wangEditor.min.js"></script>
 
 <script src="/static/js/chat-input.js?v=1.0.2"></script>
-<script src="/static/js/chat-main.js?v=1.2.4"></script>
+<script src="/static/js/chat-main.js?v=ws-safe-3"></script>
 
 
 

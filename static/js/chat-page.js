@@ -62,6 +62,7 @@ new Vue({
         onlineType:"success",
     },
     methods: {
+        renderSafeChat: renderChatMessage,
         //初始化websocket
         initConn:function() {
             this.socket = new ReconnectingWebSocket(this.server+"?visitor_id="+this.visitor.visitor_id+"&to_id="+this.visitor.to_id);//创建Socket实例
@@ -102,7 +103,7 @@ new Vue({
                 }
                 this.visitor.to_id=msg.id;
                 this.chatTitle=msg.name+","+GOFLY_LANG[LANG]['chating'];
-                $(".chatBox").append("<div class=\"chatTime\">"+this.chatTitle+"</div>");
+                $(".chatBox").append($("<div>").addClass("chatTime").text(this.chatTitle));
                 this.scrollBottom();
                 this.showKfonline=true;
             }
@@ -119,7 +120,7 @@ new Vue({
                     return;
                 }
                 this.chatTitle=msg
-                $(".chatBox").append("<div class=\"chatTime\">"+this.chatTitle+"</div>");
+                $(".chatBox").append($("<div>").addClass("chatTime").text(this.chatTitle));
                 this.scrollBottom();
             }
             if (redata.type == "peerid") {
@@ -159,7 +160,7 @@ new Vue({
                     let content = {}
                     content.avator = msg.avator;
                     content.name = msg.name;
-                    content.content =replaceSpecialTag(msgArr[i]);
+                    content.content =msgArr[i];
                     content.is_kefu = false;
                     content.read_status = GOFLY_LANG[LANG].unread;
                     content.time = msg.time;
@@ -172,7 +173,7 @@ new Vue({
                 // let content = {}
                 // content.avator = msg.avator;
                 // content.name = msg.name;
-                // content.content =replaceSpecialTag(msg.content);
+                // content.content =msg.content;
                 // content.is_kefu = false;
                 // content.time = msg.time;
                 // content.msg_id = msg.msg_id;
@@ -194,7 +195,7 @@ new Vue({
             }
             if (redata.type == "close") {
                 this.chatTitle=GOFLY_LANG[LANG]['closemes'];
-                $(".chatBox").append("<div class=\"chatTime\">"+this.chatTitle+"</div>");
+                $(".chatBox").append($("<div>").addClass("chatTime").text(this.chatTitle));
                 this.scrollBottom();
                 this.socket.close();
                 //this.socketClosed=true;
@@ -202,14 +203,14 @@ new Vue({
             }
             if (redata.type == "force_close") {
                 //this.chatTitle=GOFLY_LANG[LANG]['forceclosemes'];
-                //$(".chatBox").append("<div class=\"chatTime\">"+this.chatTitle+"</div>");
+                //$(".chatBox").append($("<div>").addClass("chatTime").text(this.chatTitle));
                 //this.scrollBottom();
                 this.socket.close();
                 this.socketClosed=true;
             }
             if (redata.type == "auto_close") {
                 //this.chatTitle=GOFLY_LANG[LANG]['autoclosemes'];
-                //$(".chatBox").append("<div class=\"chatTime\">"+this.chatTitle+"</div>");
+                //$(".chatBox").append($("<div>").addClass("chatTime").text(this.chatTitle));
                 //this.scrollBottom();
                 this.socket.close();
                 this.socketClosed=true;
@@ -251,7 +252,7 @@ new Vue({
 
             let content = {}
             content.avator=_this.visitor.avator;
-            content.content = replaceContent(_this.messageContent);
+            content.content = _this.messageContent;
             content.name = _this.visitor.name;
             content.is_kefu = true;
             content.read_status = GOFLY_LANG[LANG]['unread'];
@@ -412,7 +413,7 @@ new Vue({
                             }
                             content.avator = visitorMes["avator"];
                             content.name = visitorMes["name"];
-                            content.content = replaceContent(visitorMes["content"]);
+                            content.content = visitorMes["content"];
                             content.time = visitorMes["time"];
                             _this.msgList.push(content);
                             _this.scrollBottom();
@@ -482,7 +483,7 @@ new Vue({
 
             let msg = {}
             msg.avator=_this.visitor.avator;
-            msg.content = replaceContent(title);
+            msg.content = title;
             msg.name = _this.visitor.name;
             msg.is_kefu = true;
             msg.time = _this.getNowDate();
@@ -500,7 +501,7 @@ new Vue({
                     let content = {}
                     content.avator = msg.avator;
                     content.name = msg.name;
-                    content.content =replaceSpecialTag(msgArr[i]);
+                    content.content =msgArr[i];
                     content.is_kefu = false;
                     content.time = msg.time;
                     content.is_reply=true;
@@ -559,7 +560,7 @@ new Vue({
                         }
                         var timer =  setTimeout(function (msg) {
                             msg.time=_this.getNowDate();
-                            msg.content = replaceSpecialTag(msg.content);
+                            msg.content = msg.content;
                             if(!insertVisitorChatMessageByID(_this,msg)){
                                 return;
                             }
@@ -944,7 +945,7 @@ new Vue({
         },
         sendAjax: visitorSendAjax,
         showTitle:function(title){
-            $(".chatBox").append("<div class=\"chatTime\"><span>"+title+"</span></div>");
+            $(".chatBox").append($("<div>").addClass("chatTime").text(title));
             this.scrollBottom();
         },
         //开始录音
@@ -1089,10 +1090,10 @@ new Vue({
                         let content = {}
                         if (visitorMes["mes_type"] == "kefu") {
                             content.is_kefu = false;
-                            content.content = replaceSpecialTag(visitorMes["content"]);
+                            content.content = visitorMes["content"];
                         } else {
                             content.is_kefu = true;
-                            content.content = replaceContent(visitorMes["content"]);
+                            content.content = visitorMes["content"];
                         }
                         if (visitorMes["read_status"] == "read") {
                             content.read_status = GOFLY_LANG[LANG].read;
@@ -1151,7 +1152,8 @@ new Vue({
         document.addEventListener('paste', this.onPasteUpload);
         document.addEventListener('scroll',this.textareaBlur);
         window.addEventListener('message',function(e){
-            var msg=e.data;
+            if (!acceptChatParentEvent(e)) return;
+                var msg=e.data;
             if(msg.type=="inputing_message"){
                 _this.sendInputingStrNow(msg.content);
             }

@@ -3,7 +3,7 @@ package tmpl
 import (
 	"github.com/gin-gonic/gin"
 	"go-fly-muti/models"
-	"html/template"
+
 	"net/http"
 )
 
@@ -21,7 +21,7 @@ func PageLogin(c *gin.Context) {
 	googleAuthenticatorEnabled := models.GoogleAuthenticatorEnabled()
 	isRegister := models.RegistrationEnabled()
 	c.HTML(http.StatusOK, "login.html", gin.H{
-		"SystemNotice":               template.HTML(SystemNotice),
+		"SystemNotice":               SystemNotice,
 		"SystemTitle":                SystemTitle,
 		"SystemKeywords":             SystemKeywords,
 		"SystemDesc":                 SystemDesc,
@@ -29,7 +29,7 @@ func PageLogin(c *gin.Context) {
 		"CopyrightUrl":               CopyrightUrl,
 		"SystemLoginTitle":           SystemLoginTitle,
 		"isRegister":                 isRegister,
-		"SystemKefu":                 template.HTML(SystemKefu),
+		"SystemKefu":                 SystemKefu,
 		"GoogleAuthenticatorEnabled": googleAuthenticatorEnabled,
 	})
 }

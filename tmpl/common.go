@@ -52,7 +52,7 @@ func PageMain(c *gin.Context) {
 	c.HTML(http.StatusOK, "main.html", gin.H{
 		"Nav":           template.HTML(nav),
 		"SystemTitle":   SystemTitle,
-		"SystemKefu":    template.HTML(SystemKefu),
+		"SystemKefu":    SystemKefu,
 		"SystemVersion": models.CustomerServiceVersion(),
 	})
 }

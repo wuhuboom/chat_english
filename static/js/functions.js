@@ -209,92 +209,125 @@ function getModernEmojiGroups(language) {
         }
     ];
 }
-function replaceContent (content,baseUrl) {// 转义聊天内容中的特殊字符
-    if(typeof baseUrl=="undefined"){
-        baseUrl="";
+function escapeChatHtml(value) {
+    return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function safeChatResourceUrl(value, baseUrl) {
+    var src = String(value || "").trim();
+    // Uploaded chat media must remain below the controlled upload directory.
+    if (!/^\/?static\/upload\/[a-zA-Z0-9_./-]+$/i.test(src) || src.indexOf("..") !== -1) {
+        return "";
     }
-    // var html = function (end) {
-    //     return new RegExp('\\n*\\[' + (end || '') + '(pre|div|span|p|table|thead|th|tbody|tr|td|ul|li|ol|li|dl|dt|dd|h2|h3|h4|h5)([\\s\\S]*?)\\]\\n*', 'g');
-    // };
-    content = (content || '').replace(/&(?!#?[a-zA-Z0-9]+;)/g, '&amp;')
-        .replace(/<(?!br).*?>/g, '') // 去掉html
-        .replace(/\\n/g, '<br>') // 转义换行
-    content=replaceSpecialTag(content,baseUrl);
-    return content;
+    return escapeChatHtml(String(baseUrl || "") + (baseUrl && src.charAt(0) !== "/" ? "/" : "") + src);
 }
-function replaceSpecialTag(str,baseUrl) {
-    var faces=placeFace();
-        if(typeof baseUrl=="undefined"){
-            baseUrl="";
+
+function safeChatLinkUrl(value) {
+    var src = String(value || "").trim();
+    if (!/^(https?:\/\/|\/)[^\s]+$/i.test(src) || /^\/\//.test(src) || src.indexOf("\\") !== -1) {
+        return "";
+    }
+    return escapeChatHtml(src);
+}
+
+function replaceContent(content, baseUrl) {
+    return replaceSpecialTag(content, baseUrl);
+}
+
+// Render only the small, controlled chat markup supported by this application.
+// All original message HTML is escaped before token expansion, preventing stored
+// XSS through v-html while preserving images, audio, faces, links and newlines.
+function replaceSpecialTag(value, baseUrl) {
+    var faces = placeFace();
+    var str = escapeChatHtml(value);
+    baseUrl = typeof baseUrl === "undefined" ? "" : baseUrl;
+
+    str = str.replace(/face\[([^\s\[\]]+?)\]/g, function (token, faceName) {
+        var facePath = faces["[" + faceName + "]"];
+        if (!facePath) {
+            return token;
         }
-    str=str.replace(/face\[([^\s\[\]]+?)\]/g, function (face) {  // 转义表情
-            var alt = face.replace(/^face/g, '');
-            return '<img alt="' + alt + '" title="' + alt + '" src="'+baseUrl + faces[alt] + '">';
-        })
-        .replace(/img\[([^\s\[\]]+?)\]/g, function (face) {  // 转义图片
-            var src = face.replace(/^img\[/g, '').replace(/\]/g, '');;
-            return '<a href="' +baseUrl+ src + '" target="_blank"><img data-src="'+baseUrl+ src +'" data-lightbox class="chatImagePic"  src="' +baseUrl+ src + '?width=400"/></a>';
-        })
-        .replace(/audio\[([^\s\[\]]+?)\]/g, function (face) {  // 转义图片
-            var src = face.replace(/^audio\[/g, '').replace(/\]/g, '');;
-            return '<div class="chatAudio"><audio controls ref="audio" src="'+src+'" class="audio"></audio></div>';
-        })
-        .replace(/file\[([^\s\[\]]+?)\]/g, function (face) {  // 转义图片
-            var src = face.replace(/^file\[/g, '').replace(/\]/g, '');;
-            return '<div class="folderBtn" onclick="window.open(\''+baseUrl+src+'\')"  style="font-size:25px;"/>';
-        })
-        .replace(/\[([^\]]+?)\]+link\[([^\]]+?)\]/g, function (face) {  // 转义超链接
-            var text = face.replace(/link\[.*?\]/g, '').replace(/\[|\]/g, '');
-            var src = face.replace(/^\[([^\s\[\]]+?)\]+link\[/g, '').replace(/\]/g, '');
-            return '<a href="'+src+'" target="_blank"/>'+text+'</a>';
-        })
-        .replace(/product\[([^\[\]]+?)\]/g, function (product) {
-            if(!arguments[1]){
-                return;
-            }
-            var jsonStr=arguments[1].replace(/\'/g,'"');
-            console.log(jsonStr);
-            try{
-                var info=JSON.parse(jsonStr);
-                if(typeof info=="undefined"){
-                    return;
-                }
-                if(info.title){
-                    var title=info.title;
-                }else{
-                    var title="GOFLY客服系统";
-                }
-                if(info.price){
-                    var price=info.price;
-                }
-                if(info.img){
-                    var img="<img src='"+info.img+"'/>";
-                }else{
-                    var img="";
-                }
-                if(info.url){
-                    var url=info.url;
-                }else{
-                    var url="";
-                }
-                var html= `
-                    <a class="productCard" href="`+url+`" target="_blank"/>
-                    `+img+`
+        var alt = escapeChatHtml(faceName);
+        var src = escapeChatHtml(String(baseUrl || "") + facePath);
+        return '<img alt="' + alt + '" title="' + alt + '" src="' + src + '">';
+    }).replace(/img\[([^\s\[\]]+?)\]/g, function (token, rawSrc) {
+        var src = safeChatResourceUrl(rawSrc, baseUrl);
+        if (!src) {
+            return token;
+        }
+        return '<a href="' + src + '" target="_blank" rel="noopener noreferrer"><img data-src="' + src + '" data-lightbox class="chatImagePic" src="' + src + '?width=400"></a>';
+    }).replace(/audio\[([^\s\[\]]+?)\]/g, function (token, rawSrc) {
+        var src = safeChatResourceUrl(rawSrc, baseUrl);
+        if (!src) {
+            return token;
+        }
+        return '<div class="chatAudio"><audio controls src="' + src + '" class="audio"></audio></div>';
+    }).replace(/file\[([^\s\[\]]+?)\]/g, function (token, rawSrc) {
+        var src = safeChatResourceUrl(rawSrc, baseUrl);
+        if (!src) {
+            return token;
+        }
+        return '<a class="folderBtn" href="' + src + '" target="_blank" rel="noopener noreferrer" aria-label="下载历史附件"></a>';
+    }).replace(/\[([^\]]+?)\]+link\[([^\]]+?)\]/g, function (token, text, rawSrc) {
+        var src = safeChatLinkUrl(rawSrc);
+        if (!src) {
+            return text;
+        }
+        return '<a href="' + src + '" target="_blank" rel="noopener noreferrer">' + text + '</a>';
+    }).replace(/(?:\r\n|\r|\n|\\n)/g, '<br>');
 
-                    <div class="productCardTitle">
-                        <p class="productCardTitle">`+title+`</p>
-                        <p class="productCardPrice">`+price+`</p>
-                    </div>
-                    </a>
-            `;
-                return html;
-            }catch (e) {
-                return jsonStr;
-            }
-
-        });
-        return str;
+    return str;
 }
+
+// Parse rich text in an inert template, then rebuild only supported markup.
+function renderRichChatMessage(content, baseUrl) {
+    var raw = String(content == null ? "" : content);
+    if (!/<\/?(?:p|br|div|strong|b|em|i|u|s|strike|ul|ol|li|blockquote|h[1-6]|a|img|span)(?=[\s/>])/i.test(raw)) {
+        return replaceSpecialTag(raw, baseUrl);
+    }
+    var parsed = document.createElement("template");
+    parsed.innerHTML = raw;
+    var allowed = new Set(["p", "br", "div", "strong", "b", "em", "i", "u", "s", "strike",
+        "ul", "ol", "li", "blockquote", "h1", "h2", "h3", "h4", "h5", "h6"]);
+    function render(node, depth) {
+        if (depth > 40) return "";
+        if (node.nodeType === 3) return replaceSpecialTag(node.nodeValue, baseUrl);
+        if (node.nodeType !== 1 || node.namespaceURI !== "http://www.w3.org/1999/xhtml") return "";
+        var tag = node.localName;
+        if (tag === "img") {
+            var path = node.getAttribute("src") || "";
+            var src = /\.(?:png|jpe?g|gif|webp)$/i.test(path) && safeChatResourceUrl(path, baseUrl);
+            return src ? '<img class="chatImagePic" src="' + src + '" alt="' +
+                escapeChatHtml(node.getAttribute("alt")) + '">' : "";
+        }
+        if (tag === "br") return "<br>";
+        if (!allowed.has(tag) && tag !== "span" && tag !== "a") return "";
+        var children = Array.from(node.childNodes, function (child) { return render(child, depth + 1); }).join("");
+        if (tag === "span") return children;
+        if (tag === "a") {
+            var href = safeChatLinkUrl(node.getAttribute("href"));
+            return href ? '<a href="' + href + '" target="_blank" rel="noopener noreferrer">' + children + '</a>' : children;
+        }
+        return "<" + tag + ">" + children + "</" + tag + ">";
+    }
+    return Array.from(parsed.content.childNodes, function (node) { return render(node, 0); }).join("");
+}
+
+function acceptChatParentEvent(event) {
+    if (window.parent === window || event.source !== window.parent || !document.referrer ||
+        !event.data || typeof event.data.content !== "string") return false;
+    try {
+        var parent = new URL(document.referrer);
+        return /^(https?:)$/.test(parent.protocol) && event.origin === parent.origin;
+    } catch (ignored) { return false; }
+}
+
+function renderChatMessage(content) { return renderRichChatMessage(content); }
 
 // Reconcile persisted unread messages whenever the visitor websocket opens.
 // WebSocket writes can fail during a short mobile-network transition even
@@ -331,7 +364,7 @@ function mergeRecoveredVisitorMessages(vm, messages) {
         var content = {
             avator: message.avator,
             name: message.name,
-            content: replaceSpecialTag(message.content),
+            content: message.content,
             is_kefu: false,
             is_reply: true,
             msg_id: message.msg_id,

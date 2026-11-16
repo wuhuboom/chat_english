@@ -17,6 +17,7 @@ new Vue({
         heartsFlow:null,
     },
     methods: {
+        renderSafeChat: renderChatMessage,
         //初始化websocket
         initConn:function() {
             this.socket = new ReconnectingWebSocket(this.server+"?visitor_id="+this.visitor.visitor_id+"&to_id="+this.visitor.to_id+"&room_id="+this.visitor.to_id);//创建Socket实例
@@ -87,7 +88,7 @@ new Vue({
                 let content = {}
                 content.avator = msg.avator;
                 content.name = msg.name;
-                content.content =replaceContent(msg.content);
+                content.content =msg.content;
                 content.is_kefu = false;
                 content.time = msg.time;
                 this.msgList.push(content);
@@ -180,7 +181,7 @@ new Vue({
             let _this=this;
             let content = {}
             content.avator=_this.visitor.avator;
-            content.content = replaceContent(_this.messageContent);
+            content.content = _this.messageContent;
             content.name = _this.visitor.name;
             content.is_kefu = true;
             content.time = "";
@@ -240,7 +241,7 @@ new Vue({
             });
         },
         showTitle:function(title){
-            $(".chatBox").append("<div class=\"chatTime\"><span>"+title+"</span></div>");
+            $(".chatBox").append($("<div>").addClass("chatTime").text(title));
             this.scrollBottom();
         },
         //表情点击事件

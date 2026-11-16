@@ -62,7 +62,7 @@ GOFLY.init=function(config){
     this.GOFLY_EXTRA.host=document.location.href;
     this.GOFLY_EXTRA=JSON.stringify(_this.GOFLY_EXTRA);
 
-    this.dynamicLoadJs(this.GOFLY_URL+"/static/js/functions.js?v=1",function(){
+    this.dynamicLoadJs(this.GOFLY_URL+"/static/js/functions.js?v=embed-safe-3",function(){
         if (typeof config.GOFLY_LANG!="undefined"){
             _this.GOFLY_LANG=config.GOFLY_LANG;
         }else{
@@ -116,9 +116,9 @@ GOFLY.showPcTips=function(welcomeInfo){
     _this.offLine=welcomeInfo.all_offline;
     if(welcomeInfo.all_offline){
         _this.GOFLY_AUTO_OPEN=false;
-        var userInfo="<img style='margin-top: 5px;' class='flyAvatar' src='"+_this.GOFLY_URL+welcomeInfo.avatar+"'/> <span class='flyUsername'>"+GOFLY.TEXT[_this.GOFLY_LANG].offline_notice+"</span>"
+        var userInfo="<img style='margin-top: 5px;' class='flyAvatar' src='"+_this.avatarUrl(welcomeInfo.avatar)+"'/> <span class='flyUsername'>"+GOFLY.TEXT[_this.GOFLY_LANG].offline_notice+"</span>"
     }else{
-        var userInfo="<img style='margin-top: 5px;' class='flyAvatar' src='"+_this.GOFLY_URL+welcomeInfo.avatar+"'/> <span class='flyUsername'>"+GOFLY.TEXT[_this.GOFLY_LANG].online_notice+"</span>"
+        var userInfo="<img style='margin-top: 5px;' class='flyAvatar' src='"+_this.avatarUrl(welcomeInfo.avatar)+"'/> <span class='flyUsername'>"+GOFLY.TEXT[_this.GOFLY_LANG].online_notice+"</span>"
     }
     //自动展开
     if(_this.GOFLY_AUTO_OPEN&&_this.isIE()<=0){
@@ -153,22 +153,7 @@ GOFLY.showPcTips=function(welcomeInfo){
             delaySecond+=4;
         }
         var timer =  setTimeout(function (msg) {
-            msg.content = replaceSpecialTag(msg.content);
-
-
-
-            var welcomeHtml="<div class='flyUser'><img class='flyAvatar' src='"+_this.GOFLY_URL+msg.avator+"'/> <span class='flyUsername'>"+msg.name+"</span>" +
-                "<span id='launchNoticeClose' class='flyClose'>×</span>" +
-                "</div>";
-            welcomeHtml+="<div id='launchNoticeContent'>"+replaceSpecialTag(msg.content,_this.GOFLY_URL)+"</div>";
-
-            var obj=$("#launchButtonNotice");
-            if(obj){
-                obj.html(welcomeHtml).fadeIn();
-                setTimeout(function (obj) {
-                    obj.fadeOut();
-                },3000,obj);
-            }
+            _this.showWelcomeNotice(msg);
 
             i++;
             $("#launchIcon").text(i).fadeIn();
@@ -249,9 +234,10 @@ GOFLY.showCircleIcon=function(welcomeInfo){
         },5000);
     },5000);
     window.addEventListener('message',function(e){
+        if(!_this.acceptChatEvent(e)) return;
         var msg=e.data;
-        if(msg.type=="message"){
-            $(".flySimpleIconTip").html(replaceSpecialTag(msg.data.content,_this.GOFLY_URL)+"<div class='flyClose'>×</div>").show();
+        if(msg.type=="message" && msg.data && typeof msg.data.content==="string"){
+            $(".flySimpleIconTip").html(renderRichChatMessage(msg.data.content,_this.chatOrigin())+"<div class='flyClose'>×</div>").show();
             setTimeout(function () {
                 $(".flySimpleIconTip").fadeOut();
             },5000);
@@ -336,18 +322,47 @@ GOFLY.postMessageToIframe=function(str){
     msg.content=str;
     this.postToIframe(msg);
 }
+GOFLY.chatOrigin=function(){
+    return new URL(this.GOFLY_URL || window.location.href, window.location.href).origin;
+};
+GOFLY.acceptChatEvent=function(event){
+    var frame=document.getElementById('layui-layer-iframe19911116');
+    return !!(frame && frame.contentWindow && event.source === frame.contentWindow &&
+        event.origin === this.chatOrigin() && event.data && typeof event.data === "object");
+};
+GOFLY.avatarUrl=function(path){
+    try {
+        var origin=this.chatOrigin();
+        var url=new URL(String(path || ""),origin);
+        if(url.origin===origin && /^\/static\/(?:images|upload)\/[\w./-]+$/.test(url.pathname) &&
+            /\.(?:png|jpe?g|gif|webp)$/i.test(url.pathname)) return origin+url.pathname;
+    } catch (ignored) {}
+    return this.chatOrigin()+"/static/images/iconchat.png";
+};
+GOFLY.showWelcomeNotice=function(msg){
+    if(!msg || typeof msg!=="object") return;
+    var user=$("<div>").addClass("flyUser")
+        .append($("<img>").addClass("flyAvatar").attr("src",this.avatarUrl(msg.avator)))
+        .append($("<span>").addClass("flyUsername").text(String(msg.name || "")))
+        .append($("<span>").attr("id","launchNoticeClose").addClass("flyClose").text("×"));
+    var body=$("<div>").attr("id","launchNoticeContent").html(renderRichChatMessage(msg.content,this.chatOrigin()));
+    var notice=$("#launchButtonNotice").empty().append(user,body).fadeIn();
+    setTimeout(function(){notice.fadeOut();},3000);
+};
+
 GOFLY.postToIframe=function(messageObj){
     var obj=document.getElementById('layui-layer-iframe19911116');
     if(!obj||!messageObj){
         return;
     }
-    document.getElementById('layui-layer-iframe19911116').contentWindow.postMessage(messageObj, "*");
+    obj.contentWindow.postMessage(messageObj, this.chatOrigin());
 }
 GOFLY.addEventlisten=function(){
     var _this=this;
     window.addEventListener('message',function(e){
+        if(!_this.acceptChatEvent(e)) return;
         var msg=e.data;
-        if(msg.type=="message"){
+        if(msg.type=="message" && msg.data && typeof msg.data.content==="string"){
             clearInterval(_this.noticeTimer);
             var width=$(window).width();
             if(width>768){
@@ -356,17 +371,7 @@ GOFLY.addEventlisten=function(){
             if (_this.launchButtonFlag){
                 return;
             }
-            var welcomeHtml="<div class='flyUser'><img class='flyAvatar' src='"+_this.GOFLY_URL+msg.data.avator+"'/> <span class='flyUsername'>"+msg.data.name+"</span>" +
-                "<span id='launchNoticeClose' class='flyClose'>×</span>" +
-                "</div>";
-            welcomeHtml+="<div id='launchNoticeContent'>"+replaceSpecialTag(msg.data.content,_this.GOFLY_URL)+"</div>";
-            var obj=$("#launchButtonNotice");
-            if(obj){
-                obj.html(welcomeHtml).fadeIn();
-                setTimeout(function (obj) {
-                    obj.fadeOut();
-                },3000,obj);
-            }
+            _this.showWelcomeNotice(msg.data);
             var news=$("#launchIcon").text();
             $("#launchIcon").text(++news).show();
         }
@@ -490,7 +495,7 @@ GOFLY.layerOpen=function (width,height){
     var title=`
     <div class="kfBar">
         <div class="kfBarAvator">
-            <img src="`+this.GOFLY_URL+this.kefuAvator+`" class="kfBarLogo">
+            <img src="`+this.avatarUrl(this.kefuAvator)+`" class="kfBarLogo">
             `+onlineStatus+`
         </div>
         <div class="kfBarText">

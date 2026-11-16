@@ -113,7 +113,7 @@
                             prop="content"
                             label="content">
                         <template slot-scope="scope">
-                            <div v-html="scope.row.content"></div>
+                            <div v-html="renderSafeChat(scope.row.content)"></div>
                         </template>
                     </el-table-column>
                     <el-table-column

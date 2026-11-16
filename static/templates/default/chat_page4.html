@@ -10,7 +10,7 @@
     <script src="/static/element-ui/2.15.1/index.js"></script>
     <script src="/static/jquery/3.6.0/jquery.min.js"></script>
 
-    <script src="/static/js/functions.js?v=0.7.2"></script>
+    <script src="/static/js/functions.js?v=embed-safe-3"></script>
     <link rel="stylesheet" href="/static/css/front.css?v=0.6.0" />
     <link rel="stylesheet" href="/static/css/common.css?v=1.0.2" />
     <link rel="stylesheet" href="/static/css/icono.min.css" />
@@ -114,13 +114,13 @@
                                     <div class="chatUser"  v-if="showKefuName!='off'"><{v.name}></div>
                                     <div class="chatTime" v-bind:class="{'chatTimeHide': v.show_time==false}"><{formatTime(v.time)}></div>
                                 </div>
-                                <div class="chatContent replyContentBtn" v-html="v.content.replace(/\n/g, '<br/>')"></div>
+                                <div class="chatContent replyContentBtn" v-html="renderSafeChat(v.content)"></div>
                             </el-col>
                         </div>
                         <div class="kefuMe" v-if="v.is_kefu==true">
                             <div class="chatTime" v-bind:class="{'chatTimeHide': v.show_time==false}"><span><{formatTime(v.time)}></span></div>
                             <el-col :span="24">
-                                <div class="chatContent replyContentBtn" v-html="v.content.replace(/\n/g, '<br/>')"></div>
+                                <div class="chatContent replyContentBtn" v-html="renderSafeChat(v.content)"></div>
                                 <div class="chatReadStatus"><{v.read_status}></div>
                             </el-col>
                         </div>
@@ -305,6 +305,7 @@
             showKefuName:SHOW_KEFU_NAME,
         },
         methods: {
+            renderSafeChat: renderChatMessage,
             //初始化websocket
             initConn:function() {
                 this.socket = new ReconnectingWebSocket(this.server+"?visitor_id="+this.visitor.visitor_id+"&to_id="+this.visitor.to_id);//创建Socket实例
@@ -338,7 +339,7 @@
                     }
                     this.visitor.to_id=msg.id;
                     this.chatTitle=msg.name+","+GOFLY_LANG[LANG]['chating'];
-                    $(".chatBox").append("<div class=\"chatTime\">"+this.chatTitle+"</div>");
+                    $(".chatBox").append($("<div>").addClass("chatTime").text(this.chatTitle));
                     this.scrollBottom();
                     this.showKfonline=true;
                 }
@@ -355,7 +356,7 @@
                         return;
                     }
                     this.chatTitle=msg
-                    $(".chatBox").append("<div class=\"chatTime\">"+this.chatTitle+"</div>");
+                    $(".chatBox").append($("<div>").addClass("chatTime").text(this.chatTitle));
                     this.scrollBottom();
                 }
                 if (redata.type == "peerid") {
@@ -395,7 +396,7 @@
                         let content = {}
                         content.avator = msg.avator;
                         content.name = msg.name;
-                        content.content =replaceSpecialTag(msgArr[i]);
+                        content.content =msgArr[i];
                     content.is_kefu = false;
                     content.read_status = GOFLY_LANG[LANG].unread;
                         content.time = msg.time;
@@ -410,7 +411,7 @@
                     // let content = {}
                     // content.avator = msg.avator;
                     // content.name = msg.name;
-                    // content.content =replaceSpecialTag(msg.content);
+                    // content.content =msg.content;
                     // content.is_kefu = false;
                     // content.time = msg.time;
                     // content.msg_id = msg.msg_id;
@@ -489,7 +490,7 @@
 
                 let content = {}
                 content.avator=_this.visitor.avator;
-                content.content = replaceContent(_this.messageContent);
+                content.content = _this.messageContent;
                 content.name = _this.visitor.name;
                 content.is_kefu = true;
                 content.read_status = GOFLY_LANG[LANG]['unread'];
@@ -665,7 +666,7 @@
                                 }
                                 content.avator = visitorMes["avator"];
                                 content.name = visitorMes["name"];
-                                content.content = replaceContent(visitorMes["content"]);
+                                content.content = visitorMes["content"];
                                 content.time = visitorMes["time"];
                                 _this.msgList.push(content);
                                 _this.scrollBottom();
@@ -737,7 +738,7 @@
 
                 let msg = {}
                 msg.avator=_this.visitor.avator;
-                msg.content = replaceContent(title);
+                msg.content = title;
                 msg.name = _this.visitor.name;
                 msg.is_kefu = true;
                 msg.time = _this.getNowDate();
@@ -755,7 +756,7 @@
                         let content = {}
                         content.avator = msg.avator;
                         content.name = msg.name;
-                        content.content =replaceSpecialTag(msgArr[i]);
+                        content.content =msgArr[i];
                         content.is_kefu = false;
                         content.time = msg.time;
                         content.is_reply=true;
@@ -813,7 +814,7 @@
                             }
                             var timer =  setTimeout(function (msg) {
                                 msg.time=_this.getNowDate();
-                                msg.content = replaceSpecialTag(msg.content);
+                                msg.content = msg.content;
                                 if(!insertVisitorChatMessageByID(_this,msg)){
                                     return;
                                 }
@@ -1214,7 +1215,7 @@
             sendAjax: visitorSendAjax,
             showTitle:function(title){
                 this.chatTitle=title;
-                $(".chatBox").append("<div class=\"chatTime\"><span>"+title+"</span></div>");
+                $(".chatBox").append($("<div>").addClass("chatTime").text(title));
                 this.scrollBottom();
             },
             //开始录音
@@ -1358,10 +1359,10 @@
                             let content = {}
                             if (visitorMes["mes_type"] == "kefu") {
                                 content.is_kefu = false;
-                                content.content = replaceSpecialTag(visitorMes["content"]);
+                                content.content = visitorMes["content"];
                             } else {
                                 content.is_kefu = true;
-                                content.content = replaceContent(visitorMes["content"]);
+                                content.content = visitorMes["content"];
                             }
                             if (visitorMes["read_status"] == "read") {
                                 content.read_status = GOFLY_LANG[LANG].read;
@@ -1445,6 +1446,7 @@
             document.addEventListener('paste', this.onPasteUpload);
             document.addEventListener('scroll',this.textareaBlur);
             window.addEventListener('message',function(e){
+                if (!acceptChatParentEvent(e)) return;
                 var msg=e.data;
                 if(msg.type=="inputing_message"){
                     _this.sendInputingStrNow(msg.content);

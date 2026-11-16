@@ -43,7 +43,7 @@
                     <el-col :span="2">
                         内容:
                     </el-col>
-                    <el-col :span="22" v-html="html">
+                    <el-col :span="22" v-text="bodyText" style="white-space: pre-wrap; overflow-wrap: anywhere">
                     </el-col>
                 </el-row>
             </el-main>
@@ -65,7 +65,7 @@
             to:"",
             date:"",
             subject:"",
-            html:"",
+            bodyText:"",
         },
         methods: {
             //获取邮件夹
@@ -88,7 +88,11 @@
                     _this.to=rs.result.to;
                     _this.date=rs.result.date;
                     _this.subject=rs.result.subject;
-                    _this.html=rs.result.html;
+                    const body=document.createElement("template");
+                    body.innerHTML=String(rs.result.html || "");
+                    body.content.querySelectorAll("script,style,template,iframe,object,embed").forEach(node=>node.remove());
+                    body.content.querySelectorAll("br,p,div,li,tr").forEach(node=>node.after(document.createTextNode("\n")));
+                    _this.bodyText=body.content.textContent;
                     _this.fullscreenLoading=false;
                 }).then(()=>{
                     _this.fullscreenLoading=false;

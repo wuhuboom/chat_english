@@ -30,7 +30,7 @@ func TestClassicOneNoTimePlayerTemplateIsIsolated(t *testing.T) {
 	for _, marker := range []string{
 		"syncUnreadVisitorMessages(this);",
 		"visibleUnreadVisitorMessageIDs(_this)",
-		`v-html="v.content"`,
+		`v-html="renderSafeChat(v.content)"`,
 		`v.read_status=='已读'`,
 		"flyLang.moremessage",
 	} {
@@ -85,7 +85,7 @@ func TestClassicThreeNoTimePlayerTemplateIsIsolated(t *testing.T) {
 	for _, marker := range []string{
 		"syncUnreadVisitorMessages(this);",
 		"visibleUnreadVisitorMessageIDs(_this)",
-		`v-html="v.content"`,
+		`v-html="renderSafeChat(v.content)"`,
 		"v.read_status",
 		"flyLang.moremessage",
 	} {
@@ -114,7 +114,7 @@ func TestClassicThreeNoTimeMessageRowsDoNotReserveTimeSlot(t *testing.T) {
 	}
 	for _, marker := range []string{
 		`<{v.name}>`,
-		`v-html="v.content"`,
+		`v-html="renderSafeChat(v.content)"`,
 		"v.read_status",
 		`class="noTimeMessageMeta" v-if="showKefuName!='off'"`,
 		"chatReadStatus",

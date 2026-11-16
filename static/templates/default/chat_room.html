@@ -10,7 +10,7 @@
     <script src="/static/vue/2.6.11/vue.min.js"></script>
     <script src="/static/element-ui/2.15.1/index.js"></script>
     <script src="/static/jquery/3.6.0/jquery.min.js"></script>
-    <script src="/static/js/functions.js?v=0.4.1"></script>
+    <script src="/static/js/functions.js?v=embed-safe-3"></script>
     <link rel="stylesheet" href="/static/css/front.css?v=1.0.0" />
     <link rel="stylesheet" href="/static/css/common.css?v=1.0.2" />
     <link rel="stylesheet" href="/static/css/icono.min.css" />
@@ -31,7 +31,7 @@
                     <el-col :span="3"><el-avatar shape="square" :size="36" :src="v.avator"></el-avatar></el-col>
                     <el-col :span="21">
                         <div class="chatUser"><{v.name}></div>
-                        <div class="chatContent" v-html="v.content.replace(/\n/g, '<br/>')"></div>
+                        <div class="chatContent" v-html="renderSafeChat(v.content)"></div>
                     </el-col>
                     <div class="clear"></div>
                 </el-row>
@@ -80,5 +80,5 @@
     var LANG=checkLang();
 </script>
 <script src="/static/js/chat-lang.js?v=0.4.1"></script>
-<script src="/static/js/chat-room.js?v=0.4.1"></script>
+<script src="/static/js/chat-room.js?v=ws-safe-3"></script>
 </html>

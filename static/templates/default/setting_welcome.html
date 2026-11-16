@@ -83,7 +83,7 @@
         >
             <el-form ref="welcomeForm" :model="welcomeForm" :rules="rules" label-width="70px">
                 <el-form-item label="内容"  prop="content">
-                    <div id="welcomeEditor" v-html="welcomeForm.content"></div>
+                    <div id="welcomeEditor" v-html="renderSafeChat(welcomeForm.content)"></div>
                 </el-form-item>
             </el-form>
             <span slot="footer" class="dialog-footer">
