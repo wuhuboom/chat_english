@@ -10,6 +10,7 @@ import (
 	"go-fly-muti/types"
 	"go-fly-muti/ws"
 	"log"
+	"net/http"
 	"os"
 	"path"
 	"strconv"
@@ -350,58 +351,12 @@ func UploadImg(c *gin.Context) {
 	}
 }
 func UploadFile(c *gin.Context) {
-	if !allowUploadRequest(c, maxFileUpload) {
-		return
-	}
-	SendAttachment, err := strconv.ParseBool(models.FindConfig("SendAttachment"))
-	if !SendAttachment || err != nil {
-		c.JSON(200, gin.H{
-			"code": 400,
-			"msg":  "禁止上传附件!",
-		})
-		return
-	}
-	f, err := c.FormFile("realfile")
-	if err != nil {
-		c.JSON(200, gin.H{
-			"code": 400,
-			"msg":  "上传失败!",
-		})
-		return
-	} else {
-
-		fileExt, validateErr := validateUpload(f, "attachment")
-		if validateErr != nil {
-			c.JSON(200, gin.H{
-				"code": 400,
-				"msg":  "上传失败!" + validateErr.Error(),
-			})
-			zap.L().Warn("attachment upload rejected", zap.String("ip", c.ClientIP()), zap.String("filename", path.Base(f.Filename)), zap.String("reason", validateErr.Error()))
-			return
-		}
-
-		fileName := tools.Md5(fmt.Sprintf("%s%s", f.Filename, time.Now().String()))
-		fildDir := fmt.Sprintf("%s%d%s/", common.Upload, time.Now().Year(), time.Now().Month().String())
-		isExist, _ := tools.IsFileExist(fildDir)
-		if !isExist {
-			if err := os.MkdirAll(fildDir, 0750); err != nil {
-				c.JSON(200, gin.H{"code": 500, "msg": "上传目录创建失败"})
-				return
-			}
-		}
-		filepath := fmt.Sprintf("%s%s%s", fildDir, fileName, fileExt)
-		if err := c.SaveUploadedFile(f, filepath); err != nil {
-			c.JSON(200, gin.H{"code": 500, "msg": "文件保存失败"})
-			return
-		}
-		c.JSON(200, gin.H{
-			"code": 200,
-			"msg":  "上传成功!",
-			"result": gin.H{
-				"path": filepath,
-			},
-		})
-	}
+	// General attachments are intentionally disabled. Images must use /uploadimg,
+	// where both the extension and the actual image signature are validated.
+	c.JSON(http.StatusForbidden, gin.H{
+		"code": 403,
+		"msg":  "文件上传已禁用，仅允许上传图片",
+	})
 }
 func UploadAudio(c *gin.Context) {
 	if !allowUploadRequest(c, maxAudioUpload) {

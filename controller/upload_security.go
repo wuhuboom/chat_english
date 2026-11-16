@@ -33,12 +33,7 @@ var allowedImageExtensions = map[string]bool{
 	".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".webp": true,
 }
 
-var allowedAttachmentExtensions = map[string]bool{
-	".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".webp": true,
-	".pdf": true, ".txt": true, ".zip": true, ".rar": true, ".7z": true,
-	".doc": true, ".docx": true, ".xls": true, ".xlsx": true,
-	".ppt": true, ".pptx": true, ".mp4": true,
-}
+var allowedAttachmentExtensions = map[string]bool{}
 
 func validateUpload(header *multipart.FileHeader, kind string) (string, error) {
 	if header == nil || header.Size <= 0 {

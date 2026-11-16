@@ -14,13 +14,8 @@ func TestUploadSignaturesRejectDisguisedScripts(t *testing.T) {
 	}
 }
 
-func TestAttachmentUploadAllowsValidatedImages(t *testing.T) {
-	for _, ext := range []string{".jpg", ".jpeg", ".png", ".gif", ".webp"} {
-		if !allowedAttachmentExtensions[ext] {
-			t.Errorf("attachment upload should allow image extension %s", ext)
-		}
-	}
-	if allowedAttachmentExtensions[".svg"] || allowedAttachmentExtensions[".php"] {
-		t.Fatal("active-content attachment extension was accepted")
+func TestAttachmentUploadAllowlistIsEmpty(t *testing.T) {
+	if len(allowedAttachmentExtensions) != 0 {
+		t.Fatalf("attachment uploads must remain disabled, got %d allowed extensions", len(allowedAttachmentExtensions))
 	}
 }

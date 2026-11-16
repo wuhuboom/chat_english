@@ -50,9 +50,10 @@ func PageMain(c *gin.Context) {
 	SystemKefu := models.FindConfig("SystemKefu")
 	nav := tools.FileGetContent("html/nav.html")
 	c.HTML(http.StatusOK, "main.html", gin.H{
-		"Nav":         template.HTML(nav),
-		"SystemTitle": SystemTitle,
-		"SystemKefu":  template.HTML(SystemKefu),
+		"Nav":           template.HTML(nav),
+		"SystemTitle":   SystemTitle,
+		"SystemKefu":    template.HTML(SystemKefu),
+		"SystemVersion": models.CustomerServiceVersion(),
 	})
 }
 
@@ -64,6 +65,7 @@ func PageChatMain(c *gin.Context) {
 	}
 	c.HTML(http.StatusOK, "chat_main.html", gin.H{
 		"SystemTimezone": timezone,
+		"SystemVersion":  models.CustomerServiceVersion(),
 	})
 }
 

@@ -19,7 +19,7 @@ func TestUploadImageFormatCompatibility(t *testing.T) {
 	if err := png.Encode(&pngData, img); err != nil {
 		t.Fatal(err)
 	}
-	for _, kind := range []string{"image", "attachment"} {
+	for _, kind := range []string{"image"} {
 		for _, tc := range []struct {
 			name string
 			data []byte

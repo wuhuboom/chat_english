@@ -192,9 +192,6 @@
                     <div class="clear"></div>
                 </div>
                 <div class="visitorEditor">
-                    <div :title="flyLang.file" id="uploadFile" v-on:click="uploadFile('/uploadfile')">
-                        <img src="/static/images/file.png" alt="">
-                    </div>
                     <div class="text_photo_mod">
                         <el-input class="visitorEditorArea" @focus="scrollBottom;showIconBtns=false"
                                   @blur="scrollBottom;showIconBtns=false" v-model="messageContent"

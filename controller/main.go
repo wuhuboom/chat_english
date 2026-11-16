@@ -186,6 +186,7 @@ func GetOtherVersion(c *gin.Context) {
 		"result": gin.H{
 			"version_name": versionName,
 			"version_code": versionCode,
+			"version":      models.CustomerServiceVersion(),
 		},
 	})
 }

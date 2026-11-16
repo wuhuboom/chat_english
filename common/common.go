@@ -1,5 +1,7 @@
 package common
 
+const CustomerServiceVersion = 1 // 每次发布代码更新时加 1，并同步到数据库 config.version
+
 var (
 	PageSize           uint    = 9
 	VisitorPageSize    uint    = 10

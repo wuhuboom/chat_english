@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -222,6 +223,9 @@ func RunSchemaMigrations(db *gorm.DB) (MigrationReport, error) {
 	if err := migrateLegacySuperAdmin(db); err != nil {
 		return report, err
 	}
+	if err := syncCustomerServiceVersion(db); err != nil {
+		return report, err
+	}
 
 	report.ModelCount = len(models)
 	report.Duration = time.Since(startedAt)
@@ -243,6 +247,35 @@ func RunSchemaMigrations(db *gorm.DB) (MigrationReport, error) {
 		zap.Duration("duration", report.Duration),
 	)
 	return report, nil
+}
+
+// syncCustomerServiceVersion writes the code release number to config.version.
+// Restarting the same release keeps the same number; increment
+// common.CustomerServiceVersion once for every published code update.
+func syncCustomerServiceVersion(db *gorm.DB) error {
+	value := strconv.Itoa(common.CustomerServiceVersion)
+	var config Config
+	err := db.Where("conf_key = ?", CustomerServiceVersionKey).First(&config).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return db.Create(&Config{
+			ConfName:  "客服系统版本号",
+			ConfKey:   CustomerServiceVersionKey,
+			ConfValue: value,
+		}).Error
+	}
+	if err != nil {
+		return fmt.Errorf("query customer service version: %w", err)
+	}
+	if config.ConfValue == value && config.ConfName == "客服系统版本号" {
+		return nil
+	}
+	if err := db.Model(&Config{}).Where("conf_key = ?", CustomerServiceVersionKey).Updates(map[string]interface{}{
+		"conf_name":  "客服系统版本号",
+		"conf_value": value,
+	}).Error; err != nil {
+		return fmt.Errorf("update customer service version: %w", err)
+	}
+	return nil
 }
 
 func ensureMessageCleanupIndex(db *gorm.DB) error {

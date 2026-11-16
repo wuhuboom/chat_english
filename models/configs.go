@@ -11,6 +11,7 @@ const (
 	GoogleAuthenticatorEnabledKey = "GoogleAuthenticatorEnabled"
 	GoogleAuthenticatorSecretKey  = "GoogleAuthenticatorSecret"
 	SystemRegisterKey             = "SystemRegister"
+	CustomerServiceVersionKey     = "version"
 )
 
 var CustomConfigs []Config
@@ -72,6 +73,10 @@ func FindConfig(key string) string {
 		}
 	}
 	return ""
+}
+
+func CustomerServiceVersion() string {
+	return strings.TrimSpace(FindConfig(CustomerServiceVersionKey))
 }
 
 func GoogleAuthenticatorEnabled() bool {
