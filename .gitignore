@@ -13,3 +13,12 @@ static/upload
 logs/gofly.log
 static/templates/default/chat_page11.html
 /dist/
+
+# Local build and runtime artifacts
+/.tmp/
+*.exe
+*.log
+node_modules/
+test-results/
+/autoreply-first-entry-fixed.png
+/autoreply-first-entry-repro.png

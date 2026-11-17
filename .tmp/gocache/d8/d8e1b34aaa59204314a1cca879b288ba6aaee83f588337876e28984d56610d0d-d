@@ -1,8 +1,0 @@
-./chat_template.go
-./setting.go
-./chat_delivery_template_test.go
-./chat_template_test.go
-./chat_wx_template_test.go
-./kefu_avatar_template_test.go
-./player_no_time_template_test.go
-./setting_test.go

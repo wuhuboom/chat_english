@@ -1,9 +1,0 @@
-./args.go
-./box.go
-./file.go
-./finder.go
-./gogen.go
-./parser.go
-./prospect.go
-./roots.go
-./visitor.go

@@ -1,8 +1,0 @@
-./backend.go
-./client.go
-./conn.go
-./data.go
-./lengthlimit_reader.go
-./parse.go
-./server.go
-./smtp.go

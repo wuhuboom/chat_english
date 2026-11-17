@@ -1,8 +1,0 @@
-./failover.go
-./room.go
-./user.go
-./visitor.go
-./ws.go
-./failover_test.go
-./user_test.go
-./visitor_load_test.go

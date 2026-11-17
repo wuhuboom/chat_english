@@ -1,8 +1,0 @@
-读取配置成功
-2026-11-16T22:52:08.011+0800	INFO	logger/logger.go:85	logger initialized	{"component": "system", "file": "C:\\Users\\Administrator\\Desktop\\项目\\客服代码\\chat_english\\web_app.log", "configured_level": "debug", "max_size_mb": 300, "max_backups": 7, "max_age_days": 30}
-2026-11-16T22:52:08.020+0800	INFO	stdlib	tools/limits.go:55	cleanLimitQueue start...
-2026-11-16T22:52:08.188+0800	INFO	models/migrations.go:243	database schema is up to date	{"component": "migration", "version": "0.6.0", "model_count": 28, "duration": 162}
-2026-11-16T22:52:08.189+0800	INFO	stdlib	cmd/server.go:139	系统时区: Asia/Shanghai
-2026-11-16T22:52:08.189+0800	INFO	stdlib	cmd/server.go:146	GOFLY服务开始运行:0.0.0.0:8081
-2026-11-16T22:52:16.487+0800	DEBUG	logger/logger.go:204	GET /readyz	{"component": "http", "request_id": "def3999a93897dc8543cf691", "status": 200, "method": "GET", "path": "/readyz", "route": "/readyz", "query": "", "ip": "127.0.0.1", "user_agent": "curl/8.8.0", "response_bytes": 18, "duration": 0}
-2026-11-16T22:52:16.509+0800	WARN	logger/logger.go:199	GET /config	{"component": "http", "request_id": "3c6579e67fcebee57bfd1f77", "status": 403, "method": "GET", "path": "/config", "route": "/config", "query": "key=SystemKefu", "ip": "127.0.0.1", "user_agent": "curl/8.8.0", "response_bytes": 39, "duration": 0}

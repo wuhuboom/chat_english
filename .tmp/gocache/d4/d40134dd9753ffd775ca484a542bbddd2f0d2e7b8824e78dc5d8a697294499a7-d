@@ -1,7 +1,0 @@
-./formatter.go
-./level.go
-./logger.go
-./logrus.go
-./outable.go
-./terminal_check.go
-./version.go

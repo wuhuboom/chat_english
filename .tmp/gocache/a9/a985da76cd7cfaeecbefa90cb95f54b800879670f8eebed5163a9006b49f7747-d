@@ -1,7 +1,0 @@
-./entconfig.go
-./getui.go
-./logger.go
-./notify.go
-./wechat.go
-./getui_test.go
-./notify_test.go
