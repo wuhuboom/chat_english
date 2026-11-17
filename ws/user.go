@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"go-fly-muti/middleware"
 	"go-fly-muti/models"
 	"go-fly-muti/setting"
 	"log"
@@ -26,10 +25,8 @@ func NewKefuServer(c *gin.Context) {
 		})
 		return
 	}
-	// StaffSameOrigin has already checked the exact staff origin. The visitor
-	// allowlist is separate and must not block the staff console.
 	staffUpgrader := upgrader
-	staffUpgrader.CheckOrigin = func(r *http.Request) bool { return middleware.IsStaffOrigin(r) }
+	staffUpgrader.CheckOrigin = func(*http.Request) bool { return c.GetBool("staff_websocket_verified") }
 	conn, err := staffUpgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Print("upgrade:", err)

@@ -1,7 +1,10 @@
 package tools
 
 import (
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -36,6 +39,14 @@ func jwtSecret() []byte {
 		log.Print("SECURITY WARNING: GOFLY_JWT_SECRET is missing or shorter than 32 characters; using an ephemeral random key")
 	})
 	return jwtSecretData
+}
+
+// StaffSocketProof is a proof for the WebSocket handshake, not a login token.
+// It stays stable when a session refresh updates the cookie's creation time.
+func StaffSocketProof(staffID, started, authVersion int64) string {
+	mac := hmac.New(sha256.New, jwtSecret())
+	fmt.Fprintf(mac, "gofly-staff-ws-v1:%d:%d:%d", staffID, started, authVersion)
+	return base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
 }
 
 func validateJWTSigningMethod(token *jwt.Token) (interface{}, error) {

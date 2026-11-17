@@ -342,7 +342,8 @@ var app=new Vue({
         },
         //初始化websocket
         initConn() {
-            let socket = new ReconnectingWebSocket(this.server);//创建Socket实例
+            const protocol = this.$el.dataset.staffSocketProtocol;
+            let socket = new ReconnectingWebSocket(this.server, protocol ? [protocol] : []);
             this.socket = socket
             this.socket.onmessage = this.OnMessage;
             this.socket.onopen = this.OnOpen;

@@ -1,6 +1,7 @@
 package tmpl
 
 import (
+	"go-fly-muti/middleware"
 	"go-fly-muti/models"
 	"go-fly-muti/setting"
 	"go-fly-muti/tools"
@@ -49,9 +50,10 @@ func PageMain(c *gin.Context) {
 	SystemTitle := models.FindConfig("SystemTitle")
 	nav := tools.FileGetContent("html/nav.html")
 	c.HTML(http.StatusOK, "main.html", gin.H{
-		"Nav":           template.HTML(nav),
-		"SystemTitle":   SystemTitle,
-		"SystemVersion": models.CustomerServiceVersion(),
+		"Nav":                 template.HTML(nav),
+		"SystemTitle":         SystemTitle,
+		"SystemVersion":       models.CustomerServiceVersion(),
+		"StaffSocketProtocol": middleware.StaffSocketProtocol(c),
 	})
 }
 
@@ -62,8 +64,9 @@ func PageChatMain(c *gin.Context) {
 		timezone = setting.CurrentTimezone()
 	}
 	c.HTML(http.StatusOK, "chat_main.html", gin.H{
-		"SystemTimezone": timezone,
-		"SystemVersion":  models.CustomerServiceVersion(),
+		"SystemTimezone":      timezone,
+		"SystemVersion":       models.CustomerServiceVersion(),
+		"StaffSocketProtocol": middleware.StaffSocketProtocol(c),
 	})
 }
 

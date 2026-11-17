@@ -200,7 +200,7 @@ func InitApiRouter(engine *gin.Engine) {
 	engine.POST("/register", middleware.Ipblack, controller.PostKefuRegister)
 	//engine.POST("/install", controller.PostInstall)
 	//前后聊天
-	engine.GET("/ws_kefu", middleware.StaffSameOrigin, middleware.JwtApiMiddleware, ws.NewKefuServer)
+	engine.GET("/ws_kefu", middleware.StaffWebSocketAuth, ws.NewKefuServer)
 	engine.GET("/ws_visitor", middleware.Ipblack, ws.NewVisitorServer)
 	//websocket路由分组
 	//wsGroup := engine.Group("/ws")

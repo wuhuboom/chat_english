@@ -18,7 +18,7 @@
     <link rel="icon" href="/static/images/favicon.ico">
 </head>
 <body class="text-center">
-<div id="app">
+<div id="app" data-staff-socket-protocol="{{.StaffSocketProtocol}}">
     <template>
         {{template "nav" .}}
         <div class="mainRight">
@@ -355,7 +355,8 @@
             },
             //初始化websocket
             initConn() {
-                let socket = new ReconnectingWebSocket(this.server);//创建Socket实例
+                const protocol = this.$el.dataset.staffSocketProtocol;
+                let socket = new ReconnectingWebSocket(this.server, protocol ? [protocol] : []);
                 this.socket = socket
                 this.socket.onmessage = this.OnMessage;
                 this.socket.onopen = this.OnSocketOpen;

@@ -144,7 +144,9 @@ func TestStaffCookieLifecycle(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	engine := gin.New()
 	InitApiRouter(engine)
-	engine.GET("/staff-test-page", middleware.JwtPageMiddleware, func(c *gin.Context) { c.Status(204) })
+	engine.GET("/staff-test-page", middleware.JwtPageMiddleware, func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"protocol": middleware.StaffSocketProtocol(c)})
+	})
 	server := httptest.NewServer(engine)
 	defer server.Close()
 	backend, err := url.Parse(server.URL)
@@ -196,12 +198,10 @@ func TestStaffCookieLifecycle(t *testing.T) {
 		_ = json.NewDecoder(res.Body).Decode(&payload)
 		return res, payload
 	}
-	dial := func(sender string, cookie *http.Cookie) (*websocket.Conn, error) {
+	dial := func(sender string, cookie *http.Cookie, protocol string) (*websocket.Conn, error) {
 		header := http.Header{"Origin": []string{sender}, "Cookie": []string{cookie.Name + "=" + cookie.Value}}
-		if sender == origin {
-			header.Set("Sec-Fetch-Site", "same-origin")
-		} else {
-			header.Set("Sec-Fetch-Site", "cross-site")
+		if protocol != "" {
+			header.Set("Sec-WebSocket-Protocol", protocol)
 		}
 		conn, res, err := wsDialer.Dial("ws"+strings.TrimPrefix(origin, "http")+"/ws_kefu", header)
 		if err != nil && res != nil {
@@ -225,7 +225,9 @@ func TestStaffCookieLifecycle(t *testing.T) {
 	if cookie.Name != middleware.StaffCookie || !cookie.HttpOnly || cookie.Secure || cookie.SameSite != http.SameSiteStrictMode || cookie.Domain != "" {
 		t.Fatal("wrong session cookie attributes")
 	}
-	if page, _ := request("GET", "/staff-test-page", "", nil, nil); page.StatusCode != 204 {
+	page, data := request("GET", "/staff-test-page", "", nil, nil)
+	socketProtocol, _ := data["protocol"].(string)
+	if page.StatusCode != 200 || socketProtocol == "" {
 		t.Fatal("page reload did not authenticate")
 	}
 	for _, key := range []string{"SystemKefu", " systemkefu ", "SYSTEMKEFU"} {
@@ -269,16 +271,16 @@ func TestStaffCookieLifecycle(t *testing.T) {
 		t.Fatal("refresh did not renew cookie")
 	}
 	cookie = res.Cookies()[0]
-	if bad, err := dial("http://other.invalid", cookie); err == nil {
+	if bad, err := dial("http://other.invalid", cookie, ""); err == nil {
 		bad.Close()
 		t.Fatal("cross-origin WebSocket accepted")
 	}
-	first, err := dial(origin, cookie)
+	first, err := dial(origin, cookie, socketProtocol)
 	if err != nil {
 		t.Fatal("WebSocket initial handshake:", err)
 	}
 	first.Close()
-	active, err := dial(origin, cookie)
+	active, err := dial(origin, cookie, socketProtocol)
 	if err != nil {
 		t.Fatal("WebSocket reconnect:", err)
 	}
@@ -300,7 +302,7 @@ func TestStaffCookieLifecycle(t *testing.T) {
 	if page, _ := request("GET", "/staff-test-page", "", nil, cookie); page.StatusCode != 302 {
 		t.Fatal("revoked cookie still authenticated")
 	}
-	if stale, err := dial(origin, cookie); err == nil {
+	if stale, err := dial(origin, cookie, socketProtocol); err == nil {
 		stale.Close()
 		t.Fatal("revoked cookie reconnected")
 	}

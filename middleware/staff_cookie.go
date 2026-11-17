@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"crypto/hmac"
+	"go-fly-muti/tools"
 	"net/http"
 	"net/url"
 	"os"
@@ -11,6 +13,39 @@ import (
 
 const StaffCookie = "gofly_staff"
 const StaffCookieLifetime = 24 * 60 * 60
+
+func StaffSocketProtocol(c *gin.Context) string {
+	raw, _ := c.Get("staff_claims")
+	claims, ok := raw.(map[string]interface{})
+	if !ok || !c.GetBool("staff_cookie") {
+		return ""
+	}
+	id, idOK := numericClaim(claims["kefu_id"])
+	start, startOK := numericClaim(claims["session_started"])
+	version, versionOK := numericClaim(claims["auth_version"])
+	if !idOK || !startOK || !versionOK {
+		return ""
+	}
+	return "gofly-staff." + tools.StaffSocketProof(id, start, version)
+}
+
+func StaffWebSocketAuth(c *gin.Context) {
+	staffJWTAuth(c, false)
+	if c.IsAborted() || !c.GetBool("staff_cookie") {
+		c.Abort()
+		return
+	}
+	expected := StaffSocketProtocol(c)
+	for _, header := range c.Request.Header.Values("Sec-WebSocket-Protocol") {
+		for _, protocol := range strings.Split(header, ",") {
+			if expected != "" && hmac.Equal([]byte(strings.TrimSpace(protocol)), []byte(expected)) {
+				c.Set("staff_websocket_verified", true)
+				return
+			}
+		}
+	}
+	c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": 403, "msg": "请刷新客服后台后重新连接"})
+}
 
 func IsStaffOrigin(r *http.Request) bool {
 	origin := r.Header.Get("Origin")
