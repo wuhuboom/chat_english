@@ -210,7 +210,7 @@ GOFLY.showCircleIcon=function(welcomeInfo){
         var tipText=GOFLY.TEXT[this.GOFLY_LANG].offline_notice
         var imgHtml="<img class='flySimpleDefaultImg' src='"+imgUrl+"'/> ";
     }else{
-        var imgUrl=GOFLY.GOFLY_URL+welcomeInfo.avatar;
+        var imgUrl=this.avatarUrl(welcomeInfo.avatar);
         var tipText=GOFLY.TEXT[this.GOFLY_LANG].online_notice
         var imgHtml="<img class='flySimpleUserImg' src='"+imgUrl+"'/> ";
     }
@@ -499,7 +499,7 @@ GOFLY.layerOpen=function (width,height){
             `+onlineStatus+`
         </div>
         <div class="kfBarText">
-            <div class="kfName">`+this.kefuName+`</div>
+            <div class="kfName">`+escapeChatHtml(this.kefuName)+`</div>
             <div class="kfDesc">独立部署客服系统请加微信</div>
          </div>
     </div>

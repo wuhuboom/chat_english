@@ -1129,10 +1129,7 @@ new Vue({
             if(!GOFLY_CONFIG.SHOW_WECHAT){
                 return;
             }
-            var child = '<div class="wechatTip">';
-            child += '<img style="width:80px; margin:10px;" src="'+GOFLY_CONFIG.WECHAT_QR_URL+'?snow_id=' + this.visitor.visitor_id + '&id_type=visitor">';
-            child += '扫描左侧二维码可直接用微信登录。<br>可防止更换浏览器丢失消息、收不到回复。<br>并可接收回复通知</div>';
-            $(".chatBox").append(child);
+            appendWechatChatTip($(".chatBox"), GOFLY_CONFIG.WECHAT_QR_URL, this.visitor.visitor_id, GOFLY_LANG.cn.wechatQrTip);
         },
         //格式化时间
         formatTime:function(time) {

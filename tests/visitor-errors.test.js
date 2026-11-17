@@ -4,10 +4,12 @@ const vm = require('node:vm');
 function load(source, lang) {
     let options;
     const requests = [], messages = [];
-    const context = {LANG:lang, KEFU_ID:'test', window:{}, getWsBaseUrl:()=>'',
+    const location = {protocol:'http:', host:'localhost'};
+    const context = {LANG:lang, KEFU_ID:'test', window:{location}, document:{location, querySelectorAll:()=>[]},
         GOFLY_LANG:{en:{},cn:{},'en-US':{}}, console:{log(){}},
         Vue:function(value){ options=value; }, $:{ajax:r=>requests.push(r)}};
     vm.createContext(context);
+    vm.runInContext(fs.readFileSync("static/js/functions.js","utf8"),context);
     vm.runInContext(fs.readFileSync("static/js/chat-lang.js","utf8"),context);
     context.GOFLY_LANG[lang] = context.GOFLY_LANG[lang] || {};
     vm.runInContext(source,context);

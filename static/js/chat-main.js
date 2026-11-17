@@ -1283,10 +1283,10 @@ var app=new Vue({
                         $(this).parents(".chatBoxMe").hide();
                     });
                     $("body").on("click",".chatImagePic",function() {
-                        var url=$(this).attr("data-src");
-                        _this.$alert("<img src='"+url+"'/>", "", {
-                            dangerouslyUseHTMLString: true
-                        });
+                        var src = safeChatResourceUrl($(this).attr("data-src") || $(this).attr("src"));
+                        if (src) {
+                            _this.$alert(_this.$createElement("img", {attrs: {src: src}}), "");
+                        }
                         return false;
                     });
                     var ms= 1000*2;

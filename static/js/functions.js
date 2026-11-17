@@ -337,6 +337,30 @@ function acceptChatParentEvent(event) {
 
 function renderChatMessage(content) { return renderRichChatMessage(content); }
 
+function appendWechatChatTip(container, qrUrl, visitorId, text) {
+    var url;
+    try {
+        url = new URL(qrUrl, document.baseURI);
+    } catch (ignored) {
+        return;
+    }
+    if (url.protocol !== "https:" && url.protocol !== "http:") return;
+    url.searchParams.set("snow_id", String(visitorId || ""));
+    url.searchParams.set("id_type", "visitor");
+    var tip = document.createElement("div");
+    tip.className = "wechatTip";
+    var image = document.createElement("img");
+    image.style.width = "80px";
+    image.style.margin = "10px";
+    image.src = url.href;
+    tip.appendChild(image);
+    String(text).split("<br>").forEach(function (line, index) {
+        if (index > 0) tip.appendChild(document.createElement("br"));
+        tip.appendChild(document.createTextNode(line));
+    });
+    container.append(tip);
+}
+
 // Reconcile persisted unread messages whenever the visitor websocket opens.
 // WebSocket writes can fail during a short mobile-network transition even
 // though the message was safely stored by the server.

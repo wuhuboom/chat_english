@@ -210,7 +210,7 @@ func InitApiRouter(engine *gin.Engine) {
 	//	wsGroup.GET("/v2/visitor", middleware.Ipblack, wsV2.VisitorWebsocketServer)
 	//}
 
-	engine.GET("/message_notice", controller.SendVisitorNotice)
+	engine.GET("/message_notice", middleware.JwtApiMiddleware, middleware.AdminAuth, controller.SendVisitorNotice)
 	//发送单条消息
 	//上传文件
 	engine.POST("/uploadimg", middleware.Ipblack, controller.UploadImg)
