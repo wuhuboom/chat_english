@@ -2,14 +2,13 @@ package middleware
 
 import (
 	"crypto/hmac"
-	"net"
 	"net/http"
-	"net/netip"
 	"net/url"
 	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"go-fly-muti/setting"
 	"go-fly-muti/tools"
 )
 
@@ -79,29 +78,7 @@ func staffOrigin(r *http.Request) string {
 // Only the directly connected, trusted proxy can supply the public origin.
 // The proxy must overwrite these headers on every request.
 func staffProxyOrigin(r *http.Request) string {
-	peer, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return ""
-	}
-	addr, err := netip.ParseAddr(peer)
-	if err != nil {
-		return ""
-	}
-	addr = addr.Unmap()
-	trusted := addr.IsLoopback()
-	for _, entry := range strings.Split(os.Getenv("GOFLY_TRUSTED_PROXIES"), ",") {
-		entry = strings.TrimSpace(entry)
-		if entry == "" {
-			continue
-		}
-		ip, ipErr := netip.ParseAddr(entry)
-		prefix, prefixErr := netip.ParsePrefix(entry)
-		if (ipErr == nil && ip.Unmap() == addr) || (prefixErr == nil && prefix.Contains(addr)) {
-			trusted = true
-			break
-		}
-	}
-	if !trusted {
+	if !setting.IsTrustedProxy(r.RemoteAddr) {
 		return ""
 	}
 
@@ -133,9 +110,20 @@ func staffProxyOrigin(r *http.Request) string {
 
 const StaffLoginHeader = "X-Gofly-Login"
 
+func requireStaffProxy(c *gin.Context) bool {
+	if setting.StaffProxyAllowed(c.Request) {
+		return true
+	}
+	c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": 403, "msg": "请求来源不受信任"})
+	return false
+}
+
 // Keep this header out of the CORS allowlist. Browsers can only attach it
 // without preflight when posting from a page on the same origin.
 func RequireStaffLoginHeader(c *gin.Context) {
+	if !requireStaffProxy(c) {
+		return
+	}
 	if c.GetHeader(StaffLoginHeader) != "1" {
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": 403, "msg": "请刷新登录页面后重试"})
 	}

@@ -54,7 +54,11 @@ func NewKefuServer(c *gin.Context) {
 	version := c.GetInt64("staff_auth_version")
 	expires := c.GetInt64("staff_expires")
 	mfa := c.GetBool("staff_mfa")
+	request := c.Request
 	validateSession := func() error {
+		if !setting.StaffProxyAllowed(request) {
+			return errors.New("staff proxy is no longer trusted")
+		}
 		user := models.FindUserByUid(kefuInfo.ID)
 		if time.Now().Unix() >= expires || user.ID == 0 || user.Name != kefuInfo.Name ||
 			user.Status == 1 || user.TokenVersion() != version ||

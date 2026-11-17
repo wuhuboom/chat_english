@@ -33,13 +33,12 @@ func TestStaffCookieTransport(t *testing.T) {
 
 func TestStaffPublicOriginBehindReverseProxy(t *testing.T) {
 	t.Setenv("GOFLY_BROWSER_ORIGIN", "")
-	t.Setenv("GOFLY_TRUSTED_PROXIES", "10.20.30.0/24")
 	for _, tc := range []struct {
 		name, peer, proto, host, fetchSite string
 		wantProxyOrigin, wantSecure        bool
 	}{
 		{"local proxy", "127.0.0.1:1234", "https", "support.example.com:8443", "", true, true},
-		{"trusted remote proxy", "10.20.30.4:1234", "https", "support.example.com:8443", "", true, true},
+		{"unlisted remote proxy", "10.20.30.4:1234", "https", "support.example.com:8443", "", false, false},
 		{"untrusted client", "192.0.2.4:1234", "https", "support.example.com:8443", "", false, false},
 		{"ambiguous scheme", "127.0.0.1:1234", "http, https", "support.example.com:8443", "", false, false},
 		{"browser indicates HTTPS", "127.0.0.1:1234", "", "", "same-origin", false, true},

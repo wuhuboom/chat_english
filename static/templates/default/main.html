@@ -5,7 +5,7 @@
     <meta name="renderer" content="webkit">
     <meta name="description" content="">
     <meta name="author" content="GOFLY">
-    <title>{{.SystemTitle}} · {{.SystemVersion}}</title>
+    <title>{{.SystemTitle}}{{if .SystemVersion}} · version{{.SystemVersion}}{{end}}</title>
     <link rel="stylesheet" href="/static/element-ui/2.15.1/theme-chalk/index.min.css">
     <script src="/static/vue/2.6.11/vue.min.js"></script>
     <script src="/static/element-ui/2.15.1/index.js"></script>

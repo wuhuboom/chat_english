@@ -9,12 +9,12 @@ package setting
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 	"time"
 	_ "time/tzdata"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 )
 
@@ -28,19 +28,22 @@ func init() {
 }
 
 func Init() error {
-	//指定配置文件 如果是 json 就写json
-	viper.SetConfigFile("config.yaml")
-	//指定文件路径
-	viper.AddConfigPath(".")
+	configPath, err := filepath.Abs("config.yaml")
+	if err != nil {
+		return fmt.Errorf("无法定位配置文件: %w", err)
+	}
+	viper.SetConfigFile(configPath)
 	//读取配置文件
 	if err := viper.ReadInConfig(); err != nil {
 		return fmt.Errorf("读取配置失败: %w", err)
 	}
-	//监控配置文件变化
+	if err := loadStaffProxyPolicy(viper.GetViper()); err != nil {
+		return fmt.Errorf("代理信任配置无效: %w", err)
+	}
+	if _, err := watchStaffProxyConfig(configPath); err != nil {
+		return fmt.Errorf("无法监听代理信任配置: %w", err)
+	}
 	viper.WatchConfig()
-	viper.OnConfigChange(func(in fsnotify.Event) {
-		fmt.Println("配置文件修改了!")
-	})
 
 	fmt.Println("读取配置成功")
 	return nil

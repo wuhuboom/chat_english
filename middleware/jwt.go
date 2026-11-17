@@ -40,6 +40,9 @@ func StaffResourceAuth(c *gin.Context) {
 }
 
 func staffJWTAuth(c *gin.Context, requireBrowserHeader bool) {
+	if !requireStaffProxy(c) {
+		return
+	}
 	token, _ := c.Cookie(StaffCookie)
 	fromCookie := token != ""
 	if fromCookie {

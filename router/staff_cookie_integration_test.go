@@ -50,6 +50,15 @@ func TestStaffLoginDoesNotDependOnProxyHost(t *testing.T) {
 	if status := login(false); status != http.StatusForbidden {
 		t.Fatalf("plain form submission must be rejected, got %d", status)
 	}
+	reqViaUntrustedProxy := httptest.NewRequest(http.MethodPost, proxyURL, nil)
+	reqViaUntrustedProxy.RemoteAddr = "192.0.2.1:4321"
+	reqViaUntrustedProxy.Header.Set("X-Forwarded-For", "127.0.0.1")
+	reqViaUntrustedProxy.Header.Set(middleware.StaffLoginHeader, "1")
+	blocked := httptest.NewRecorder()
+	engine.ServeHTTP(blocked, reqViaUntrustedProxy)
+	if blocked.Code != http.StatusForbidden || !strings.Contains(blocked.Body.String(), "请求来源不受信任") {
+		t.Fatalf("untrusted proxy was not blocked before login, got %d %s", blocked.Code, blocked.Body.String())
+	}
 
 	req := httptest.NewRequest(http.MethodOptions, proxyURL, nil)
 	req.Header.Set("Origin", "http://other.invalid")
