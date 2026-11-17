@@ -307,7 +307,12 @@
                         data.password = _this.kefuForm.password;
                         data.google_code = _this.kefuForm.googleCode;
                         _this.loading = true;
-                        $.post("/check", data, function (data) {
+                        $.ajax({
+                            url: "/check",
+                            method: "POST",
+                            data: data,
+                            headers: {"X-Gofly-Login": "1"}
+                        }).done(function (data) {
                             if (data.code == 200) {
                                 _this.$message({
                                     message: data.msg,
@@ -327,6 +332,10 @@
                                     type: 'error'
                                 });
                             }
+                        }).fail(function (response) {
+                            const message = response.responseJSON && response.responseJSON.msg;
+                            _this.$message({message: message || "登录请求失败，请重试", type: "error"});
+                        }).always(function () {
                             _this.loading = false;
                         });
                     }

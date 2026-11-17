@@ -192,7 +192,7 @@ func InitApiRouter(engine *gin.Engine) {
 		room.POST("/message", middleware.Ipblack, controller.PostRoomMessage)
 	}
 	engine.GET("/captcha", controller.GetCaptcha)
-	engine.POST("/check", middleware.StaffSameOrigin, controller.LoginCheckPass)
+	engine.POST("/check", middleware.RequireStaffLoginHeader, controller.LoginCheckPass)
 	engine.POST("/JyKey", controller.JyKey)
 
 	engine.POST("/check_auth", middleware.JwtApiMiddleware, controller.MainCheckAuth)

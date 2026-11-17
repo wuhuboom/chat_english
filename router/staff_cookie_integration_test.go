@@ -26,6 +26,44 @@ import (
 	"go-fly-muti/ws"
 )
 
+func TestStaffLoginDoesNotDependOnProxyHost(t *testing.T) {
+	engine := gin.New()
+	engine.Use(middleware.CrossSite)
+	InitApiRouter(engine)
+
+	const proxyURL = "http://127.0.0.1:8081/check"
+	const publicOrigin = "http://192.0.2.10:13888"
+	login := func(withHeader bool) int {
+		req := httptest.NewRequest(http.MethodPost, proxyURL, strings.NewReader(""))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Set("Origin", publicOrigin)
+		if withHeader {
+			req.Header.Set(middleware.StaffLoginHeader, "1")
+		}
+		rec := httptest.NewRecorder()
+		engine.ServeHTTP(rec, req)
+		return rec.Code
+	}
+	if status := login(true); status != http.StatusBadRequest {
+		t.Fatalf("login should reach the normal form validation, got %d", status)
+	}
+	if status := login(false); status != http.StatusForbidden {
+		t.Fatalf("plain form submission must be rejected, got %d", status)
+	}
+
+	req := httptest.NewRequest(http.MethodOptions, proxyURL, nil)
+	req.Header.Set("Origin", "http://other.invalid")
+	req.Header.Set("Access-Control-Request-Method", http.MethodPost)
+	req.Header.Set("Access-Control-Request-Headers", middleware.StaffLoginHeader)
+	rec := httptest.NewRecorder()
+	engine.ServeHTTP(rec, req)
+	for _, header := range strings.Split(rec.Header().Get("Access-Control-Allow-Headers"), ",") {
+		if strings.EqualFold(strings.TrimSpace(header), middleware.StaffLoginHeader) || strings.TrimSpace(header) == "*" {
+			t.Fatal("CORS must not allow browsers to attach the staff login header")
+		}
+	}
+}
+
 func TestStaffCookieLifecycle(t *testing.T) {
 	config := os.Getenv("GOFLY_TEST_MYSQL_CONFIG")
 	if config == "" {
@@ -111,6 +149,9 @@ func TestStaffCookieLifecycle(t *testing.T) {
 			t.Fatal(err)
 		}
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		if path == "/check" && sender == origin {
+			req.Header.Set(middleware.StaffLoginHeader, "1")
+		}
 		if sender != "" {
 			req.Header.Set("Origin", sender)
 			if sender == origin {
