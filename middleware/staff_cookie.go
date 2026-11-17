@@ -48,7 +48,7 @@ func staffOrigin(r *http.Request) string {
 const StaffLoginHeader = "X-Gofly-Login"
 
 // Keep this header out of the CORS allowlist. Browsers can only attach it
-// without preflight when posting from the login page on the same origin.
+// without preflight when posting from a page on the same origin.
 func RequireStaffLoginHeader(c *gin.Context) {
 	if c.GetHeader(StaffLoginHeader) != "1" {
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": 403, "msg": "请刷新登录页面后重试"})

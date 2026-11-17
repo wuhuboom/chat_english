@@ -64,6 +64,30 @@ func TestStaffLoginDoesNotDependOnProxyHost(t *testing.T) {
 	}
 }
 
+func TestStaffRefreshDoesNotDependOnProxyHost(t *testing.T) {
+	engine := gin.New()
+	InitApiRouter(engine)
+
+	refresh := func(withHeader bool) *httptest.ResponseRecorder {
+		req := httptest.NewRequest(http.MethodPost, "http://127.0.0.1:8081/staff/session/refresh", nil)
+		req.Header.Set("Origin", "http://192.0.2.10:13888")
+		req.AddCookie(&http.Cookie{Name: middleware.StaffCookie, Value: "invalid-fixture"})
+		if withHeader {
+			req.Header.Set(middleware.StaffLoginHeader, "1")
+		}
+		rec := httptest.NewRecorder()
+		engine.ServeHTTP(rec, req)
+		return rec
+	}
+	if rec := refresh(false); rec.Code != http.StatusForbidden {
+		t.Fatalf("refresh without the protected header must be rejected, got %d", rec.Code)
+	}
+	rec := refresh(true)
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `"code":401`) {
+		t.Fatalf("refresh should reach session validation, got %d %s", rec.Code, rec.Body.String())
+	}
+}
+
 func TestStaffCookieLifecycle(t *testing.T) {
 	config := os.Getenv("GOFLY_TEST_MYSQL_CONFIG")
 	if config == "" {
@@ -149,14 +173,14 @@ func TestStaffCookieLifecycle(t *testing.T) {
 			t.Fatal(err)
 		}
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		if path == "/check" && sender == origin {
+		if (path == "/check" || path == "/staff/session/refresh") && sender == origin {
 			req.Header.Set(middleware.StaffLoginHeader, "1")
 		}
 		if sender != "" {
 			req.Header.Set("Origin", sender)
-			if sender == origin {
+			if sender == origin && path != "/staff/session/refresh" {
 				req.Header.Set("Sec-Fetch-Site", "same-origin")
-			} else {
+			} else if sender != origin {
 				req.Header.Set("Sec-Fetch-Site", "same-site")
 			}
 		}

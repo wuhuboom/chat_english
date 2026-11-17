@@ -24,14 +24,25 @@ func staffAuthError(c *gin.Context, code int, message string) {
 }
 
 func JwtApiMiddleware(c *gin.Context) {
+	staffJWTAuth(c, true)
+}
+
+func StaffSessionRefreshAuth(c *gin.Context) {
+	RequireStaffLoginHeader(c)
+	if !c.IsAborted() {
+		staffJWTAuth(c, false)
+	}
+}
+
+func staffJWTAuth(c *gin.Context, checkOrigin bool) {
 	token, _ := c.Cookie(StaffCookie)
 	fromCookie := token != ""
-	if fromCookie {
+	if fromCookie && checkOrigin {
 		StaffSameOrigin(c)
 		if c.IsAborted() {
 			return
 		}
-	} else if !c.GetBool("staff_page") && c.FullPath() != "/ws_kefu" {
+	} else if !fromCookie && !c.GetBool("staff_page") && c.FullPath() != "/ws_kefu" {
 		token = c.GetHeader("token")
 	}
 	userinfo := tools.ParseToken(token)

@@ -11,7 +11,7 @@ import (
 func InitApiRouter(engine *gin.Engine) {
 	engine.GET("/healthz", controller.GetHealth)
 	engine.GET("/readyz", controller.GetReadiness)
-	engine.POST("/staff/session/refresh", middleware.StaffSameOrigin, middleware.JwtApiMiddleware, controller.RefreshStaffSession)
+	engine.POST("/staff/session/refresh", middleware.StaffSessionRefreshAuth, controller.RefreshStaffSession)
 	engine.POST("/staff/session/logout", middleware.StaffSameOrigin, middleware.JwtApiMiddleware, controller.LogoutStaffSession)
 
 	//用户身份接口

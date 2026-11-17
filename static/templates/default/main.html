@@ -533,7 +533,11 @@
             this.notificationGuideBrowser=this.detectNotificationGuideBrowser();
             window.addEventListener("focus",this.refreshNotificationPermission);
             ["token","ref_token","create_time"].forEach(key=>localStorage.removeItem(key));
-            $.post("/staff/session/refresh");
+            $.ajax({
+                url: "/staff/session/refresh",
+                method: "POST",
+                headers: {"X-Gofly-Login": "1"}
+            });
             this.kefuInfo();
             this.initConn();
             this.getConfigs();
