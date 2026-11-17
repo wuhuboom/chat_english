@@ -12,7 +12,7 @@ func InitApiRouter(engine *gin.Engine) {
 	engine.GET("/healthz", controller.GetHealth)
 	engine.GET("/readyz", controller.GetReadiness)
 	engine.POST("/staff/session/refresh", middleware.StaffSessionRefreshAuth, controller.RefreshStaffSession)
-	engine.POST("/staff/session/logout", middleware.StaffSameOrigin, middleware.JwtApiMiddleware, controller.LogoutStaffSession)
+	engine.POST("/staff/session/logout", middleware.JwtApiMiddleware, controller.LogoutStaffSession)
 
 	//用户身份接口
 	ucv1 := engine.Group("/uc/v1", middleware.Ipblack, middleware.SetLanguage)
@@ -20,7 +20,7 @@ func InitApiRouter(engine *gin.Engine) {
 		//刷新token
 		ucv1.POST("/refreshToken", controllerV2.PostRefreshTokenV1)
 		//刷新token
-		ucv1.POST("/loginCheck", middleware.StaffSameOrigin, controller.LoginCheckPass)
+		ucv1.POST("/loginCheck", middleware.RequireStaffLoginHeader, controller.LoginCheckPass)
 		//访客登录
 		ucv1.POST("/visitorLogin", middleware.Ipblack, controller.PostVisitorLogin)
 	}
@@ -78,6 +78,7 @@ func InitApiRouter(engine *gin.Engine) {
 		entGroup.GET("/article_list", middleware.JwtApiMiddleware, controller.GetArticleList)
 	}
 	//客服路由分组
+	engine.GET("/kefu/qrcode", middleware.StaffResourceAuth, controller.GetQrcode)
 	kefuGroup := engine.Group("/kefu")
 	kefuGroup.Use(middleware.JwtApiMiddleware)
 	{
@@ -131,7 +132,6 @@ func InitApiRouter(engine *gin.Engine) {
 		//获取客服用户
 		kefuGroup.GET("/kefuUsers", controller.GetKefuListOwn)
 		//获取二维码
-		kefuGroup.GET("/qrcode", controller.GetQrcode)
 		//删除访客
 		kefuGroup.DELETE("/delVisitor", controller.DelVisitor)
 		//自动欢迎列表

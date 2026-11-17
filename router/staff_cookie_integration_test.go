@@ -88,6 +88,40 @@ func TestStaffRefreshDoesNotDependOnProxyHost(t *testing.T) {
 	}
 }
 
+func TestStaffAPIHeaderDoesNotDependOnOrigin(t *testing.T) {
+	engine := gin.New()
+	engine.Use(middleware.CrossSite)
+	InitApiRouter(engine)
+	for _, tc := range []struct{ method, path string }{
+		{http.MethodGet, "/kefu/kefuinfo"},
+		{http.MethodPost, "/kefu/message"},
+		{http.MethodPost, "/staff/session/logout"},
+	} {
+		t.Run(tc.path, func(t *testing.T) {
+			t.Setenv("GOFLY_ALLOWED_ORIGINS", "https://support.example.test")
+			for _, withHeader := range []bool{false, true} {
+				req := httptest.NewRequest(tc.method, "http://127.0.0.1:8081"+tc.path, nil)
+				req.Header.Set("Origin", "https://support.example.test")
+				req.AddCookie(&http.Cookie{Name: middleware.StaffCookie, Value: "invalid-fixture"})
+				if withHeader {
+					req.Header.Set(middleware.StaffLoginHeader, "1")
+				}
+				rec := httptest.NewRecorder()
+				engine.ServeHTTP(rec, req)
+				if !withHeader && rec.Code != http.StatusForbidden {
+					t.Errorf("missing browser header: got %d, want 403", rec.Code)
+				}
+				if withHeader && (rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `"code":401`)) {
+					t.Errorf("expected session validation, got %d %s", rec.Code, rec.Body.String())
+				}
+				if rec.Header().Get("Access-Control-Allow-Credentials") != "" {
+					t.Error("staff cookie response must not allow cross-origin credentials")
+				}
+			}
+		})
+	}
+}
+
 func TestStaffCookieLifecycle(t *testing.T) {
 	config := os.Getenv("GOFLY_TEST_MYSQL_CONFIG")
 	if config == "" {
@@ -155,6 +189,9 @@ func TestStaffCookieLifecycle(t *testing.T) {
 	}
 	proxy := httptest.NewServer(&httputil.ReverseProxy{Rewrite: func(req *httputil.ProxyRequest) {
 		req.SetURL(backend) // Replace the public Host, as the production proxy does.
+		if req.In.URL.Path != "/kefu/message" && req.In.URL.Path != "/config" {
+			req.SetXForwarded()
+		}
 	}})
 	defer proxy.Close()
 	// Simulate a public HTTP origin without putting any test traffic on the network.
@@ -175,14 +212,12 @@ func TestStaffCookieLifecycle(t *testing.T) {
 			t.Fatal(err)
 		}
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		if (path == "/check" || path == "/staff/session/refresh") && sender == origin {
+		if sender == origin || sender == "" {
 			req.Header.Set(middleware.StaffLoginHeader, "1")
 		}
 		if sender != "" {
 			req.Header.Set("Origin", sender)
-			if sender == origin && path != "/staff/session/refresh" {
-				req.Header.Set("Sec-Fetch-Site", "same-origin")
-			} else if sender != origin {
+			if sender != origin {
 				req.Header.Set("Sec-Fetch-Site", "same-site")
 			}
 		}
@@ -229,6 +264,12 @@ func TestStaffCookieLifecycle(t *testing.T) {
 	socketProtocol, _ := data["protocol"].(string)
 	if page.StatusCode != 200 || socketProtocol == "" {
 		t.Fatal("page reload did not authenticate")
+	}
+	if res, _ := request("POST", "/kefu/message", "http://other.invalid", nil, nil); res.StatusCode != http.StatusForbidden {
+		t.Fatalf("cross-origin staff message accepted, status %d", res.StatusCode)
+	}
+	if res, data := request("POST", "/kefu/message", origin, nil, nil); res.StatusCode != http.StatusOK || data["code"] != float64(400) || data["msg"] != "内容不能为空" {
+		t.Fatalf("staff message should reach normal input validation through proxy, got %d %v", res.StatusCode, data)
 	}
 	for _, key := range []string{"SystemKefu", " systemkefu ", "SYSTEMKEFU"} {
 		res, _ := request("POST", "/config", origin, url.Values{"key": {key}, "value": {"replacement fixture"}}, nil)

@@ -5,6 +5,7 @@ import (
 	"go-fly-muti/common"
 	"go-fly-muti/tools"
 	"go-fly-muti/types"
+	"net/url"
 	"strings"
 )
 
@@ -13,19 +14,13 @@ func DomainLimitMiddleware(c *gin.Context) {
 	if common.DomainWhiteList == "*" {
 		return
 	}
-	host := c.Request.Host
-	hostPort := strings.Split(host, ":")
-	if len(hostPort) == 0 {
-		c.JSON(200, gin.H{
-			"code": types.ApiCode.DOMAIN_LIMIT,
-			"msg":  types.ApiCode.GetMessage(types.ApiCode.DOMAIN_LIMIT),
-		})
-		c.Abort()
-		return
+	host := ""
+	if origin, err := url.Parse(staffOrigin(c.Request)); err == nil {
+		host = origin.Hostname()
 	}
 
 	allowHost := strings.Split(common.DomainWhiteList, ",")
-	if exist, _ := tools.InArray(hostPort[0], allowHost); !exist {
+	if exist, _ := tools.InArray(host, allowHost); host == "" || !exist {
 		c.JSON(200, gin.H{
 			"code": types.ApiCode.DOMAIN_LIMIT,
 			"msg":  types.ApiCode.GetMessage(types.ApiCode.DOMAIN_LIMIT),

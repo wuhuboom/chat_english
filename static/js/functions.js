@@ -1,3 +1,11 @@
+if (window.jQuery && document.currentScript && document.currentScript.hasAttribute("data-staff-requests")) {
+    window.jQuery.ajaxPrefilter(function (options, originalOptions, request) {
+        if (options.crossDomain === false) {
+            request.setRequestHeader("X-Gofly-Login", "1");
+        }
+    });
+}
+
 function getBaseUrl() {
     var ishttps = 'https:' == document.location.protocol ? true : false;
     var url = window.location.host;

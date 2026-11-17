@@ -642,6 +642,7 @@ var app=new Vue({
             $.ajax({
                 type:"post",
                 url:"/kefu/message",
+                headers:{"X-Gofly-Login":"1"},
                 data:mes,
                 success: function(data) {
                     _this.sendDisabled=false;
@@ -664,11 +665,12 @@ var app=new Vue({
                     _this.sendSound();
                     _this.applyConversationState({status:"pending", waiting_since:null});
                 },
-                error: function() {
+                error: function(response) {
                     _this.sendDisabled=false;
                     _this.pasteImageUploading=false;
+                    const message = response.responseJSON && response.responseJSON.msg;
                     _this.$message({
-                        message: "消息发送失败，请检查网络后重试",
+                        message: message || "消息发送失败，请检查网络后重试",
                         type: 'error'
                     });
                 }

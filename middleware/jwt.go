@@ -11,7 +11,7 @@ import (
 
 func JwtPageMiddleware(c *gin.Context) {
 	c.Set("staff_page", true)
-	JwtApiMiddleware(c)
+	staffJWTAuth(c, false)
 }
 
 func staffAuthError(c *gin.Context, code int, message string) {
@@ -34,15 +34,25 @@ func StaffSessionRefreshAuth(c *gin.Context) {
 	}
 }
 
-func staffJWTAuth(c *gin.Context, checkOrigin bool) {
+// StaffResourceAuth is for read-only resources loaded by plain HTML elements.
+func StaffResourceAuth(c *gin.Context) {
+	staffJWTAuth(c, false)
+}
+
+func staffJWTAuth(c *gin.Context, requireBrowserHeader bool) {
 	token, _ := c.Cookie(StaffCookie)
 	fromCookie := token != ""
-	if fromCookie && checkOrigin {
-		StaffSameOrigin(c)
-		if c.IsAborted() {
-			return
+	if fromCookie {
+		// Cookie sessions are local to the dashboard. In particular, a
+		// cross-origin page must not read the rendered WebSocket proof.
+		c.Writer.Header().Del("Access-Control-Allow-Credentials")
+		if requireBrowserHeader {
+			RequireStaffLoginHeader(c)
+			if c.IsAborted() {
+				return
+			}
 		}
-	} else if !fromCookie && !c.GetBool("staff_page") && c.FullPath() != "/ws_kefu" {
+	} else if !c.GetBool("staff_page") && c.FullPath() != "/ws_kefu" {
 		token = c.GetHeader("token")
 	}
 	userinfo := tools.ParseToken(token)

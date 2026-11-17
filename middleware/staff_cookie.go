@@ -2,13 +2,15 @@ package middleware
 
 import (
 	"crypto/hmac"
-	"go-fly-muti/tools"
+	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"go-fly-muti/tools"
 )
 
 const StaffCookie = "gofly_staff"
@@ -57,26 +59,10 @@ func StaffWebSocketAuth(c *gin.Context) {
 	c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": 403, "msg": "请刷新客服后台后重新连接"})
 }
 
-func IsStaffOrigin(r *http.Request) bool {
-	origin := r.Header.Get("Origin")
-	if origin == "" {
-		return false
-	}
-	expected := staffOrigin(r)
-	if strings.EqualFold(origin, expected) {
-		return true
-	}
-	// A reverse proxy may replace Host. Browser JavaScript cannot set
-	// Sec-Fetch-Site; same-site is insufficient (ports and subdomains differ).
-	if r.Header.Get("Sec-Fetch-Site") != "same-origin" || !strings.HasPrefix(expected, "http://") {
-		return false
-	}
-	u, err := url.Parse(origin)
-	return err == nil && u.Scheme == "http" && u.Hostname() != "" &&
-		u.User == nil && u.Path == "" && u.RawQuery == "" && !u.ForceQuery && u.Fragment == ""
-}
-
 func staffOrigin(r *http.Request) string {
+	if origin := staffProxyOrigin(r); origin != "" {
+		return origin
+	}
 	scheme := "http"
 	if r.TLS != nil {
 		scheme = "https"
@@ -90,6 +76,61 @@ func staffOrigin(r *http.Request) string {
 	return scheme + "://" + r.Host
 }
 
+// Only the directly connected, trusted proxy can supply the public origin.
+// The proxy must overwrite these headers on every request.
+func staffProxyOrigin(r *http.Request) string {
+	peer, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return ""
+	}
+	addr, err := netip.ParseAddr(peer)
+	if err != nil {
+		return ""
+	}
+	addr = addr.Unmap()
+	trusted := addr.IsLoopback()
+	for _, entry := range strings.Split(os.Getenv("GOFLY_TRUSTED_PROXIES"), ",") {
+		entry = strings.TrimSpace(entry)
+		if entry == "" {
+			continue
+		}
+		ip, ipErr := netip.ParseAddr(entry)
+		prefix, prefixErr := netip.ParsePrefix(entry)
+		if (ipErr == nil && ip.Unmap() == addr) || (prefixErr == nil && prefix.Contains(addr)) {
+			trusted = true
+			break
+		}
+	}
+	if !trusted {
+		return ""
+	}
+
+	schemes := r.Header.Values("X-Forwarded-Proto")
+	hosts := r.Header.Values("X-Forwarded-Host")
+	if len(schemes) != 1 || len(hosts) > 1 {
+		return ""
+	}
+	scheme := strings.ToLower(strings.TrimSpace(schemes[0]))
+	if scheme != "https" && scheme != "http" {
+		return ""
+	}
+	host := r.Host
+	if len(hosts) == 1 {
+		host = strings.TrimSpace(hosts[0])
+	}
+	if strings.ContainsAny(host, " \t\r\n,\\/#?@") {
+		return ""
+	}
+	u, err := url.Parse(scheme + "://" + host)
+	if err != nil || u.Hostname() == "" {
+		return ""
+	}
+	if (scheme == "https" && u.Port() == "443") || (scheme == "http" && u.Port() == "80") {
+		host = strings.TrimSuffix(host, ":"+u.Port())
+	}
+	return scheme + "://" + host
+}
+
 const StaffLoginHeader = "X-Gofly-Login"
 
 // Keep this header out of the CORS allowlist. Browsers can only attach it
@@ -101,18 +142,12 @@ func RequireStaffLoginHeader(c *gin.Context) {
 }
 
 func SetStaffCookie(c *gin.Context, token string, age int) {
-	c.SetSameSite(http.SameSiteStrictMode)
-	c.SetCookie(StaffCookie, token, age, "/", "", strings.HasPrefix(staffOrigin(c.Request), "https://"), true)
-	c.Header("Cache-Control", "no-store")
-}
-
-// Cookie-authenticated requests stay on the exact origin, including WS upgrades.
-func StaffSameOrigin(c *gin.Context) {
-	origin := c.GetHeader("Origin")
-	site := c.GetHeader("Sec-Fetch-Site")
-	ws := strings.EqualFold(c.GetHeader("Upgrade"), "websocket")
-	if (origin != "" && !IsStaffOrigin(c.Request)) ||
-		(site != "" && site != "same-origin" && site != "none") || (ws && origin == "") {
-		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": 403, "msg": "请求来源不受信任"})
+	secure := c.Request.TLS != nil || strings.HasPrefix(staffOrigin(c.Request), "https://")
+	if !secure && c.GetHeader("Sec-Fetch-Site") == "same-origin" {
+		origin, err := url.Parse(c.GetHeader("Origin"))
+		secure = err == nil && origin.Scheme == "https" && origin.Hostname() != ""
 	}
+	c.SetSameSite(http.SameSiteStrictMode)
+	c.SetCookie(StaffCookie, token, age, "/", "", secure, true)
+	c.Header("Cache-Control", "no-store")
 }
