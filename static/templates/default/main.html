@@ -356,7 +356,7 @@
             //初始化websocket
             initConn() {
                 const protocol = this.$el.dataset.staffSocketProtocol;
-                let socket = new ReconnectingWebSocket(this.server, protocol ? [protocol] : []);
+                let socket = new ReconnectingWebSocket(this.server, protocol ? ["gofly-staff-v1", protocol] : []);
                 this.socket = socket
                 this.socket.onmessage = this.OnMessage;
                 this.socket.onopen = this.OnSocketOpen;
@@ -540,7 +540,6 @@
                 headers: {"X-Gofly-Login": "1"}
             });
             this.kefuInfo();
-            this.initConn();
             this.getConfigs();
             this.socketHealthTimer=setInterval(this.checkSocketHealth,10000);
             this.socketPingTimer=setInterval(this.sendSocketPing,25000);
@@ -550,6 +549,9 @@
                     $(this).addClass("active");
                 });
             })
+        },
+        mounted: function () {
+            this.initConn();
         },
         beforeDestroy:function(){
             window.removeEventListener("focus",this.refreshNotificationPermission);

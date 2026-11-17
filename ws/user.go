@@ -26,7 +26,9 @@ func NewKefuServer(c *gin.Context) {
 		return
 	}
 	staffUpgrader := upgrader
-	staffUpgrader.CheckOrigin = func(*http.Request) bool { return c.GetBool("staff_websocket_verified") }
+	protocol := c.GetString("staff_websocket_protocol")
+	staffUpgrader.CheckOrigin = func(*http.Request) bool { return protocol != "" }
+	staffUpgrader.Subprotocols = []string{protocol}
 	conn, err := staffUpgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Print("upgrade:", err)

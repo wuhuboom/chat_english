@@ -13,6 +13,7 @@ import (
 
 const StaffCookie = "gofly_staff"
 const StaffCookieLifetime = 24 * 60 * 60
+const StaffWebSocketProtocol = "gofly-staff-v1"
 
 func StaffSocketProtocol(c *gin.Context) string {
 	raw, _ := c.Get("staff_claims")
@@ -36,13 +37,22 @@ func StaffWebSocketAuth(c *gin.Context) {
 		return
 	}
 	expected := StaffSocketProtocol(c)
+	var verified, offersPublicProtocol bool
 	for _, header := range c.Request.Header.Values("Sec-WebSocket-Protocol") {
 		for _, protocol := range strings.Split(header, ",") {
-			if expected != "" && hmac.Equal([]byte(strings.TrimSpace(protocol)), []byte(expected)) {
-				c.Set("staff_websocket_verified", true)
-				return
-			}
+			protocol = strings.TrimSpace(protocol)
+			offersPublicProtocol = offersPublicProtocol || protocol == StaffWebSocketProtocol
+			verified = verified || (expected != "" && hmac.Equal([]byte(protocol), []byte(expected)))
 		}
+	}
+	if verified {
+		if offersPublicProtocol {
+			c.Set("staff_websocket_protocol", StaffWebSocketProtocol)
+		} else {
+			// Version 9 only offers its verified session-specific protocol.
+			c.Set("staff_websocket_protocol", expected)
+		}
+		return
 	}
 	c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": 403, "msg": "请刷新客服后台后重新连接"})
 }

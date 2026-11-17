@@ -198,10 +198,10 @@ func TestStaffCookieLifecycle(t *testing.T) {
 		_ = json.NewDecoder(res.Body).Decode(&payload)
 		return res, payload
 	}
-	dial := func(sender string, cookie *http.Cookie, protocol string) (*websocket.Conn, error) {
+	dial := func(sender string, cookie *http.Cookie, protocols ...string) (*websocket.Conn, error) {
 		header := http.Header{"Origin": []string{sender}, "Cookie": []string{cookie.Name + "=" + cookie.Value}}
-		if protocol != "" {
-			header.Set("Sec-WebSocket-Protocol", protocol)
+		if len(protocols) != 0 {
+			header.Set("Sec-WebSocket-Protocol", strings.Join(protocols, ", "))
 		}
 		conn, res, err := wsDialer.Dial("ws"+strings.TrimPrefix(origin, "http")+"/ws_kefu", header)
 		if err != nil && res != nil {
@@ -271,7 +271,7 @@ func TestStaffCookieLifecycle(t *testing.T) {
 		t.Fatal("refresh did not renew cookie")
 	}
 	cookie = res.Cookies()[0]
-	if bad, err := dial("http://other.invalid", cookie, ""); err == nil {
+	if bad, err := dial("http://other.invalid", cookie, middleware.StaffWebSocketProtocol); err == nil {
 		bad.Close()
 		t.Fatal("cross-origin WebSocket accepted")
 	}
@@ -279,12 +279,19 @@ func TestStaffCookieLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal("WebSocket initial handshake:", err)
 	}
+	if first.Subprotocol() != socketProtocol {
+		first.Close()
+		t.Fatal("version 9 browser did not receive its offered subprotocol")
+	}
 	first.Close()
-	active, err := dial(origin, cookie, socketProtocol)
+	active, err := dial(origin, cookie, middleware.StaffWebSocketProtocol, socketProtocol)
 	if err != nil {
 		t.Fatal("WebSocket reconnect:", err)
 	}
 	defer active.Close()
+	if active.Subprotocol() != middleware.StaffWebSocketProtocol {
+		t.Fatal("browser did not receive the public subprotocol")
+	}
 	deadline := time.Now().Add(2 * time.Second)
 	for !ws.IsKefuOnline(user.Name) && time.Now().Before(deadline) {
 		time.Sleep(time.Millisecond)
