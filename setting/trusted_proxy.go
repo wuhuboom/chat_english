@@ -76,6 +76,7 @@ func loadStaffProxyPolicy(config *viper.Viper) error {
 		return fmt.Errorf("启用 app.require_trusted_proxy 时，app.trusted_proxies 不能为空")
 	}
 	currentStaffProxyPolicy.Store(policy)
+	loadCustomerVerifyURL(config)
 	return nil
 }
 
@@ -175,6 +176,31 @@ func (p *staffProxyPolicy) trusts(remoteAddr string) bool {
 
 func IsTrustedProxy(remoteAddr string) bool {
 	return currentStaffProxyPolicy.Load().trusts(remoteAddr)
+}
+
+// VisitorClientIP follows forwarded addresses only through explicitly trusted proxy hops.
+func VisitorClientIP(r *http.Request) netip.Addr {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return netip.Addr{}
+	}
+	addr, err := netip.ParseAddr(host)
+	if err != nil {
+		return netip.Addr{}
+	}
+	forwarded := strings.Join(r.Header.Values("X-Forwarded-For"), ",")
+	if forwarded == "" {
+		return addr.Unmap()
+	}
+	policy := currentStaffProxyPolicy.Load()
+	hops := strings.Split(forwarded, ",")
+	for i := len(hops) - 1; i >= 0 && policy.trusts(net.JoinHostPort(addr.String(), "0")); i-- {
+		addr, err = netip.ParseAddr(strings.TrimSpace(hops[i]))
+		if err != nil || addr.Zone() != "" {
+			return netip.Addr{}
+		}
+	}
+	return addr.Unmap()
 }
 
 func StaffProxyAllowed(r *http.Request) bool {

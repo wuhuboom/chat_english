@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"go-fly-muti/middleware"
 	"go-fly-muti/models"
 	"go-fly-muti/setting"
 	"go-fly-muti/tools"
@@ -18,6 +19,13 @@ func PostRoomLogin(c *gin.Context) {
 	toId := c.PostForm("to_id")
 	entId := c.PostForm("ent_id")
 	id := c.PostForm("visitor_id")
+	if !middleware.VisitorConversationIPAllowed(c, entId, id) {
+		return
+	}
+	middleware.VisitorIpblack(c)
+	if c.IsAborted() {
+		return
+	}
 	if id == "" {
 		id = tools.Uuid()
 	}
@@ -110,6 +118,15 @@ func PostRoomLogin(c *gin.Context) {
 func PostRoomMessage(c *gin.Context) {
 	fromId := c.PostForm("from_id")
 	toId := c.PostForm("to_id")
+	vistorInfo := models.FindVisitorByVistorId(fromId)
+	if !middleware.VisitorIPAllowed(c, vistorInfo.EntId) ||
+		(vistorInfo.ToId != toId && !middleware.VisitorLinkIPAllowed(c, "", toId)) {
+		return
+	}
+	middleware.VisitorIpblack(c)
+	if c.IsAborted() {
+		return
+	}
 	content := c.PostForm("content")
 	if content == "" {
 		c.JSON(200, gin.H{
@@ -127,7 +144,6 @@ func PostRoomMessage(c *gin.Context) {
 		return
 	}
 
-	vistorInfo := models.FindVisitorByVistorId(fromId)
 	kefuInfo := models.FindUser(toId)
 	if kefuInfo.ID == 0 || vistorInfo.ID == 0 {
 		c.JSON(200, gin.H{

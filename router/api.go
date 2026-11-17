@@ -15,14 +15,14 @@ func InitApiRouter(engine *gin.Engine) {
 	engine.POST("/staff/session/logout", middleware.JwtApiMiddleware, controller.LogoutStaffSession)
 
 	//用户身份接口
-	ucv1 := engine.Group("/uc/v1", middleware.Ipblack, middleware.SetLanguage)
+	ucv1 := engine.Group("/uc/v1", middleware.SetLanguage)
 	{
 		//刷新token
-		ucv1.POST("/refreshToken", controllerV2.PostRefreshTokenV1)
+		ucv1.POST("/refreshToken", middleware.Ipblack, controllerV2.PostRefreshTokenV1)
 		//刷新token
-		ucv1.POST("/loginCheck", middleware.RequireStaffLoginHeader, controller.LoginCheckPass)
+		ucv1.POST("/loginCheck", middleware.Ipblack, middleware.RequireStaffLoginHeader, controller.LoginCheckPass)
 		//访客登录
-		ucv1.POST("/visitorLogin", middleware.Ipblack, controller.PostVisitorLogin)
+		ucv1.POST("/visitorLogin", controller.PostVisitorLogin)
 	}
 	uc := engine.Group("/uc/v2", middleware.Ipblack, middleware.SetLanguage)
 	{
@@ -47,7 +47,7 @@ func InitApiRouter(engine *gin.Engine) {
 		kefuV2.GET("/visitorExt", controller.GetVisitorExt)
 	}
 	//访客接口
-	visitorV2 := engine.Group("/visitor/v2", middleware.Ipblack, middleware.SetLanguage)
+	visitorV2 := engine.Group("/visitor/v2", middleware.SetLanguage)
 	{
 		visitorV2.POST("/login", controllerV2.PostVisitorLogin)
 	}
@@ -59,16 +59,16 @@ func InitApiRouter(engine *gin.Engine) {
 	{
 		//获取欢迎信息
 		//分页获取数据
-		v2.GET("/notices", controller.GetNotice)
+		v2.GET("/notices", middleware.VisitorSessionAccess("visitor_id", true), controller.GetNotice)
 		//获取消息
-		v2.GET("/messages", controller.GetMessagesV2)
-		v2.GET("/messages_unread", controller.GetMessagesVisitorUnread)
-		v2.POST("/messages_read", controller.PostMessagesVisitorRead)
+		v2.GET("/messages", middleware.VisitorSessionAccess("visitor_id", true), controller.GetMessagesV2)
+		v2.GET("/messages_unread", middleware.VisitorSessionAccess("visitor_id", true), controller.GetMessagesVisitorUnread)
+		v2.POST("/messages_read", middleware.VisitorSessionAccess("visitor_id", false), controller.PostMessagesVisitorRead)
 		//发送单条信息
-		v2.POST("/message", middleware.Ipblack, controller.SendMessageV2)
+		v2.POST("/message", controller.SendMessageV2)
 		//分页获取数据
-		v2.GET("/messages_page", controller.GetVisitorListMessagesPage)
-		v2.POST("/message_ask", controller.PostMessagesAsk)
+		v2.GET("/messages_page", middleware.VisitorSessionAccess("visitor_id", true), controller.GetVisitorListMessagesPage)
+		v2.POST("/message_ask", middleware.VisitorSessionAccess("from_id", false), controller.PostMessagesAsk)
 	}
 	//企业路由分组
 	entGroup := engine.Group("/ent")
@@ -169,6 +169,8 @@ func InitApiRouter(engine *gin.Engine) {
 		kefuGroup.POST("/ipblack", controller.PostIpblack)
 		//IP黑名单列表
 		kefuGroup.GET("/ipblacks", controller.GetIpblacksByKefuId)
+		kefuGroup.GET("/visitor-allowlist", middleware.MerchantAuth, controller.GetVisitorAllowlist("merchant"))
+		kefuGroup.POST("/visitor-allowlist", middleware.MerchantAuth, controller.PostVisitorAllowlist("merchant"))
 		//删除IP
 		kefuGroup.DELETE("/ipblack", controller.DelIpblack)
 		//删除访客聊天记录
@@ -186,10 +188,10 @@ func InitApiRouter(engine *gin.Engine) {
 		kefuGroup.GET("/roleList", controller.GetRoleListOwn)
 	}
 	//聊天室路由分组
-	room := engine.Group("/room")
+	room := engine.Group("/room", middleware.OrdinaryVisitorOnly)
 	{
-		room.POST("/login", middleware.Ipblack, controller.PostRoomLogin)
-		room.POST("/message", middleware.Ipblack, controller.PostRoomMessage)
+		room.POST("/login", controller.PostRoomLogin)
+		room.POST("/message", controller.PostRoomMessage)
 	}
 	engine.GET("/captcha", controller.GetCaptcha)
 	engine.POST("/check", middleware.RequireStaffLoginHeader, controller.LoginCheckPass)
@@ -201,7 +203,7 @@ func InitApiRouter(engine *gin.Engine) {
 	//engine.POST("/install", controller.PostInstall)
 	//前后聊天
 	engine.GET("/ws_kefu", middleware.StaffWebSocketAuth, ws.NewKefuServer)
-	engine.GET("/ws_visitor", middleware.Ipblack, ws.NewVisitorServer)
+	engine.GET("/ws_visitor", ws.NewVisitorServer)
 	//websocket路由分组
 	//wsGroup := engine.Group("/ws")
 	//{
@@ -216,7 +218,7 @@ func InitApiRouter(engine *gin.Engine) {
 	engine.POST("/uploadfile", middleware.Ipblack, controller.UploadFile)
 	//上传文件
 	engine.POST("/uploadaudio", middleware.Ipblack, controller.UploadAudio)
-	engine.POST("/call_kefu", controller.PostCallKefu)
+	engine.POST("/call_kefu", middleware.VisitorSessionAccess("visitor_id", false), controller.PostCallKefu)
 
 	//获取客服信息
 	engine.POST("/kefuinfo_peerid", middleware.JwtApiMiddleware, controller.PostKefuPeerId)
@@ -241,7 +243,7 @@ func InitApiRouter(engine *gin.Engine) {
 	engine.GET("/visitors_online", controller.GetVisitorOnlines)
 	engine.GET("/visitors_kefu_online", middleware.JwtApiMiddleware, controller.GetKefusVisitorOnlines)
 	engine.GET("/clear_online_tcp", controller.DeleteOnlineTcp)
-	engine.POST("/visitor_login", middleware.Ipblack, controller.PostVisitorLogin)
+	engine.POST("/visitor_login", controller.PostVisitorLogin)
 	engine.GET("/visitor_ext", middleware.JwtApiMiddleware, controller.GetVisitorExt)
 
 	//engine.POST("/visitor", controller.PostVisitor)
@@ -251,7 +253,7 @@ func InitApiRouter(engine *gin.Engine) {
 	//前台接口
 	engine.GET("/about", controller.GetAbout)
 	engine.POST("/about", middleware.JwtApiMiddleware, middleware.RbacAuth, controller.PostAbout)
-	engine.GET("/notice", middleware.SetLanguage, controller.GetNotice)
+	engine.GET("/notice", middleware.VisitorSessionAccess("visitor_id", true), middleware.SetLanguage, controller.GetNotice)
 
 	engine.GET("/ipblacks_all", middleware.JwtApiMiddleware, middleware.AdminAuth, controller.GetIpblacks)
 
@@ -287,6 +289,10 @@ func InitApiRouter(engine *gin.Engine) {
 		systemGroup.GET("/logs", controller.GetSystemLogs)
 		systemGroup.GET("/google-authenticator", controller.GetGoogleAuthenticatorSettings)
 		systemGroup.POST("/google-authenticator", controller.PostGoogleAuthenticatorSettings)
+		systemGroup.GET("/visitor-access", controller.GetVisitorAccessSettings)
+		systemGroup.POST("/visitor-access", controller.PostVisitorAccessSettings)
+		systemGroup.GET("/visitor-allowlist", controller.GetVisitorAllowlist("global"))
+		systemGroup.POST("/visitor-allowlist", controller.PostVisitorAllowlist("global"))
 		//systemGroup.POST("/saveNews", controller.PostNews)
 		//	systemGroup.GET("/delNews", controller.DelNews)
 	}

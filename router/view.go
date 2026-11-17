@@ -27,10 +27,14 @@ func InitViewRouter(engine *gin.Engine) {
 
 	engine.GET("/install", tmpl.PageInstall)
 	engine.GET("/login", middleware.DomainLimitMiddleware, middleware.TryUseLimitMiddleware, tmpl.PageLogin)
-	engine.GET("/chat_page", middleware.SetLanguage, tmpl.PageChat)
-	engine.GET("/chatIndex", middleware.SetLanguage, tmpl.PageChat)
-	engine.GET("/wechatIndex", middleware.SetLanguage, tmpl.PageWechatChat)
-	engine.GET("/chatRoom", tmpl.PageChatRoom)
+	engine.GET("/chat_page", middleware.VisitorPageAccess, middleware.SetLanguage, tmpl.PageChat)
+	engine.GET("/chatIndex", middleware.VisitorPageAccess, middleware.SetLanguage, tmpl.PageChat)
+	engine.GET("/wechatIndex", middleware.VisitorPageAccess, middleware.SetLanguage, tmpl.PageWechatChat)
+	engine.GET("/chatRoom", middleware.OrdinaryVisitorOnly, func(c *gin.Context) {
+		if middleware.VisitorLinkIPAllowed(c, c.Query("ent_id"), c.Query("room_id")) {
+			tmpl.PageChatRoom(c)
+		}
+	})
 	//后台主界面
 	engine.GET("/mainGuide", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "main_guide.html", gin.H{})

@@ -6,7 +6,24 @@ import (
 	"github.com/oschwald/geoip2-golang"
 	"net"
 	"strings"
+	"sync"
 )
+
+var countryDB = sync.OnceValues(func() (*geoip2.Reader, error) {
+	return geoip2.Open("./config/GeoLite2-Country.mmdb")
+})
+
+func IPRegionCode(ip net.IP) string {
+	db, err := countryDB()
+	if err != nil {
+		return ""
+	}
+	record, err := db.Country(ip)
+	if err != nil {
+		return ""
+	}
+	return record.Country.IsoCode
+}
 
 func ParseIp(myip string) *ipdb.CityInfo {
 	db, err := ipdb.NewCity("./config/city.free.ipdb")

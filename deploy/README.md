@@ -81,3 +81,32 @@ last agent session disappears and the configured grace period expires.
 After pulling an update, rebuild the binary and restart the service before
 checking /readyz. Git updates the checkout, but the running process keeps using
 the old binary until it is restarted.
+
+## 关闭普通访客
+
+在客服服务的 `config.yaml` 填写业务后台的完整校验地址。
+
+```yaml
+app:
+  customer_verify_url: "https://business.example.com/test/customer_verify"
+```
+
+客服服务会发起 GET 请求，将来访链接的 `visitor_id` 作为 `code`，
+将 `visitor_name` 作为 `username`。业务后台应返回 HTTP 200，响应体为
+JSON 布尔值 `true` 或 `false`。缺少参数、返回 `false`、超时或校验服务报错时，
+访客请求返回 HTTP 404。
+
+用超级管理员打开「系统管理 → 配置参数 → 访客访问」，启用「关闭普通访客」
+并保存。开关默认关闭。访客在新浏览器打开原链接时会重新校验，校验成功后
+可访问原会话。若页面嵌入不同站点且浏览器拦截第三方 Cookie，请用新标签页
+打开访客链接。
+
+## 访客 IP 白名单
+
+在「IP 黑名单」页启用 IP 白名单。单个规则支持多个 IPv4、IPv6 地址和地区，
+匹配其中一项即可通过。超级管理员保存全局规则，商户只管理自己的规则。
+同时启用全局和商户规则时，访客须通过两边的规则。已有 IP 黑名单继续拦截。
+
+反向代理部署时，应在 `app.trusted_proxies` 列出客服服务到访客之间需要信任的
+代理地址，并转发 `X-Forwarded-For`。地区匹配使用
+`config/GeoLite2-Country.mmdb`。无法识别地区的地址可通过精确 IP 条目放行。

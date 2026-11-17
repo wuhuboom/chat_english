@@ -43,7 +43,7 @@ func PageChat(c *gin.Context) {
 	errMsg := ""
 	//获取微信用户消息
 	weixinCode := c.Query("code")
-	if weixinCode != "" && entId != "" {
+	if weixinCode != "" && entId != "" && !c.GetBool("verified_visitor_entry") {
 		userInfo, err := GetWechatUserInfo(weixinCode, entId)
 		if err != nil {
 			errMsg = err.Error()
@@ -107,6 +107,10 @@ func PageChat(c *gin.Context) {
 
 // PageWechatChat 微信跳转界面
 func PageWechatChat(c *gin.Context) {
+	if c.GetBool("verified_visitor_entry") {
+		PageChat(c)
+		return
+	}
 	kefuId := c.Query("kefu_id")
 	lang, _ := c.Get("lang")
 	refer := c.Query("refer")

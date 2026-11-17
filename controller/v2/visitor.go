@@ -3,11 +3,13 @@ package v2
 import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"go-fly-muti/middleware"
 	"go-fly-muti/models"
 	v2 "go-fly-muti/models/v2"
 	"go-fly-muti/tools"
 	"go-fly-muti/types"
 	"go-fly-muti/ws"
+	"net/http"
 	"strconv"
 	"time"
 )
@@ -34,14 +36,27 @@ type VisitorExtra struct {
 
 func PostVisitorLogin(c *gin.Context) {
 	var form VisitorLoginForm
-	err := c.Bind(&form)
+	strict := models.VisitorVerificationRequired()
+	err := c.ShouldBind(&form)
 
 	if err != nil {
+		if strict {
+			middleware.RejectVisitorAccess(c)
+			return
+		}
+		_ = c.AbortWithError(http.StatusBadRequest, err)
 		c.JSON(200, gin.H{
 			"code":   types.ApiCode.FAILED,
 			"msg":    types.ApiCode.GetMessage(types.ApiCode.INVALID),
 			"result": err.Error(),
 		})
+		return
+	}
+	if !middleware.VisitorIPAllowed(c, form.EntId) {
+		return
+	}
+	middleware.VisitorIpblack(c)
+	if c.IsAborted() || (strict && !middleware.VerifyVisitor(c, form.VisitorId, form.VisitorName)) {
 		return
 	}
 	form.UserAgent = c.GetHeader("User-Agent")
@@ -59,12 +74,18 @@ func PostVisitorLogin(c *gin.Context) {
 	if form.CityAddress == "" {
 		form.CityAddress = "Unknown Area"
 	}
-	form.VisitorName = form.CityAddress
+	if !strict {
+		form.VisitorName = form.CityAddress
+	}
 	form.ClientIp = c.ClientIP()
-	c.JSON(200, VisitorLogin(form))
+	c.JSON(200, visitorLogin(form, strict))
 }
-func VisitorLogin(form VisitorLoginForm) gin.H {
+func visitorLogin(form VisitorLoginForm, verified bool) gin.H {
+	id, name := form.VisitorId, form.VisitorName
 	makeVisitorLoginForm(&form)
+	if verified {
+		form.VisitorId, form.VisitorName = id, name
+	}
 	//查看企业状态
 	entId, _ := strconv.Atoi(form.EntId)
 	userModel := &models.User{ID: uint(entId), Name: form.ToId}

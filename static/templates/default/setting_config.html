@@ -5,6 +5,14 @@
         <el-container v-loading.fullscreen.lock="fullscreenLoading">
 
             <el-main class="mainMain">
+                <el-card v-if="menuAdminShow" shadow="never" style="margin-bottom: 18px;">
+                    <div slot="header">访客访问</div>
+                    <el-switch v-model="visitorVerificationRequired" :disabled="!visitorAccessLoaded"
+                               active-text="关闭普通访客"></el-switch>
+                    <el-button type="primary" size="small" :disabled="!visitorAccessLoaded"
+                               @click="saveVisitorAccess">保存</el-button>
+                    <p>启用后，访客链接必须携带 visitor_id 和 visitor_name，并通过业务后台校验。</p>
+                </el-card>
                 <el-card shadow="never" style="margin-bottom: 18px;">
                     <div slot="header">
                         <span>系统时区</span>

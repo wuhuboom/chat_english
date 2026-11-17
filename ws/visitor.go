@@ -6,48 +6,62 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"go-fly-muti/common"
+	"go-fly-muti/middleware"
 	"go-fly-muti/models"
 	"go-fly-muti/setting"
 	"log"
+	"net/http"
 	"time"
 )
 
 func NewVisitorServer(c *gin.Context) {
+	visitorID := c.Query("visitor_id")
+	if !middleware.CheckVisitorAccess(c, visitorID) {
+		return
+	}
+	verified := c.GetBool("verified_visitor_session")
+	if models.VisitorVerificationRequired() && (!verified || c.Query("room_id") != "") {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
 
-	//升級協議   get=>ws
+	requestedToID := c.Query("to_id")
+	if visitorID == "" {
+		middleware.RejectVisitorAccess(c)
+		return
+	}
+
+	vistorInfo := models.FindVisitorByVistorId(visitorID)
+	toId := visitorWebSocketTarget(requestedToID, vistorInfo)
+	roomID := c.Query("room_id")
+	accessIP := setting.VisitorClientIP(c.Request)
+	if vistorInfo.VisitorId == "" || toId == "" || (roomID != "" && roomID != toId) ||
+		!middleware.VisitorIPMatches(accessIP, vistorInfo.EntId) {
+		middleware.RejectVisitorAccess(c)
+		return
+	}
+	middleware.VisitorIpblack(c)
+	if c.IsAborted() {
+		return
+	}
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Println("upgrade error:", err)
 		return
 	}
-	//获取GET参数,创建WS
-	requestedToID := c.Query("to_id")
-	visitorId := c.Query("visitor_id")
-	if visitorId == "" {
-		log.Println("访客ws参数为空")
-		conn.Close()
-		return
-	}
-
-	//獲取訪客
-	vistorInfo := models.FindVisitorByVistorId(visitorId)
-	toId := visitorWebSocketTarget(requestedToID, vistorInfo)
-	if vistorInfo.VisitorId == "" || toId == "" {
-		log.Println("访客visitorId不存在:", visitorId)
-		conn.Close()
-		return
-	}
 	if requestedToID != "" && requestedToID != toId {
-		log.Printf("visitor websocket target ignored visitor_id=%q requested=%q stored=%q", visitorId, requestedToID, toId)
+		log.Printf("visitor websocket target ignored visitor_id=%q requested=%q stored=%q", visitorID, requestedToID, toId)
 	}
 	user := &User{
-		Conn:       conn,
-		Name:       fmt.Sprintf("#%d%s", vistorInfo.ID, vistorInfo.Name),
-		Avator:     vistorInfo.Avator,
-		Id:         vistorInfo.VisitorId,
-		To_id:      toId,
-		Ent_id:     vistorInfo.EntId,
-		UpdateTime: setting.Now(),
+		verifiedVisitor: verified,
+		visitorAccessIP: accessIP,
+		Conn:            conn,
+		Name:            fmt.Sprintf("#%d%s", vistorInfo.ID, vistorInfo.Name),
+		Avator:          vistorInfo.Avator,
+		Id:              vistorInfo.VisitorId,
+		To_id:           toId,
+		Ent_id:          vistorInfo.EntId,
+		UpdateTime:      setting.Now(),
 	}
 	if err := configureWebSocketHeartbeat(user); err != nil {
 		log.Printf("websocket setup failed role=visitor id=%q error=%q", user.Id, err)
@@ -60,14 +74,16 @@ func NewVisitorServer(c *gin.Context) {
 	} else {
 		notifyVisitorOnline(toId, vistorInfo)
 	}
+	if (models.VisitorVerificationRequired() && !verified) || !middleware.VisitorIPMatches(accessIP, vistorInfo.EntId) {
+		_ = conn.Close()
+	}
 	log.Printf(
 		"websocket connected role=visitor id=%q session=%d kefu=%q remote=%q",
 		user.Id, user.SessionID, user.State().ToID, c.ClientIP(),
 	)
 	//判断是否有room_id,代表聊天室
-	roomId := c.Query("room_id")
-	if roomId != "" {
-		AddVisitorToRoom(roomId, vistorInfo.VisitorId)
+	if roomID != "" {
+		AddVisitorToRoom(roomID, vistorInfo.VisitorId)
 	}
 	for {
 		//接受消息
@@ -100,6 +116,24 @@ func NewVisitorServer(c *gin.Context) {
 			content:     receive,
 			context:     c,
 			messageType: messageType,
+		}
+	}
+}
+
+func CloseVisitorsOutsideAllowlist(entID string) {
+	for _, visitor := range VisitorConnectionsSnapshot() {
+		state := visitor.State()
+		if (entID == "" || state.EntID == entID) && visitor.Conn != nil &&
+			!middleware.VisitorIPMatches(visitor.visitorAccessIP, state.EntID) {
+			_ = visitor.Conn.Close()
+		}
+	}
+}
+
+func CloseUnverifiedVisitors() {
+	for _, visitor := range VisitorConnectionsSnapshot() {
+		if !visitor.verifiedVisitor && visitor.Conn != nil {
+			_ = visitor.Conn.Close()
 		}
 	}
 }

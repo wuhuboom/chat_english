@@ -96,6 +96,10 @@ func PostEntConfigs(c *gin.Context) {
 	kefuId, _ := c.Get("kefu_id")
 	name := c.PostForm("name")
 	key := c.PostForm("key")
+	if strings.EqualFold(strings.TrimSpace(key), models.VisitorAllowlistKey) {
+		c.AbortWithStatusJSON(400, gin.H{"code": 400, "msg": "请使用 IP 白名单设置"})
+		return
+	}
 	value := c.PostForm("value")
 	if key == "" {
 		c.JSON(200, gin.H{
@@ -302,6 +306,10 @@ func PostConfig(c *gin.Context) {
 	}
 	if strings.EqualFold(key, models.GoogleAuthenticatorSecretKey) || strings.EqualFold(key, models.GoogleAuthenticatorEnabledKey) {
 		c.JSON(200, gin.H{"code": 400, "msg": "请使用谷歌验证器设置面板"})
+		return
+	}
+	if strings.EqualFold(key, models.VisitorAccessConfigKey) || strings.EqualFold(key, models.VisitorAllowlistKey) {
+		c.AbortWithStatusJSON(400, gin.H{"code": 400, "msg": "请使用访客访问设置面板"})
 		return
 	}
 	if strings.EqualFold(key, "IndexJumpUrl") && value != "" && !setting.SafeIndexDestination(value) {

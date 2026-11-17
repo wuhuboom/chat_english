@@ -11,6 +11,7 @@ import (
 	"go-fly-muti/tools"
 	"log"
 	"net/http"
+	"net/netip"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -18,17 +19,19 @@ import (
 )
 
 type User struct {
-	Conn       *websocket.Conn
-	Name       string
-	Id         string
-	Avator     string
-	To_id      string
-	Ent_id     string
-	Role_id    string
-	SessionID  uint64
-	Mux        sync.Mutex
-	stateMux   sync.RWMutex
-	UpdateTime time.Time
+	Conn            *websocket.Conn
+	Name            string
+	Id              string
+	Avator          string
+	To_id           string
+	Ent_id          string
+	Role_id         string
+	SessionID       uint64
+	verifiedVisitor bool
+	visitorAccessIP netip.Addr
+	Mux             sync.Mutex
+	stateMux        sync.RWMutex
+	UpdateTime      time.Time
 }
 
 type UserState struct {
@@ -259,6 +262,12 @@ func WsServerBackend() {
 			to, toOK := data["to"].(string)
 			if !fromOK || !toOK {
 				continue
+			}
+			if message.user.verifiedVisitor {
+				state := message.user.State()
+				if from != state.Id || to != state.ToID {
+					continue
+				}
 			}
 			//限流
 			if tools.LimitFreqSingle("inputing:"+from, 1, 2) {

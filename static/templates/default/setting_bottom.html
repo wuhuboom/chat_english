@@ -74,6 +74,8 @@
             roleList:[],
             configList:[],
             systemTimezone:"Asia/Shanghai",
+            visitorVerificationRequired:false,
+            visitorAccessLoaded:false,
             h5ChatTemplate:(document.getElementById("h5TemplateInitialValue") || {dataset:{template:"chat_page.html"}}).dataset.template || "chat_page.html",
             h5ChatTemplateOptions:[
                 {label:"现代标准版（推荐）",value:"chat_page.html",description:"当前重点维护版本，适配手机和桌面，包含新版 Emoji、现代消息气泡与响应式布局。"},
@@ -167,6 +169,11 @@
             wechatWelcomes:[],
             welcomeDialog:false,
             ipblackList:[],
+            visitorAllowlist:{enabled:false, regions:[]},
+            visitorAllowlistIPs:"",
+            visitorAllowlistRegions:[],
+            visitorAllowlistLoaded:false,
+            visitorAllowlistSaving:false,
             welcomeForm: {
                 content: "",
                 keyword:"",
@@ -361,8 +368,17 @@
                     }
                     if(result.role_id==1){
                         _this.menuAdminShow=true;
+                        if(ACTION=="setting_config"){
+                            _this.sendAjax("/system/visitor-access","get",{},function(result){
+                                _this.visitorVerificationRequired=result.required;
+                                _this.visitorAccessLoaded=true;
+                            });
+                        }
                     }
                     _this.kefuId=result.name;
+                    if(ACTION=="setting_ipblack" && (result.role_id==1 || result.role_id==2)){
+                        _this.loadVisitorAllowlist();
+                    }
                     _this.entId=result.ent_id;
                     _this.visitorUrl=_this.host+'/chatIndex?kefu_id='+result.name+'&ent_id='+result.ent_id;
                     _this.wechatServerUrl=_this.host+'/wechat/server/'+result.ent_id+'/'+result.name;
@@ -987,6 +1003,54 @@
                         message: "更新成功",
                         type: 'success'
                     });
+                });
+            },
+            visitorAllowlistURL(){
+                return this.menuAdminShow ? "/system/visitor-allowlist" : "/kefu/visitor-allowlist";
+            },
+            applyVisitorAllowlist(policy){
+                this.visitorAllowlist={enabled:policy.enabled, regions:policy.regions || []};
+                this.visitorAllowlistIPs=(policy.ips || []).join("\n");
+            },
+            loadVisitorAllowlist(){
+                this.sendAjax(this.visitorAllowlistURL(),"get",{},(result)=>{
+                    let names=typeof Intl.DisplayNames==="function" ? new Intl.DisplayNames(["zh-CN"],{type:"region"}) : null;
+                    this.visitorAllowlistRegions=result.region_codes.map((code)=>{
+                        return {code:code, label:code==="CN" ? "中国大陆" : (names ? names.of(code) : code)};
+                    }).sort((a,b)=>a.label.localeCompare(b.label,"zh-CN"));
+                    this.applyVisitorAllowlist(result.policy);
+                    this.visitorAllowlistLoaded=true;
+                });
+            },
+            saveVisitorAllowlist(){
+                this.visitorAllowlistSaving=true;
+                $.ajax({
+                    url:this.visitorAllowlistURL(),
+                    method:"POST",
+                    contentType:"application/json",
+                    data:JSON.stringify({
+                        enabled:this.visitorAllowlist.enabled,
+                        ips:this.visitorAllowlistIPs.split(/[\s,，]+/).filter(Boolean),
+                        regions:this.visitorAllowlist.regions
+                    }),
+                    success:(data)=>{
+                        if(data.code!==200){
+                            this.$message.error(data.msg);
+                            return;
+                        }
+                        this.applyVisitorAllowlist(data.result);
+                        this.$message.success("IP 白名单已保存");
+                    },
+                    error:(xhr)=>this.$message.error((xhr.responseJSON || {}).msg || "保存 IP 白名单失败"),
+                    complete:()=>{this.visitorAllowlistSaving=false;}
+                });
+            },
+            saveVisitorAccess(){
+                this.sendAjax("/system/visitor-access","POST",{
+                    required:this.visitorVerificationRequired
+                },(result)=>{
+                    this.visitorVerificationRequired=result.required;
+                    this.$message.success("访客访问设置已保存");
                 });
             },
             saveSystemTimezone(){

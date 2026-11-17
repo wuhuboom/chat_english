@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-fly-muti/common"
+	"go-fly-muti/middleware"
 	"go-fly-muti/models"
 	"go-fly-muti/setting"
 	"go-fly-muti/tools"
@@ -29,8 +30,13 @@ type VisitorMessageForm struct {
 
 func SendMessageV2(c *gin.Context) {
 	var form VisitorMessageForm
-	err := c.Bind(&form)
+	err := c.ShouldBind(&form)
 	if err != nil {
+		if models.VisitorVerificationRequired() {
+			middleware.RejectVisitorAccess(c)
+			return
+		}
+		_ = c.AbortWithError(http.StatusBadRequest, err)
 		c.JSON(200, gin.H{
 			"code":   types.ApiCode.FAILED,
 			"msg":    types.ApiCode.GetMessage(types.ApiCode.INVALID),
@@ -39,6 +45,17 @@ func SendMessageV2(c *gin.Context) {
 		return
 	}
 	fromId := form.FromId
+	if !middleware.CheckVisitorAccess(c, fromId) {
+		return
+	}
+	vistorInfo := models.FindVisitorByVistorId(fromId)
+	if !middleware.VisitorIPAllowed(c, vistorInfo.EntId) {
+		return
+	}
+	middleware.VisitorIpblack(c)
+	if c.IsAborted() {
+		return
+	}
 	content := form.Content
 
 	//限流
@@ -59,7 +76,6 @@ func SendMessageV2(c *gin.Context) {
 		return
 	}
 
-	vistorInfo := models.FindVisitorByVistorId(fromId)
 	if vistorInfo.ID == 0 {
 		c.JSON(200, gin.H{
 			"code": types.ApiCode.ACCOUNT_NO_EXIST,

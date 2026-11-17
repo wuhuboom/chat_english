@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-fly-muti/common"
+	"go-fly-muti/middleware"
 	"go-fly-muti/models"
 	v2 "go-fly-muti/models/v2"
 	"go-fly-muti/setting"
@@ -12,6 +13,7 @@ import (
 	"go-fly-muti/types"
 	"go-fly-muti/ws"
 	"log"
+	"net/http"
 	"net/url"
 	"sort"
 	"strconv"
@@ -36,8 +38,14 @@ type VisitorLoginForm struct {
 // PostVisitorLogin 玩家分配客服
 func PostVisitorLogin(c *gin.Context) {
 	var form VisitorLoginForm
-	err := c.Bind(&form)
+	strict := models.VisitorVerificationRequired()
+	err := c.ShouldBind(&form)
 	if err != nil {
+		if strict {
+			middleware.RejectVisitorAccess(c)
+			return
+		}
+		_ = c.AbortWithError(http.StatusBadRequest, err)
 		c.JSON(200, gin.H{
 			"code":   types.ApiCode.FAILED,
 			"msg":    types.ApiCode.GetMessage(types.ApiCode.INVALID),
@@ -46,6 +54,20 @@ func PostVisitorLogin(c *gin.Context) {
 		return
 	}
 
+	if !middleware.VisitorIPAllowed(c, form.EntId) {
+		return
+	}
+	middleware.VisitorIpblack(c)
+	if c.IsAborted() || (strict && !middleware.VerifyVisitor(c, form.VisitorId, form.VisitorName)) {
+		return
+	}
+	if strict {
+		if prefix, rest, scoped := strings.Cut(form.VisitorId, "|"); scoped &&
+			!(prefix == form.EntId && rest != "" || prefix == "wx" && strings.HasPrefix(rest, form.EntId+"|") && len(rest) > len(form.EntId)+1) {
+			middleware.RejectVisitorAccess(c)
+			return
+		}
+	}
 	//限流
 	if !tools.LimitFreqSingle("visitor_login:"+c.ClientIP(), 1, 2) {
 		c.JSON(200, gin.H{
@@ -108,13 +130,17 @@ func PostVisitorLogin(c *gin.Context) {
 	}
 	if form.VisitorName == "" && !isWechat {
 		form.VisitorName = form.CityAddress
-	} else {
+	} else if !strict {
 		form.VisitorName, _ = url.QueryUnescape(form.VisitorName)
 	}
 
 	form.ClientIp = c.ClientIP()
 
+	verifiedID, verifiedName := form.VisitorId, form.VisitorName
 	makeVisitorLoginForm(&form)
+	if strict {
+		form.VisitorId, form.VisitorName = verifiedID, verifiedName
+	}
 	allOffline := true
 
 	entKefuInfo := models.FindUserByUid(form.EntId)
@@ -134,6 +160,13 @@ func PostVisitorLogin(c *gin.Context) {
 	}
 
 	visitor := models.FindVisitorByVistorId(form.VisitorId)
+	if visitor.EntId != "" && visitor.EntId != form.EntId && !middleware.VisitorIPAllowed(c, visitor.EntId) {
+		return
+	}
+	if strict && visitor.ID != 0 && (visitor.VisitorId != form.VisitorId || visitor.EntId != form.EntId) {
+		middleware.RejectVisitorAccess(c)
+		return
+	}
 	previousKefuId := visitor.ToId
 	lastMessage := models.FindLastMessageByVisitorId(form.VisitorId)
 	kefus := models.FindUsersWhere("pid = ? or id=?", form.EntId, form.EntId)
@@ -196,6 +229,9 @@ func PostVisitorLogin(c *gin.Context) {
 	//go SendWechatKefuNotice(form.ToId, "[访客]"+visitor.Name+",访问："+form.Refer, visitor.EntId)
 	go SendNoticeEmail(visitor.Name, "[访客]"+visitor.Name, form.EntId, "访问："+form.Refer)
 	go SendAppGetuiPush(dstKefu.Name, "[访客]"+visitor.Name, visitor.Name+"来了")
+	if strict {
+		middleware.IssueVisitorAccess(c, visitor.VisitorId)
+	}
 	c.JSON(200, gin.H{
 		"code":            200,
 		"msg":             "ok",
