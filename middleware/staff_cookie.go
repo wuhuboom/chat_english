@@ -13,7 +13,22 @@ const StaffCookie = "gofly_staff"
 const StaffCookieLifetime = 24 * 60 * 60
 
 func IsStaffOrigin(r *http.Request) bool {
-	return strings.EqualFold(r.Header.Get("Origin"), staffOrigin(r))
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		return false
+	}
+	expected := staffOrigin(r)
+	if strings.EqualFold(origin, expected) {
+		return true
+	}
+	// A reverse proxy may replace Host. Browser JavaScript cannot set
+	// Sec-Fetch-Site; same-site is insufficient (ports and subdomains differ).
+	if r.Header.Get("Sec-Fetch-Site") != "same-origin" || !strings.HasPrefix(expected, "http://") {
+		return false
+	}
+	u, err := url.Parse(origin)
+	return err == nil && u.Scheme == "http" && u.Hostname() != "" &&
+		u.User == nil && u.Path == "" && u.RawQuery == "" && !u.ForceQuery && u.Fragment == ""
 }
 
 func staffOrigin(r *http.Request) string {
@@ -41,7 +56,7 @@ func StaffSameOrigin(c *gin.Context) {
 	origin := c.GetHeader("Origin")
 	site := c.GetHeader("Sec-Fetch-Site")
 	ws := strings.EqualFold(c.GetHeader("Upgrade"), "websocket")
-	if (origin != "" && !strings.EqualFold(origin, staffOrigin(c.Request))) ||
+	if (origin != "" && !IsStaffOrigin(c.Request)) ||
 		(site != "" && site != "same-origin" && site != "none") || (ws && origin == "") {
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": 403, "msg": "请求来源不受信任"})
 	}

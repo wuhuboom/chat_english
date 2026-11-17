@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
+	"net/http/httputil"
 	"net/url"
 	"os"
 	"strings"
@@ -84,11 +85,19 @@ func TestStaffCookieLifecycle(t *testing.T) {
 	engine.GET("/staff-test-page", middleware.JwtPageMiddleware, func(c *gin.Context) { c.Status(204) })
 	server := httptest.NewServer(engine)
 	defer server.Close()
+	backend, err := url.Parse(server.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	proxy := httptest.NewServer(&httputil.ReverseProxy{Rewrite: func(req *httputil.ProxyRequest) {
+		req.SetURL(backend) // Replace the public Host, as the production proxy does.
+	}})
+	defer proxy.Close()
 	// Simulate a public HTTP origin without putting any test traffic on the network.
 	origin := "http://192.0.2.10:8081"
 	t.Setenv("GOFLY_BROWSER_ORIGIN", "")
 	dialLocal := func(ctx context.Context, network, address string) (net.Conn, error) {
-		return (&net.Dialer{}).DialContext(ctx, network, server.Listener.Addr().String())
+		return (&net.Dialer{}).DialContext(ctx, network, proxy.Listener.Addr().String())
 	}
 	transport := &http.Transport{DialContext: dialLocal}
 	defer transport.CloseIdleConnections()
@@ -104,6 +113,11 @@ func TestStaffCookieLifecycle(t *testing.T) {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		if sender != "" {
 			req.Header.Set("Origin", sender)
+			if sender == origin {
+				req.Header.Set("Sec-Fetch-Site", "same-origin")
+			} else {
+				req.Header.Set("Sec-Fetch-Site", "same-site")
+			}
 		}
 		if replay != nil {
 			req.AddCookie(replay)
@@ -119,6 +133,11 @@ func TestStaffCookieLifecycle(t *testing.T) {
 	}
 	dial := func(sender string, cookie *http.Cookie) (*websocket.Conn, error) {
 		header := http.Header{"Origin": []string{sender}, "Cookie": []string{cookie.Name + "=" + cookie.Value}}
+		if sender == origin {
+			header.Set("Sec-Fetch-Site", "same-origin")
+		} else {
+			header.Set("Sec-Fetch-Site", "cross-site")
+		}
 		conn, res, err := wsDialer.Dial("ws"+strings.TrimPrefix(origin, "http")+"/ws_kefu", header)
 		if err != nil && res != nil {
 			res.Body.Close()
