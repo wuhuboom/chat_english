@@ -53,7 +53,7 @@ func RejectVisitorAccess(c *gin.Context) {
 func IssueVisitorAccess(c *gin.Context, id string) {
 	c.Set("visitor_diagnostic_id", id)
 	// Issued only at the end of a successful upstream-verified login. Old APKs
-	// send Origin:null but no portable access mode and cannot retain cookies.
+	// omit Origin on XHR or send Origin:null, and cannot retain cookies.
 	if c.PostForm("access_mode") == "" {
 		legacyVisitors.issue(c, id, time.Now())
 		VisitorDiagnosticEvent(c, "grant", c.GetString("visitor_diagnostic_legacy"))

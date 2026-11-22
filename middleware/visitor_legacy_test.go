@@ -24,6 +24,21 @@ func TestLegacyVisitorGrantBindingAndExpiry(t *testing.T) {
 		t.Fatal("unverified access")
 	}
 	store.issue(a, "2|alice", now)
+	missingOrigin := context("192.0.2.1", "legacy-browser")
+	missingOrigin.Request.Header.Del("Origin")
+	if !store.allowed(missingOrigin, "2|alice", now) {
+		t.Fatal("null-origin login must authorize missing-origin HTTP")
+	}
+	store = newLegacyVisitorStore(2)
+	store.issue(missingOrigin, "2|alice", now)
+	if !store.allowed(a, "2|alice", now) {
+		t.Fatal("missing-origin login must authorize null-origin websocket")
+	}
+	foreign := context("192.0.2.1", "legacy-browser")
+	foreign.Request.Header.Set("Origin", "https://untrusted.example")
+	if store.allowed(foreign, "2|alice", now) {
+		t.Fatal("foreign origin accepted legacy grant")
+	}
 	if !store.allowed(a, "2|alice", now.Add(time.Minute)) {
 		t.Fatal("verified access denied")
 	}

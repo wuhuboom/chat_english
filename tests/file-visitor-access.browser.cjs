@@ -14,6 +14,12 @@ const assert = require('node:assert/strict');
     await page.route('**/*', route => {
       const url = new URL(route.request().url());
       if (url.origin === origin && url.pathname === '/') return route.fulfill({body:''});
+      if (url.origin === origin && process.env.GOFLY_TEST_OMIT_ORIGIN_HTTP === '1') {
+        // Reproduce the Android WebView trace without changing the APK HTML.
+        const headers = { ...route.request().headers() };
+        delete headers.origin;
+        return route.continue({ headers });
+      }
       return url.protocol === 'file:' || url.origin === origin ? route.continue() : route.abort();
     });
     const url = pathToFileURL(process.env.GOFLY_TEST_FILE_PAGE);
@@ -30,7 +36,8 @@ const assert = require('node:assert/strict');
     await page.evaluate(() => document.querySelector('#app').__vue__.socket.send(JSON.stringify({type:'ping'})));
     await Promise.race([pong, new Promise((_, reject) => setTimeout(() => reject(Error('No WebSocket pong')), 5000))]);
     assert.equal((await context.cookies(origin)).length, 0);
-    const other = await browser.newContext();
+    // The agreed legacy model cannot distinguish identical IP + UA devices.
+    const other = await browser.newContext({ userAgent: 'UnverifiedOtherBrowser/1.0' });
     const anonymous = await other.request.get(origin + '/2/messages_page?visitor_id=1%7Cfixture_id&ent_id=1&page=1&pagesize=5');
     assert.equal(anonymous.status(), 404);
     await other.close();

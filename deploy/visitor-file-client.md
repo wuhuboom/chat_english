@@ -4,10 +4,10 @@
 
 ## 旧 APK：只更新后端
 
-旧客户端不必修改 HTML、增加 Cookie 或传 Token。Origin 为 `null` 的本地文件页面，先按旧协议向 `/visitor_login` 提交访客 ID 和名字；后端调用配置的 `/test/customer_verify` 验证，完整登录成功后才签发服务端兼容授权。之后同一来源 IP、相同 User-Agent、同一完整访客 ID 的请求可访问记录和 WebSocket。
+旧客户端不必修改 HTML、增加 Cookie 或传 Token。Origin 缺失或为 `null` 的本地文件页面，先按旧协议向 `/visitor_login` 提交访客 ID 和名字；后端调用配置的 `/test/customer_verify` 验证，完整登录成功后才签发服务端兼容授权。之后同一来源 IP、相同 User-Agent、同一完整访客 ID 的请求可访问记录和 WebSocket。HTTP 不带 Origin 而 WS 带 `null` 的安卓旧壳会使用同一授权，两者不会因 Origin 表现不同而失配。
 
 - 授权保存在当前 Go 进程内存，有效期固定 12 小时，不因访问自动延长，容量上限 50000 条。过期、重启、IP/浏览器标识变化时需重新打开客服完成验证登录。
-- Origin 非 null、空浏览器标识、没有成功验证登录的访问不能使用此兼容授权。
+- Origin 存在且非 `null`、空浏览器标识、没有成功验证登录的访问不能使用此兼容授权。
 - 不同访客、不同商户不共享授权。IP 黑白名单和既有业务权限继续生效。
 - 这是明确接受安全折中的旧客户端兼容模式：同公网 IP、同 User-Agent 的设备无法严格区分，知道同一访客 ID 时可能共享授权。User-Agent 不是密码。此模式不适合需要严格设备隔离的环境。
 - 多个后端实例需将同一来源稳定转发到同一实例，否则应改用共享授权存储；本实现不宣称支持跨实例共享。
@@ -23,7 +23,7 @@
 grep '"component":"visitor_diagnostic"' web_app.log | tail -n 100
 ```
 
-重点对照 `request_id`、`pid`、`visitor_hash`、`ip`、`ua_hash`、`origin`、`auth_mode`、`legacy_grant`、`reason`。`origin_missing` 表示旧壳没有发送 Origin；`origin_not_null` 表示实际来源并非 null；`not_found_for_ip_ua_id` 表示当前进程没有匹配授权（可能未登录、进程重启或 IP/UA 发生变化）；`expired` 表示已过期。记录接口的 `record_count` 仅表示返回条数，不包含正文。
+重点对照 `request_id`、`pid`、`visitor_hash`、`ip`、`ua_hash`、`origin`、`auth_mode`、`legacy_grant`、`reason`。`origin` 为空且 `origin_present=false` 现在是可兼容情况，不再因为缺失而拒绝；`origin_not_legacy` 表示存在一个非 `null` Origin；`not_found_for_ip_ua_id` 表示当前进程没有匹配授权（可能未登录、进程重启或 IP/UA 发生变化）；`expired` 表示已过期。记录接口的 `record_count` 仅表示返回条数，不包含正文。
 
 诊断日志不读取请求/响应正文，不输出完整访客 ID、姓名、Cookie、Token 或 WS 子协议。Origin 和 User-Agent 有长度上限。日志仍含来源 IP 和浏览器标识，请仅交给维护人员，不公开发布。
 

@@ -27,6 +27,12 @@ import (
 	"go-fly-muti/ws"
 )
 
+type visitorTestTransport func(*http.Request) (*http.Response, error)
+
+func (transport visitorTestTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	return transport(r)
+}
+
 func TestVerifiedVisitorHTTPAndWebSocket(t *testing.T) {
 	browserScript, _ := filepath.Abs("../tests/file-visitor-access.browser.cjs")
 	path := os.Getenv("GOFLY_TEST_MYSQL_CONFIG")
@@ -114,9 +120,16 @@ func TestVerifiedVisitorHTTPAndWebSocket(t *testing.T) {
 	InitApiRouter(engine)
 	app := httptest.NewServer(engine)
 	defer app.Close()
+	browserNumber := 0
 	makeClient := func() *http.Client {
+		browserNumber++
+		ua := fmt.Sprintf("IsolatedBrowser/%d", browserNumber)
 		jar, _ := cookiejar.New(nil)
-		return &http.Client{Jar: jar, Timeout: 5 * time.Second}
+		return &http.Client{Jar: jar, Timeout: 5 * time.Second, Transport: visitorTestTransport(func(r *http.Request) (*http.Response, error) {
+			r = r.Clone(r.Context())
+			r.Header.Set("User-Agent", ua)
+			return http.DefaultTransport.RoundTrip(r)
+		})}
 	}
 	client := makeClient()
 	otherBrowser := makeClient()
@@ -345,11 +358,14 @@ func TestVerifiedVisitorHTTPAndWebSocket(t *testing.T) {
 	})
 	t.Run("legacy file client without cookies or tokens", func(t *testing.T) {
 		const ua = "LegacyAPK-Compatibility-Test/1.0"
+		httpOrigin := "" // Android WebView omits Origin on XHR but sends null on WS.
 		call := func(method, path string, form url.Values, agent string, want int) {
 			t.Helper()
 			req, _ := http.NewRequest(method, app.URL+path, strings.NewReader(form.Encode()))
 			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-			req.Header.Set("Origin", "null")
+			if httpOrigin != "" {
+				req.Header.Set("Origin", httpOrigin)
+			}
 			req.Header.Set("User-Agent", agent)
 			res, err := http.DefaultClient.Do(req)
 			if err != nil {
@@ -373,21 +389,34 @@ func TestVerifiedVisitorHTTPAndWebSocket(t *testing.T) {
 		call("GET", history, nil, ua, 404)
 		call("POST", "/visitor_login", login, ua, 200)
 		call("GET", history, nil, ua, 200)
+		httpOrigin = "null"
+		call("GET", history, nil, ua, 200)
+		httpOrigin = "https://untrusted.example"
+		call("GET", history, nil, ua, 404)
+		httpOrigin = ""
 		call("GET", history, nil, ua+"other-browser", 404)
 		call("GET", "/2/messages_page?visitor_id="+url.QueryEscape(ent+"|unknown")+"&ent_id="+ent, nil, ua, 404)
 		t.Setenv("GOFLY_ALLOWED_ORIGINS", "https://trusted.example")
-		oldWS, _, err := (&websocket.Dialer{HandshakeTimeout: 3 * time.Second}).Dial(wsURL+query.Encode(), http.Header{"Origin": {"null"}, "User-Agent": {ua}})
-		if err != nil {
-			t.Fatal("legacy websocket:", err)
-		}
-		defer oldWS.Close()
-		_ = oldWS.SetReadDeadline(time.Now().Add(3 * time.Second))
-		if err := oldWS.WriteJSON(ws.TypeMessage{Type: "ping"}); err != nil {
-			t.Fatal(err)
-		}
-		var pong ws.TypeMessage
-		if err := oldWS.ReadJSON(&pong); err != nil || pong.Type != "pong" {
-			t.Fatalf("legacy pong failed: %v", err)
+		for _, origin := range []string{"null", ""} {
+			headers := http.Header{"User-Agent": {ua}}
+			if origin != "" {
+				headers.Set("Origin", origin)
+			}
+			oldWS, _, err := (&websocket.Dialer{HandshakeTimeout: 3 * time.Second}).Dial(wsURL+query.Encode(), headers)
+			if err != nil {
+				t.Fatalf("legacy websocket origin %q: %v", origin, err)
+			}
+			_ = oldWS.SetReadDeadline(time.Now().Add(3 * time.Second))
+			if err := oldWS.WriteJSON(ws.TypeMessage{Type: "ping"}); err != nil {
+				oldWS.Close()
+				t.Fatal(err)
+			}
+			var pong ws.TypeMessage
+			err = oldWS.ReadJSON(&pong)
+			_ = oldWS.Close()
+			if err != nil || pong.Type != "pong" {
+				t.Fatalf("legacy pong origin %q: %v", origin, err)
+			}
 		}
 	})
 	changeSetting(1, false, 200)
