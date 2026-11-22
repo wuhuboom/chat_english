@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -50,6 +51,16 @@ func IssueVisitorAccess(c *gin.Context, id string) {
 		"purpose": "visitor-access", "visitor_id": id, "exp": time.Now().Add(age).Unix(),
 	})
 	if err == nil {
+		c.Header("Cache-Control", "no-store")
+		if c.PostForm("access_mode") == "token" {
+			portable, err := tools.MakeToken(map[string]interface{}{
+				"purpose": "visitor-portable", "visitor_id": id,
+				"exp": time.Now().Add(time.Hour).Unix(),
+			})
+			if err == nil {
+				c.Set("visitor_access_token", portable)
+			}
+		}
 		http.SetCookie(c.Writer, &http.Cookie{
 			Name: visitorAccessCookie(id), Value: token, Path: "/", MaxAge: int(age.Seconds()),
 			HttpOnly: true, Secure: c.Request.TLS != nil ||
@@ -78,6 +89,25 @@ func VisitorSessionAccess(param string, fromQuery bool) gin.HandlerFunc {
 func CheckVisitorAccess(c *gin.Context, id string) bool {
 	if !models.VisitorVerificationRequired() {
 		return true
+	}
+	// Portable clients cannot rely on third-party cookies. Never accept their
+	// credentials from URL query parameters (which are logged and shared).
+	portable := c.GetHeader("X-Gofly-Visitor-Token")
+	if c.Request.URL.Path == "/ws_visitor" {
+		for _, offered := range strings.Split(c.GetHeader("Sec-WebSocket-Protocol"), ",") {
+			if strings.HasPrefix(strings.TrimSpace(offered), "gofly-visitor.") {
+				portable = strings.TrimPrefix(strings.TrimSpace(offered), "gofly-visitor.")
+				break
+			}
+		}
+	}
+	if portable != "" && id != "" {
+		claims := tools.ParseToken(portable)
+		if claims["purpose"] == "visitor-portable" && claims["visitor_id"] == id {
+			c.Set("verified_visitor_session", true)
+			c.Set("portable_visitor_session", true)
+			return true
+		}
 	}
 	value, _ := c.Cookie(visitorAccessCookie(id))
 	if id != "" && value != "" {

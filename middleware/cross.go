@@ -5,11 +5,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"go-fly-muti/common"
 	"net/http"
+	"strings"
 )
 
 func CrossSite(c *gin.Context) {
 	origin := c.GetHeader("Origin")
 	allowedOrigin, allowCredentials := common.AllowedOrigin(origin)
+	path := c.Request.URL.Path
+	if origin == "null" && (path == "/visitor_login" || strings.HasPrefix(path, "/2/") ||
+		path == "/config" || path == "/uploadimg" || path == "/uploadaudio") {
+		// Opaque origins use scoped visitor tokens, never credentialed cookies.
+		allowedOrigin, allowCredentials = "*", false
+	}
 	if allowedOrigin != "" {
 		c.Header("Access-Control-Allow-Origin", allowedOrigin)
 	}
@@ -19,7 +26,7 @@ func CrossSite(c *gin.Context) {
 	//服务器支持的所有跨域请求的方法
 	c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	//允许跨域设置可以返回其他子段，可以自定义字段
-	c.Header("Access-Control-Allow-Headers", "Authorization, Content-Length, Content-Type, X-CSRF-Token, Token, Session, Lang, X-Requested-With")
+	c.Header("Access-Control-Allow-Headers", "Authorization, Content-Length, Content-Type, X-CSRF-Token, Token, Session, Lang, X-Requested-With, X-Gofly-Visitor-Token")
 	// 允许浏览器（客户端）可以解析的头部 （重要）
 	c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers")
 	if allowCredentials {

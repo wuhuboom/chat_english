@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -18,6 +19,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/jinzhu/gorm"
+	"go-fly-muti/middleware"
 	"go-fly-muti/models"
 	"go-fly-muti/setting"
 	"go-fly-muti/tools"
@@ -26,6 +28,7 @@ import (
 )
 
 func TestVerifiedVisitorHTTPAndWebSocket(t *testing.T) {
+	browserScript, _ := filepath.Abs("../tests/file-visitor-access.browser.cjs")
 	path := os.Getenv("GOFLY_TEST_MYSQL_CONFIG")
 	if path == "" {
 		t.Skip("isolated MySQL integration test")
@@ -62,7 +65,8 @@ func TestVerifiedVisitorHTTPAndWebSocket(t *testing.T) {
 	models.DB, models.CustomConfigs = db, nil
 	defer func() { models.DB, models.CustomConfigs = oldDB, oldConfigs }()
 	if err := db.AutoMigrate(&models.User{}, &models.User_role{}, &models.Role{}, &models.Visitor{}, &models.Ipblack{}, &models.VisitorBlack{},
-		&models.Message{}, &models.VisitorExt{}, &models.EntConfig{}, &models.ConversationEvent{}, &models.Config{}).Error; err != nil {
+		&models.Message{}, &models.VisitorExt{}, &models.EntConfig{}, &models.ConversationEvent{}, &models.Config{},
+		&models.User_client{}, &models.Oauth{}, &models.Conversation{}, &models.Article{}, &models.ReplyGroup{}, &models.ReplyItem{}).Error; err != nil {
 		t.Fatal(err)
 	}
 	user := models.User{Name: "visitor-handler", AuthVersion: 1}
@@ -104,6 +108,7 @@ func TestVerifiedVisitorHTTPAndWebSocket(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	engine := gin.New()
+	engine.Use(middleware.CrossSite)
 	engine.SetHTMLTemplate(template.Must(template.New("chat_page.html").Parse("{{.visitorId}}")))
 	InitViewRouter(engine)
 	InitApiRouter(engine)
@@ -188,12 +193,39 @@ func TestVerifiedVisitorHTTPAndWebSocket(t *testing.T) {
 	request(client, "POST", "/visitor_login", login, 200)
 	loginReady := time.Now().Add(2100 * time.Millisecond)
 
-	query := url.Values{"visitor_id": {visitorID}, "ent_id": {ent}}
+	query := url.Values{"visitor_id": {visitorID}, "ent_id": {ent}, "page": {"1"}, "pagesize": {"5"}}
 	request(client, "GET", "/2/messages_page?"+query.Encode(), nil, 200)
 	request(otherBrowser, "GET", "/2/messages_page?"+query.Encode(), nil, 404)
 	form := url.Values{"from_id": {visitorID}, "to_id": {user.Name}, "content": {"test message"}}
 	request(otherBrowser, "POST", "/2/message", form, 404)
 	request(client, "POST", "/2/message", form, 200)
+	assertHistory := func(browser *http.Client) {
+		t.Helper()
+		res, err := browser.Get(app.URL + "/2/messages_page?" + query.Encode() + "&page=1&pagesize=5")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer res.Body.Close()
+		var result struct {
+			Code   int `json:"code"`
+			Result struct {
+				List []struct {
+					Content string `json:"content"`
+				} `json:"list"`
+			} `json:"result"`
+		}
+		if err := json.NewDecoder(res.Body).Decode(&result); err != nil || res.StatusCode != 200 || result.Code != 200 {
+			t.Fatalf("verified history request failed: HTTP %d code %d: %v", res.StatusCode, result.Code, err)
+		}
+		for _, item := range result.Result.List {
+			if item.Content == "test message" {
+				return
+			}
+		}
+		t.Fatal("verified browser did not receive the persisted fixture message")
+	}
+	assertHistory(client)
+	request(otherBrowser, "GET", "/2/messages_page?"+query.Encode()+"&page=1&pagesize=5", nil, 404)
 
 	wsURL := "ws" + strings.TrimPrefix(app.URL, "http") + "/ws_visitor?"
 	dial := func(client *http.Client, query url.Values, status int) *websocket.Conn {
@@ -227,6 +259,90 @@ func TestVerifiedVisitorHTTPAndWebSocket(t *testing.T) {
 	time.Sleep(time.Until(loginReady))
 	request(otherBrowser, "POST", "/visitor_login", login, 200)
 	request(otherBrowser, "GET", "/2/messages_page?"+query.Encode(), nil, 200)
+	assertHistory(otherBrowser)
+	t.Run("portable file origin", func(t *testing.T) {
+		portableLogin := url.Values{}
+		for key, value := range login {
+			portableLogin[key] = value
+		}
+		portableLogin.Set("access_mode", "token")
+		res, err := http.PostForm(app.URL+"/visitor_login", portableLogin)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var result struct {
+			Code  int    `json:"code"`
+			Token string `json:"visitor_access_token"`
+		}
+		err = json.NewDecoder(res.Body).Decode(&result)
+		res.Body.Close()
+		if err != nil || result.Code != 200 || result.Token == "" {
+			t.Fatalf("portable login failed: code %d, %v", result.Code, err)
+		}
+		fetch := func(token, visitor string, want int) {
+			t.Helper()
+			req, _ := http.NewRequest("GET", app.URL+"/2/messages_page?"+url.Values{"visitor_id": {visitor}, "ent_id": {ent}, "page": {"1"}, "pagesize": {"5"}}.Encode(), nil)
+			req.Header.Set("Origin", "null")
+			req.Header.Set("X-Gofly-Visitor-Token", token)
+			res, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer res.Body.Close()
+			if res.StatusCode != want {
+				t.Fatalf("portable request HTTP %d, want %d", res.StatusCode, want)
+			}
+			if want == 200 {
+				var payload struct {
+					Result struct {
+						List []struct {
+							Content string `json:"content"`
+						} `json:"list"`
+					} `json:"result"`
+				}
+				if err := json.NewDecoder(res.Body).Decode(&payload); err != nil {
+					t.Fatal(err)
+				}
+				found := false
+				for _, message := range payload.Result.List {
+					found = found || message.Content == "test message"
+				}
+				if !found {
+					t.Fatal("portable client lost persisted history")
+				}
+			}
+		}
+		fetch(result.Token, visitorID, 200)
+		fetch("", visitorID, 404)
+		fetch(result.Token+"tampered", visitorID, 404)
+		fetch(result.Token, ent+"|other", 404)
+		expired, _ := tools.MakeToken(map[string]interface{}{"purpose": "visitor-portable", "visitor_id": visitorID, "exp": time.Now().Add(-time.Hour).Unix()})
+		fetch(expired, visitorID, 404)
+		if os.Getenv("GOFLY_TEST_FILE_PAGE") != "" {
+			cmd := exec.Command("node", browserScript)
+			cmd.Env = append(os.Environ(), "GOFLY_TEST_APP_URL="+app.URL)
+			if out, err := cmd.CombinedOutput(); err != nil {
+				t.Fatalf("file browser test: %v\n%s", err, out)
+			} else {
+				t.Log(string(out))
+			}
+		}
+		t.Setenv("GOFLY_ALLOWED_ORIGINS", "https://trusted.example")
+		dialer := websocket.Dialer{Subprotocols: []string{"gofly-visitor." + result.Token}, HandshakeTimeout: 3 * time.Second}
+		portableWS, _, err := dialer.Dial(wsURL+query.Encode(), http.Header{"Origin": {"null"}})
+		if err != nil {
+			t.Fatal("portable file websocket:", err)
+		}
+		defer portableWS.Close()
+		_ = portableWS.SetReadDeadline(time.Now().Add(3 * time.Second))
+		if err := portableWS.WriteJSON(ws.TypeMessage{Type: "ping"}); err != nil {
+			t.Fatal(err)
+		}
+		var pong ws.TypeMessage
+		if err := portableWS.ReadJSON(&pong); err != nil || pong.Type != "pong" {
+			t.Fatalf("portable websocket pong: %v", err)
+		}
+	})
 	changeSetting(1, false, 200)
 	request(client, "GET", "/chatIndex?ent_id="+ent, nil, 200)
 

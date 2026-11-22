@@ -233,11 +233,12 @@ func PostVisitorLogin(c *gin.Context) {
 		middleware.IssueVisitorAccess(c, visitor.VisitorId)
 	}
 	c.JSON(200, gin.H{
-		"code":            200,
-		"msg":             "ok",
-		"alloffline":      allOffline,
-		"assigned_reason": assignedReason,
-		"result":          visitor,
+		"code":                 200,
+		"msg":                  "ok",
+		"alloffline":           allOffline,
+		"assigned_reason":      assignedReason,
+		"visitor_access_token": c.GetString("visitor_access_token"),
+		"result":               visitor,
 		"kefu": gin.H{
 			"username": dstKefu.Nickname,
 			"avatar":   dstKefu.Avator,
