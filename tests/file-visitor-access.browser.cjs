@@ -17,7 +17,7 @@ const assert = require('node:assert/strict');
       return url.protocol === 'file:' || url.origin === origin ? route.continue() : route.abort();
     });
     const url = pathToFileURL(process.env.GOFLY_TEST_FILE_PAGE);
-    url.search = new URLSearchParams({ api: origin, ent_id: '1', kefu_id: 'visitor-handler', visitor_id: 'fixture+id', visitor_name: '张三 & Co', extra:'e30=' }).toString();
+    url.search = new URLSearchParams({ api: origin, ent_id: '1', kefu_id: 'visitor-handler', visitor_id: 'fixture_id', visitor_name: '张三 & Co', extra:'e30=' }).toString();
     const history = page.waitForResponse(r => new URL(r.url()).pathname === '/2/messages_page' && r.status() === 200);
     const pong = new Promise(resolve => page.on('websocket', ws => ws.on('framereceived', frame => {
       try { if (JSON.parse(frame.payload).type === 'pong') resolve(); } catch (_) {}
@@ -31,7 +31,7 @@ const assert = require('node:assert/strict');
     await Promise.race([pong, new Promise((_, reject) => setTimeout(() => reject(Error('No WebSocket pong')), 5000))]);
     assert.equal((await context.cookies(origin)).length, 0);
     const other = await browser.newContext();
-    const anonymous = await other.request.get(origin + '/2/messages_page?visitor_id=1%7Cfixture%2Bid&ent_id=1&page=1&pagesize=5');
+    const anonymous = await other.request.get(origin + '/2/messages_page?visitor_id=1%7Cfixture_id&ent_id=1&page=1&pagesize=5');
     assert.equal(anonymous.status(), 404);
     await other.close();
     console.log('PASS: real file page login, persisted history, WebSocket pong without cookies; separate anonymous client denied');

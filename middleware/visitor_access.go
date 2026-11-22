@@ -46,6 +46,11 @@ func RejectVisitorAccess(c *gin.Context) {
 
 // IssueVisitorAccess is called only after a verified visitor login succeeds.
 func IssueVisitorAccess(c *gin.Context, id string) {
+	// Issued only at the end of a successful upstream-verified login. Old APKs
+	// send Origin:null but no portable access mode and cannot retain cookies.
+	if c.PostForm("access_mode") == "" {
+		legacyVisitors.issue(c, id, time.Now())
+	}
 	const age = 12 * time.Hour
 	token, err := tools.MakeToken(map[string]interface{}{
 		"purpose": "visitor-access", "visitor_id": id, "exp": time.Now().Add(age).Unix(),
@@ -116,6 +121,11 @@ func CheckVisitorAccess(c *gin.Context, id string) bool {
 			c.Set("verified_visitor_session", true)
 			return true
 		}
+	}
+	if portable == "" && value == "" && legacyVisitors.allowed(c, id, time.Now()) {
+		c.Set("verified_visitor_session", true)
+		c.Set("legacy_visitor_session", true)
+		return true
 	}
 	RejectVisitorAccess(c)
 	return false

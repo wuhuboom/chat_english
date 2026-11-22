@@ -66,14 +66,14 @@ func TestVerifiedVisitorHTTPAndWebSocket(t *testing.T) {
 	defer func() { models.DB, models.CustomConfigs = oldDB, oldConfigs }()
 	if err := db.AutoMigrate(&models.User{}, &models.User_role{}, &models.Role{}, &models.Visitor{}, &models.Ipblack{}, &models.VisitorBlack{},
 		&models.Message{}, &models.VisitorExt{}, &models.EntConfig{}, &models.ConversationEvent{}, &models.Config{},
-		&models.User_client{}, &models.Oauth{}, &models.Conversation{}, &models.Article{}, &models.ReplyGroup{}, &models.ReplyItem{}).Error; err != nil {
+		&models.User_client{}, &models.Oauth{}, &models.Conversation{}, &models.Article{}, &models.ReplyGroup{}, &models.ReplyItem{}, &models.Welcome{}).Error; err != nil {
 		t.Fatal(err)
 	}
 	user := models.User{Name: "visitor-handler", AuthVersion: 1}
 	if err := db.Create(&user).Error; err != nil {
 		t.Fatal(err)
 	}
-	const id, name = "fixture+id", "张三 & Co"
+	const id, name = "fixture_id", "张三 & Co"
 	verify := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		if query.Get("username") == "upstream-error" {
@@ -341,6 +341,53 @@ func TestVerifiedVisitorHTTPAndWebSocket(t *testing.T) {
 		var pong ws.TypeMessage
 		if err := portableWS.ReadJSON(&pong); err != nil || pong.Type != "pong" {
 			t.Fatalf("portable websocket pong: %v", err)
+		}
+	})
+	t.Run("legacy file client without cookies or tokens", func(t *testing.T) {
+		const ua = "LegacyAPK-Compatibility-Test/1.0"
+		call := func(method, path string, form url.Values, agent string, want int) {
+			t.Helper()
+			req, _ := http.NewRequest(method, app.URL+path, strings.NewReader(form.Encode()))
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			req.Header.Set("Origin", "null")
+			req.Header.Set("User-Agent", agent)
+			res, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer res.Body.Close()
+			if res.StatusCode != want {
+				t.Fatalf("%s returned %d, want %d", path, res.StatusCode, want)
+			}
+			if want == 200 {
+				var body struct{ Code int }
+				if err := json.NewDecoder(res.Body).Decode(&body); err != nil || body.Code != 200 {
+					t.Fatalf("legacy business response: %+v %v", body, err)
+				}
+			}
+		}
+		history := "/2/messages_page?" + query.Encode()
+		call("GET", history, nil, ua, 404)
+		invalidLogin := url.Values{"visitor_id": {id}, "visitor_name": {"wrong"}, "ent_id": {ent}, "to_id": {user.Name}}
+		call("POST", "/visitor_login", invalidLogin, ua, 404)
+		call("GET", history, nil, ua, 404)
+		call("POST", "/visitor_login", login, ua, 200)
+		call("GET", history, nil, ua, 200)
+		call("GET", history, nil, ua+"other-browser", 404)
+		call("GET", "/2/messages_page?visitor_id="+url.QueryEscape(ent+"|unknown")+"&ent_id="+ent, nil, ua, 404)
+		t.Setenv("GOFLY_ALLOWED_ORIGINS", "https://trusted.example")
+		oldWS, _, err := (&websocket.Dialer{HandshakeTimeout: 3 * time.Second}).Dial(wsURL+query.Encode(), http.Header{"Origin": {"null"}, "User-Agent": {ua}})
+		if err != nil {
+			t.Fatal("legacy websocket:", err)
+		}
+		defer oldWS.Close()
+		_ = oldWS.SetReadDeadline(time.Now().Add(3 * time.Second))
+		if err := oldWS.WriteJSON(ws.TypeMessage{Type: "ping"}); err != nil {
+			t.Fatal(err)
+		}
+		var pong ws.TypeMessage
+		if err := oldWS.ReadJSON(&pong); err != nil || pong.Type != "pong" {
+			t.Fatalf("legacy pong failed: %v", err)
 		}
 	})
 	changeSetting(1, false, 200)

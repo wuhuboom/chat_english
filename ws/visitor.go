@@ -48,7 +48,7 @@ func NewVisitorServer(c *gin.Context) {
 	if c.GetBool("portable_visitor_session") {
 		visitorUpgrader.Subprotocols = []string{"gofly-visitor-v1"}
 	}
-	if c.GetBool("portable_visitor_session") && c.GetHeader("Origin") == "null" {
+	if (c.GetBool("portable_visitor_session") || c.GetBool("legacy_visitor_session")) && c.GetHeader("Origin") == "null" {
 		// Opaque file:// origins are allowed only after verifying the scoped token.
 		visitorUpgrader.CheckOrigin = func(*http.Request) bool { return true }
 	}
