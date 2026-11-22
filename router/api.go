@@ -67,7 +67,7 @@ func InitApiRouter(engine *gin.Engine) {
 		//发送单条信息
 		v2.POST("/message", controller.SendMessageV2)
 		//分页获取数据
-		v2.GET("/messages_page", middleware.VisitorSessionAccess("visitor_id", true), controller.GetVisitorListMessagesPage)
+		v2.GET("/messages_page", middleware.VisitorDiagnostic, middleware.VisitorSessionAccess("visitor_id", true), controller.GetVisitorListMessagesPage)
 		v2.POST("/message_ask", middleware.VisitorSessionAccess("from_id", false), controller.PostMessagesAsk)
 	}
 	//企业路由分组
@@ -203,7 +203,7 @@ func InitApiRouter(engine *gin.Engine) {
 	//engine.POST("/install", controller.PostInstall)
 	//前后聊天
 	engine.GET("/ws_kefu", middleware.StaffWebSocketAuth, ws.NewKefuServer)
-	engine.GET("/ws_visitor", ws.NewVisitorServer)
+	engine.GET("/ws_visitor", middleware.VisitorDiagnostic, ws.NewVisitorServer)
 	//websocket路由分组
 	//wsGroup := engine.Group("/ws")
 	//{
@@ -243,7 +243,7 @@ func InitApiRouter(engine *gin.Engine) {
 	engine.GET("/visitors_online", controller.GetVisitorOnlines)
 	engine.GET("/visitors_kefu_online", middleware.JwtApiMiddleware, controller.GetKefusVisitorOnlines)
 	engine.GET("/clear_online_tcp", controller.DeleteOnlineTcp)
-	engine.POST("/visitor_login", controller.PostVisitorLogin)
+	engine.POST("/visitor_login", middleware.VisitorDiagnostic, controller.PostVisitorLogin)
 	engine.GET("/visitor_ext", middleware.JwtApiMiddleware, controller.GetVisitorExt)
 
 	//engine.POST("/visitor", controller.PostVisitor)

@@ -34,22 +34,29 @@ func VisitorPageAccess(c *gin.Context) {
 
 func VerifyVisitor(c *gin.Context, id, name string) bool {
 	if !setting.VerifyCustomer(c.Request, id, name) {
+		c.Set("visitor_diagnostic_reason", "customer_verify_failed")
 		RejectVisitorAccess(c)
 		return false
 	}
+	c.Set("visitor_diagnostic_upstream", "verified")
 	return true
 }
 
 func RejectVisitorAccess(c *gin.Context) {
+	if c.GetString("visitor_diagnostic_reason") == "" {
+		c.Set("visitor_diagnostic_reason", "visitor_access_denied")
+	}
 	c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"code": 404, "msg": "Not Found"})
 }
 
 // IssueVisitorAccess is called only after a verified visitor login succeeds.
 func IssueVisitorAccess(c *gin.Context, id string) {
+	c.Set("visitor_diagnostic_id", id)
 	// Issued only at the end of a successful upstream-verified login. Old APKs
 	// send Origin:null but no portable access mode and cannot retain cookies.
 	if c.PostForm("access_mode") == "" {
 		legacyVisitors.issue(c, id, time.Now())
+		VisitorDiagnosticEvent(c, "grant", c.GetString("visitor_diagnostic_legacy"))
 	}
 	const age = 12 * time.Hour
 	token, err := tools.MakeToken(map[string]interface{}{
@@ -93,6 +100,7 @@ func VisitorSessionAccess(param string, fromQuery bool) gin.HandlerFunc {
 
 func CheckVisitorAccess(c *gin.Context, id string) bool {
 	if !models.VisitorVerificationRequired() {
+		c.Set("visitor_diagnostic_auth", "verification_disabled")
 		return true
 	}
 	// Portable clients cannot rely on third-party cookies. Never accept their
@@ -106,27 +114,33 @@ func CheckVisitorAccess(c *gin.Context, id string) bool {
 			}
 		}
 	}
+	c.Set("visitor_diagnostic_portable_present", portable != "")
 	if portable != "" && id != "" {
 		claims := tools.ParseToken(portable)
 		if claims["purpose"] == "visitor-portable" && claims["visitor_id"] == id {
 			c.Set("verified_visitor_session", true)
 			c.Set("portable_visitor_session", true)
+			c.Set("visitor_diagnostic_auth", "portable_token")
 			return true
 		}
 	}
 	value, _ := c.Cookie(visitorAccessCookie(id))
+	c.Set("visitor_diagnostic_cookie_present", value != "")
 	if id != "" && value != "" {
 		claims := tools.ParseToken(value)
 		if claims["purpose"] == "visitor-access" && claims["visitor_id"] == id {
 			c.Set("verified_visitor_session", true)
+			c.Set("visitor_diagnostic_auth", "visitor_cookie")
 			return true
 		}
 	}
 	if portable == "" && value == "" && legacyVisitors.allowed(c, id, time.Now()) {
 		c.Set("verified_visitor_session", true)
 		c.Set("legacy_visitor_session", true)
+		c.Set("visitor_diagnostic_auth", "legacy_grant")
 		return true
 	}
+	c.Set("visitor_diagnostic_reason", "no_valid_visitor_session")
 	RejectVisitorAccess(c)
 	return false
 }

@@ -660,6 +660,7 @@ func GetVisitorListMessagesPage(c *gin.Context) {
 	}
 	count := models.CountMessage("message.ent_id= ? and message.visitor_id=?", entId, visitorId)
 	chatMessages := CommonMessagesPage(uint(page), uint(pagesize), visitorId, entId)
+	c.Set("visitor_diagnostic_record_count", len(chatMessages))
 
 	c.JSON(200, gin.H{
 		"code": 200,

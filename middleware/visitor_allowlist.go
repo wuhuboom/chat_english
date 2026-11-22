@@ -17,6 +17,7 @@ func VisitorIPAllowed(c *gin.Context, entID string) bool {
 	if VisitorIPMatches(setting.VisitorClientIP(c.Request), entID) {
 		return true
 	}
+	c.Set("visitor_diagnostic_reason", "ip_allowlist_denied")
 	RejectVisitorAccess(c)
 	return false
 }

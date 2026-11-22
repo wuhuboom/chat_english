@@ -18,6 +18,7 @@ func VisitorIpblack(c *gin.Context) {
 func rejectBlacklistedIP(c *gin.Context, ip string) {
 	ipblack := models.FindIp(ip)
 	if ipblack.IP != "" {
+		c.Set("visitor_diagnostic_reason", "ip_blacklisted")
 		c.JSON(200, gin.H{
 			"code": types.ApiCode.IP_BAN,
 			"msg":  types.ApiCode.GetMessage(types.ApiCode.IP_BAN),

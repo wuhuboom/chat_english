@@ -27,7 +27,21 @@ var legacyVisitors = newLegacyVisitorStore(50000)
 func legacyVisitorKey(c *gin.Context, id string) ([32]byte, bool) {
 	ip := setting.VisitorClientIP(c.Request)
 	ua := c.Request.UserAgent()
-	if id == "" || len(id) > 512 || !ip.IsValid() || ua == "" || len(ua) > 2048 || c.GetHeader("Origin") != "null" {
+	reason := ""
+	switch {
+	case id == "" || len(id) > 512:
+		reason = "invalid_visitor_id"
+	case !ip.IsValid():
+		reason = "invalid_client_ip"
+	case ua == "" || len(ua) > 2048:
+		reason = "invalid_user_agent"
+	case c.GetHeader("Origin") == "":
+		reason = "origin_missing"
+	case c.GetHeader("Origin") != "null":
+		reason = "origin_not_null"
+	}
+	if reason != "" {
+		c.Set("visitor_diagnostic_legacy", reason)
 		return [32]byte{}, false
 	}
 	verifyURL := ""
@@ -62,6 +76,7 @@ func (s *legacyVisitorStore) issue(c *gin.Context, id string, now time.Time) {
 		}
 	}
 	s.grants[key] = now.Add(12 * time.Hour)
+	c.Set("visitor_diagnostic_legacy", "issued")
 }
 
 func (s *legacyVisitorStore) allowed(c *gin.Context, id string, now time.Time) bool {
@@ -74,7 +89,13 @@ func (s *legacyVisitorStore) allowed(c *gin.Context, id string, now time.Time) b
 	expiry, found := s.grants[key]
 	if found && !now.Before(expiry) {
 		delete(s.grants, key)
+		c.Set("visitor_diagnostic_legacy", "expired")
 		return false
+	}
+	if found {
+		c.Set("visitor_diagnostic_legacy", "matched")
+	} else {
+		c.Set("visitor_diagnostic_legacy", "not_found_for_ip_ua_id")
 	}
 	return found
 }

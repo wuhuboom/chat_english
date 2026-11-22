@@ -13,7 +13,21 @@
 - 多个后端实例需将同一来源稳定转发到同一实例，否则应改用共享授权存储；本实现不宣称支持跨实例共享。
 - 上游核验结果在 12 小时窗口内缓存，上游修改身份不会即时撤销已签发的兼容授权。
 
-## 新独立页面：可选凭证模式
+## 正式服诊断日志
+
+`/visitor_login`、`/2/messages_page`、`/ws_visitor` 会输出 `component=visitor_diagnostic` 的结构化日志到现有日志系统（默认 `web_app.log`）。无需改 APK 或开启新的接口。WS 握手成功即时输出 `stage=upgrade, reason=connected, http_status=101`，不会等连接断开才记录。
+
+可收集最近 100 条诊断记录：
+
+```sh
+grep '"component":"visitor_diagnostic"' web_app.log | tail -n 100
+```
+
+重点对照 `request_id`、`pid`、`visitor_hash`、`ip`、`ua_hash`、`origin`、`auth_mode`、`legacy_grant`、`reason`。`origin_missing` 表示旧壳没有发送 Origin；`origin_not_null` 表示实际来源并非 null；`not_found_for_ip_ua_id` 表示当前进程没有匹配授权（可能未登录、进程重启或 IP/UA 发生变化）；`expired` 表示已过期。记录接口的 `record_count` 仅表示返回条数，不包含正文。
+
+诊断日志不读取请求/响应正文，不输出完整访客 ID、姓名、Cookie、Token 或 WS 子协议。Origin 和 User-Agent 有长度上限。日志仍含来源 IP 和浏览器标识，请仅交给维护人员，不公开发布。
+
+## 可选凭证协议
 
 新客户端可使用更强的显式凭证，避免仅凭 IP/浏览器标识识别设备：
 

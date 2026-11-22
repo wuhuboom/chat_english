@@ -21,6 +21,7 @@ func NewVisitorServer(c *gin.Context) {
 	}
 	verified := c.GetBool("verified_visitor_session")
 	if models.VisitorVerificationRequired() && (!verified || c.Query("room_id") != "") {
+		c.Set("visitor_diagnostic_reason", "verified_session_or_room_rejected")
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -37,6 +38,7 @@ func NewVisitorServer(c *gin.Context) {
 	accessIP := setting.VisitorClientIP(c.Request)
 	if vistorInfo.VisitorId == "" || toId == "" || (roomID != "" && roomID != toId) ||
 		!middleware.VisitorIPMatches(accessIP, vistorInfo.EntId) {
+		c.Set("visitor_diagnostic_reason", "visitor_target_or_ip_policy_rejected")
 		middleware.RejectVisitorAccess(c)
 		return
 	}
@@ -54,9 +56,13 @@ func NewVisitorServer(c *gin.Context) {
 	}
 	conn, err := visitorUpgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
+		c.Set("visitor_diagnostic_reason", "websocket_upgrade_failed")
+		middleware.VisitorDiagnosticEvent(c, "upgrade", "failed")
 		log.Println("upgrade error:", err)
 		return
 	}
+	c.Set("visitor_diagnostic_ws_connected", true)
+	middleware.VisitorDiagnosticEvent(c, "upgrade", "connected")
 	if requestedToID != "" && requestedToID != toId {
 		log.Printf("visitor websocket target ignored visitor_id=%q requested=%q stored=%q", visitorID, requestedToID, toId)
 	}

@@ -39,7 +39,13 @@ type VisitorLoginForm struct {
 func PostVisitorLogin(c *gin.Context) {
 	var form VisitorLoginForm
 	strict := models.VisitorVerificationRequired()
+	if strict {
+		c.Set("visitor_diagnostic_auth", "customer_verify_login")
+	} else {
+		c.Set("visitor_diagnostic_auth", "verification_disabled")
+	}
 	err := c.ShouldBind(&form)
+	c.Set("visitor_diagnostic_id", form.VisitorId)
 	if err != nil {
 		if strict {
 			middleware.RejectVisitorAccess(c)
@@ -232,6 +238,8 @@ func PostVisitorLogin(c *gin.Context) {
 	if strict {
 		middleware.IssueVisitorAccess(c, visitor.VisitorId)
 	}
+	c.Set("visitor_diagnostic_id", visitor.VisitorId)
+	c.Set("visitor_diagnostic_login_ok", true)
 	c.JSON(200, gin.H{
 		"code":                 200,
 		"msg":                  "ok",
